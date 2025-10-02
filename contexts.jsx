@@ -49,17 +49,20 @@ function EndpointProvider({ children, initialEndpoints }) {
       localStorage.getItem("apiExplorer") || "{}"
     );
 
+    // Use saved endpoints if available, otherwise use initial
+    const endpointsToUse = savedState.endpoints || initialEndpoints;
+
     // Initialize with starter code for endpoints without saved code
     const initial = {};
-    initialEndpoints.forEach((endpoint) => {
+    endpointsToUse.forEach((endpoint) => {
       initial[endpoint.id] =
         (savedState.endpointCodes && savedState.endpointCodes[endpoint.id]) ||
         endpoint.starterCode;
     });
 
     return {
-      currentEndpointId: savedState.currentEndpointId || initialEndpoints[0].id,
-      endpoints: savedState.endpoints || initialEndpoints,
+      currentEndpointId: savedState.currentEndpointId || endpointsToUse[0].id,
+      endpoints: endpointsToUse,
       endpointCodes: initial
     };
   });
