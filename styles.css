@@ -145,6 +145,8 @@ body,
 
 .sidebar {
   width: 300px;
+  min-width: 300px;
+  flex-shrink: 0;
   border-right: 1px solid var(--border-color);
   background: var(--bg-secondary);
   overflow-y: auto;
