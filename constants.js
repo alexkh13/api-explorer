@@ -13,6 +13,68 @@ window.AppConstants = {
   const [users, setUsers] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
 
+  const DataDisplay = ({ data }) => {
+    if (data === null || data === undefined) return <span style={{ color: '#999' }}>null</span>;
+
+    if (Array.isArray(data)) {
+      if (data.length === 0) return <span style={{ color: '#999' }}>[]</span>;
+
+      const firstItem = data[0];
+      if (typeof firstItem === 'object' && firstItem !== null) {
+        const keys = Object.keys(firstItem);
+        return (
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px', border: '1px solid #ddd' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#4a5568', color: '#ffffff' }}>
+                {keys.map(key => (
+                  <th key={key} style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: 600, color: '#ffffff' }}>{key}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((item, idx) => (
+                <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                  {keys.map(key => (
+                    <td key={key} style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
+                      <DataDisplay data={item[key]} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        );
+      } else {
+        return (
+          <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
+            {data.map((item, idx) => (
+              <li key={idx}><DataDisplay data={item} /></li>
+            ))}
+          </ul>
+        );
+      }
+    }
+
+    if (typeof data === 'object') {
+      return (
+        <div style={{ marginLeft: '15px' }}>
+          {Object.entries(data).map(([key, value]) => (
+            <div key={key} style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#2563eb' }}>{key}:</strong>{' '}
+              {Array.isArray(value) || (typeof value === 'object' && value !== null) ? (
+                <DataDisplay data={value} />
+              ) : (
+                <span>{String(value)}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return <span>{String(data)}</span>;
+  };
+
   React.useEffect(() => {
     setLoading(true);
     fetch('https://jsonplaceholder.typicode.com/users')
@@ -32,13 +94,10 @@ window.AppConstants = {
       <h2>Users List</h2>
       {loading && <p>Loading...</p>}
       {!loading && users.length > 0 && (
-        <ul>
-          {users.map(user => (
-            <li key={user.id}>
-              <strong>{user.name}</strong> - {user.email}
-            </li>
-          ))}
-        </ul>
+        <div style={{ marginTop: '20px' }}>
+          <h3>Response</h3>
+          <DataDisplay data={users} />
+        </div>
       )}
     </div>
   );
@@ -58,6 +117,69 @@ window.AppConstants = {
   const [postId, setPostId] = React.useState(1);
   const [post, setPost] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
+  const [paramsOpen, setParamsOpen] = React.useState(true);
+
+  const DataDisplay = ({ data }) => {
+    if (data === null || data === undefined) return <span style={{ color: '#999' }}>null</span>;
+
+    if (Array.isArray(data)) {
+      if (data.length === 0) return <span style={{ color: '#999' }}>[]</span>;
+
+      const firstItem = data[0];
+      if (typeof firstItem === 'object' && firstItem !== null) {
+        const keys = Object.keys(firstItem);
+        return (
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px', border: '1px solid #ddd' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#4a5568', color: '#ffffff' }}>
+                {keys.map(key => (
+                  <th key={key} style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: 600, color: '#ffffff' }}>{key}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((item, idx) => (
+                <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                  {keys.map(key => (
+                    <td key={key} style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
+                      <DataDisplay data={item[key]} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        );
+      } else {
+        return (
+          <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
+            {data.map((item, idx) => (
+              <li key={idx}><DataDisplay data={item} /></li>
+            ))}
+          </ul>
+        );
+      }
+    }
+
+    if (typeof data === 'object') {
+      return (
+        <div style={{ marginLeft: '15px' }}>
+          {Object.entries(data).map(([key, value]) => (
+            <div key={key} style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#2563eb' }}>{key}:</strong>{' '}
+              {Array.isArray(value) || (typeof value === 'object' && value !== null) ? (
+                <DataDisplay data={value} />
+              ) : (
+                <span>{String(value)}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return <span>{String(data)}</span>;
+  };
 
   React.useEffect(() => {
     setLoading(true);
@@ -76,21 +198,43 @@ window.AppConstants = {
   return (
     <div style={{ padding: '20px' }}>
       <h2>Post Details</h2>
-      <div>
-        <label>Post ID: </label>
-        <input
-          type="number"
-          value={postId}
-          onChange={(e) => setPostId(parseInt(e.target.value))}
-          min="1"
-          max="100"
-        />
+      <div style={{ marginBottom: '20px', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden' }}>
+        <div
+          onClick={() => setParamsOpen(!paramsOpen)}
+          style={{
+            padding: '12px',
+            backgroundColor: '#4a5568',
+            color: '#ffffff',
+            cursor: 'pointer',
+            fontWeight: 600,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}
+        >
+          <span>Parameters</span>
+          <span style={{ transform: paramsOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▶</span>
+        </div>
+        {paramsOpen && (
+          <div style={{ padding: '12px' }}>
+            <div>
+              <label>Post ID: </label>
+              <input
+                type="number"
+                value={postId}
+                onChange={(e) => setPostId(parseInt(e.target.value))}
+                min="1"
+                max="100"
+              />
+            </div>
+          </div>
+        )}
       </div>
       {loading && <p>Loading...</p>}
       {post && (
         <div style={{ marginTop: '20px' }}>
-          <h3>{post.title}</h3>
-          <p>{post.body}</p>
+          <h3>Response</h3>
+          <DataDisplay data={post} />
         </div>
       )}
     </div>
@@ -120,6 +264,68 @@ window.AppConstants = {
   });
   const [result, setResult] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
+
+  const DataDisplay = ({ data }) => {
+    if (data === null || data === undefined) return <span style={{ color: '#999' }}>null</span>;
+
+    if (Array.isArray(data)) {
+      if (data.length === 0) return <span style={{ color: '#999' }}>[]</span>;
+
+      const firstItem = data[0];
+      if (typeof firstItem === 'object' && firstItem !== null) {
+        const keys = Object.keys(firstItem);
+        return (
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px', border: '1px solid #ddd' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#4a5568', color: '#ffffff' }}>
+                {keys.map(key => (
+                  <th key={key} style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: 600, color: '#ffffff' }}>{key}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((item, idx) => (
+                <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                  {keys.map(key => (
+                    <td key={key} style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
+                      <DataDisplay data={item[key]} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        );
+      } else {
+        return (
+          <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
+            {data.map((item, idx) => (
+              <li key={idx}><DataDisplay data={item} /></li>
+            ))}
+          </ul>
+        );
+      }
+    }
+
+    if (typeof data === 'object') {
+      return (
+        <div style={{ marginLeft: '15px' }}>
+          {Object.entries(data).map(([key, value]) => (
+            <div key={key} style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#2563eb' }}>{key}:</strong>{' '}
+              {Array.isArray(value) || (typeof value === 'object' && value !== null) ? (
+                <DataDisplay data={value} />
+              ) : (
+                <span>{String(value)}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return <span>{String(data)}</span>;
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -177,9 +383,9 @@ window.AppConstants = {
         </button>
       </form>
       {result && (
-        <div style={{ marginTop: '20px', padding: '10px', background: '#e6ffe6', borderRadius: '4px' }}>
-          <h3>Success!</h3>
-          <pre>{JSON.stringify(result, null, 2)}</pre>
+        <div style={{ marginTop: '20px' }}>
+          <h3>Response</h3>
+          <DataDisplay data={result} />
         </div>
       )}
     </div>
@@ -421,6 +627,69 @@ function generateStarterCode(endpoint, baseUrl, bearerToken) {
       return `function ${funcName}() {
 ${stateInit}  const [data, setData] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
+  const [paramsOpen, setParamsOpen] = React.useState(true);
+
+  const DataDisplay = ({ data }) => {
+    if (data === null || data === undefined) return <span style={{ color: '#999' }}>null</span>;
+
+    if (Array.isArray(data)) {
+      if (data.length === 0) return <span style={{ color: '#999' }}>[]</span>;
+
+      const firstItem = data[0];
+      if (typeof firstItem === 'object' && firstItem !== null) {
+        const keys = Object.keys(firstItem);
+        return (
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px', border: '1px solid #ddd' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#4a5568', color: '#ffffff' }}>
+                {keys.map(key => (
+                  <th key={key} style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: 600, color: '#ffffff' }}>{key}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((item, idx) => (
+                <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                  {keys.map(key => (
+                    <td key={key} style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
+                      <DataDisplay data={item[key]} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        );
+      } else {
+        return (
+          <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
+            {data.map((item, idx) => (
+              <li key={idx}><DataDisplay data={item} /></li>
+            ))}
+          </ul>
+        );
+      }
+    }
+
+    if (typeof data === 'object') {
+      return (
+        <div style={{ marginLeft: '15px' }}>
+          {Object.entries(data).map(([key, value]) => (
+            <div key={key} style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#2563eb' }}>{key}:</strong>{' '}
+              {Array.isArray(value) || (typeof value === 'object' && value !== null) ? (
+                <DataDisplay data={value} />
+              ) : (
+                <span>{String(value)}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return <span>{String(data)}</span>;
+  };
 
   React.useEffect(() => {
     setLoading(true);
@@ -439,26 +708,49 @@ ${stateInit}  const [data, setData] = React.useState(null);
   return (
     <div style={{ padding: '20px' }}>
       <h2>${endpoint.title}</h2>
-${pathParams.map(p => `      <div style={{ marginBottom: '10px' }}>
-        <label>${p.name}: </label>
-        <input
-          type="${p.type === 'integer' ? 'number' : 'text'}"
-          value={${p.name}}
-          onChange={(e) => set${p.name.charAt(0).toUpperCase() + p.name.slice(1)}(${p.type === 'integer' ? 'parseInt(e.target.value)' : 'e.target.value'})}
-        />
-      </div>`).join('\n')}
-${queryParams.map(p => `      <div style={{ marginBottom: '10px' }}>
-        <label>${p.name}: </label>
-        <input
-          type="${p.type === 'integer' ? 'number' : 'text'}"
-          value={${p.name}}
-          onChange={(e) => set${p.name.charAt(0).toUpperCase() + p.name.slice(1)}(${p.type === 'integer' ? 'parseInt(e.target.value)' : 'e.target.value'})}
-        />
-      </div>`).join('\n')}
+      <div style={{ marginBottom: '20px', border: '1px solid #ddd', borderRadius: '6px', overflow: 'hidden' }}>
+        <div
+          onClick={() => setParamsOpen(!paramsOpen)}
+          style={{
+            padding: '12px',
+            backgroundColor: '#4a5568',
+            color: '#ffffff',
+            cursor: 'pointer',
+            fontWeight: 600,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}
+        >
+          <span>Parameters</span>
+          <span style={{ transform: paramsOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▶</span>
+        </div>
+        {paramsOpen && (
+          <div style={{ padding: '12px' }}>
+${pathParams.map(p => `            <div style={{ marginBottom: '10px' }}>
+              <label>${p.name}: </label>
+              <input
+                type="${p.type === 'integer' ? 'number' : 'text'}"
+                value={${p.name}}
+                onChange={(e) => set${p.name.charAt(0).toUpperCase() + p.name.slice(1)}(${p.type === 'integer' ? 'parseInt(e.target.value)' : 'e.target.value'})}
+              />
+            </div>`).join('\n')}
+${queryParams.map(p => `            <div style={{ marginBottom: '10px' }}>
+              <label>${p.name}: </label>
+              <input
+                type="${p.type === 'integer' ? 'number' : 'text'}"
+                value={${p.name}}
+                onChange={(e) => set${p.name.charAt(0).toUpperCase() + p.name.slice(1)}(${p.type === 'integer' ? 'parseInt(e.target.value)' : 'e.target.value'})}
+              />
+            </div>`).join('\n')}
+          </div>
+        )}
+      </div>
       {loading && <p>Loading...</p>}
       {data && (
         <div style={{ marginTop: '20px' }}>
-          <pre>{JSON.stringify(data, null, 2)}</pre>
+          <h3>Response</h3>
+          <DataDisplay data={data} />
         </div>
       )}
     </div>
@@ -471,6 +763,68 @@ ${queryParams.map(p => `      <div style={{ marginBottom: '10px' }}>
       return `function ${funcName}() {
   const [data, setData] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
+
+  const DataDisplay = ({ data }) => {
+    if (data === null || data === undefined) return <span style={{ color: '#999' }}>null</span>;
+
+    if (Array.isArray(data)) {
+      if (data.length === 0) return <span style={{ color: '#999' }}>[]</span>;
+
+      const firstItem = data[0];
+      if (typeof firstItem === 'object' && firstItem !== null) {
+        const keys = Object.keys(firstItem);
+        return (
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px', border: '1px solid #ddd' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#4a5568', color: '#ffffff' }}>
+                {keys.map(key => (
+                  <th key={key} style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: 600, color: '#ffffff' }}>{key}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((item, idx) => (
+                <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                  {keys.map(key => (
+                    <td key={key} style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
+                      <DataDisplay data={item[key]} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        );
+      } else {
+        return (
+          <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
+            {data.map((item, idx) => (
+              <li key={idx}><DataDisplay data={item} /></li>
+            ))}
+          </ul>
+        );
+      }
+    }
+
+    if (typeof data === 'object') {
+      return (
+        <div style={{ marginLeft: '15px' }}>
+          {Object.entries(data).map(([key, value]) => (
+            <div key={key} style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#2563eb' }}>{key}:</strong>{' '}
+              {Array.isArray(value) || (typeof value === 'object' && value !== null) ? (
+                <DataDisplay data={value} />
+              ) : (
+                <span>{String(value)}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return <span>{String(data)}</span>;
+  };
 
   React.useEffect(() => {
     setLoading(true);
@@ -492,7 +846,8 @@ ${queryParams.map(p => `      <div style={{ marginBottom: '10px' }}>
       {loading && <p>Loading...</p>}
       {data && (
         <div style={{ marginTop: '20px' }}>
-          <pre>{JSON.stringify(data, null, 2)}</pre>
+          <h3>Response</h3>
+          <DataDisplay data={data} />
         </div>
       )}
     </div>
@@ -515,6 +870,68 @@ ${queryParams.map(p => `      <div style={{ marginBottom: '10px' }}>
   const [formData, setFormData] = React.useState(${initialState});
   const [result, setResult] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
+
+  const DataDisplay = ({ data }) => {
+    if (data === null || data === undefined) return <span style={{ color: '#999' }}>null</span>;
+
+    if (Array.isArray(data)) {
+      if (data.length === 0) return <span style={{ color: '#999' }}>[]</span>;
+
+      const firstItem = data[0];
+      if (typeof firstItem === 'object' && firstItem !== null) {
+        const keys = Object.keys(firstItem);
+        return (
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px', border: '1px solid #ddd' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#4a5568', color: '#ffffff' }}>
+                {keys.map(key => (
+                  <th key={key} style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: 600, color: '#ffffff' }}>{key}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((item, idx) => (
+                <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                  {keys.map(key => (
+                    <td key={key} style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
+                      <DataDisplay data={item[key]} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        );
+      } else {
+        return (
+          <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
+            {data.map((item, idx) => (
+              <li key={idx}><DataDisplay data={item} /></li>
+            ))}
+          </ul>
+        );
+      }
+    }
+
+    if (typeof data === 'object') {
+      return (
+        <div style={{ marginLeft: '15px' }}>
+          {Object.entries(data).map(([key, value]) => (
+            <div key={key} style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#2563eb' }}>{key}:</strong>{' '}
+              {Array.isArray(value) || (typeof value === 'object' && value !== null) ? (
+                <DataDisplay data={value} />
+              ) : (
+                <span>{String(value)}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return <span>{String(data)}</span>;
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -577,9 +994,9 @@ ${propNames.map(name => {
         </button>
       </form>
       {result && (
-        <div style={{ marginTop: '20px', padding: '10px', background: '#e6ffe6', borderRadius: '4px' }}>
-          <h3>Response:</h3>
-          <pre>{JSON.stringify(result, null, 2)}</pre>
+        <div style={{ marginTop: '20px' }}>
+          <h3>Response</h3>
+          <DataDisplay data={result} />
         </div>
       )}
     </div>
@@ -592,6 +1009,68 @@ ${propNames.map(name => {
       return `function ${funcName}() {
   const [result, setResult] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
+
+  const DataDisplay = ({ data }) => {
+    if (data === null || data === undefined) return <span style={{ color: '#999' }}>null</span>;
+
+    if (Array.isArray(data)) {
+      if (data.length === 0) return <span style={{ color: '#999' }}>[]</span>;
+
+      const firstItem = data[0];
+      if (typeof firstItem === 'object' && firstItem !== null) {
+        const keys = Object.keys(firstItem);
+        return (
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px', border: '1px solid #ddd' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#4a5568', color: '#ffffff' }}>
+                {keys.map(key => (
+                  <th key={key} style={{ padding: '8px', textAlign: 'left', borderBottom: '2px solid #ddd', fontWeight: 600, color: '#ffffff' }}>{key}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((item, idx) => (
+                <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                  {keys.map(key => (
+                    <td key={key} style={{ padding: '8px', borderBottom: '1px solid #eee' }}>
+                      <DataDisplay data={item[key]} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        );
+      } else {
+        return (
+          <ul style={{ margin: '5px 0', paddingLeft: '20px' }}>
+            {data.map((item, idx) => (
+              <li key={idx}><DataDisplay data={item} /></li>
+            ))}
+          </ul>
+        );
+      }
+    }
+
+    if (typeof data === 'object') {
+      return (
+        <div style={{ marginLeft: '15px' }}>
+          {Object.entries(data).map(([key, value]) => (
+            <div key={key} style={{ marginBottom: '8px' }}>
+              <strong style={{ color: '#2563eb' }}>{key}:</strong>{' '}
+              {Array.isArray(value) || (typeof value === 'object' && value !== null) ? (
+                <DataDisplay data={value} />
+              ) : (
+                <span>{String(value)}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return <span>{String(data)}</span>;
+  };
 
   const handleClick = () => {
     setLoading(true);
@@ -614,9 +1093,9 @@ ${propNames.map(name => {
         {loading ? 'Processing...' : '${endpoint.method}'}
       </button>
       {result && (
-        <div style={{ marginTop: '20px', padding: '10px', background: '#e6ffe6', borderRadius: '4px' }}>
-          <h3>Response:</h3>
-          <pre>{JSON.stringify(result, null, 2)}</pre>
+        <div style={{ marginTop: '20px' }}>
+          <h3>Response</h3>
+          <DataDisplay data={result} />
         </div>
       )}
     </div>
