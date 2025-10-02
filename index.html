@@ -1,0 +1,2103 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>React Coder</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Add CodeMirror CSS and JS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/jsx/jsx.min.js"></script>
+    <!-- Import modern fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8f9fa;
+        --bg-selected: #e2e8f0;
+        --bg-hover: #edf2f7;
+        --bg-header: #ffffff;
+        --bg-dialog: rgba(0, 0, 0, 0.5);
+        --bg-dialog-content: #ffffff;
+        --text-primary: #2d3748;
+        --text-secondary: #4a5568;
+        --text-muted: #718096;
+        --border-color: #eaeaea;
+        --drawer-bg: #ffffff;
+        --border-accent: #4299e1;
+        --border-input: #cbd5e0;
+        --button-primary: #4299e1;
+        --button-primary-hover: #3182ce;
+        --button-secondary: #e2e8f0;
+        --button-secondary-hover: #cbd5e0;
+        --button-secondary-text: #4a5568;
+        --button-text: #ffffff;
+        --button-disabled: #a0aec0;
+        --toolbar-border: #eaeaea;
+        --ai-assistant-color: #805ad5;
+        --ai-assistant-bg: #faf5ff;
+        --ai-assistant-bg-hover: #f3ebff;
+        --font-size-xs: 12px;
+        --font-size-sm: 14px;
+        --font-size-md: 16px;
+        --font-size-lg: 18px;
+        --font-size-xl: 20px;
+        --font-size-2xl: 24px;
+        --space-1: 4px;
+        --space-2: 8px;
+        --space-3: 12px;
+        --space-4: 16px;
+        --space-5: 20px;
+        --space-6: 24px;
+        --space-8: 32px;
+        --space-10: 40px;
+        --space-12: 48px;
+        --space-16: 64px;
+        --radius-sm: 4px;
+        --radius-md: 6px;
+        --radius-lg: 8px;
+        --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        --font-mono: 'JetBrains Mono', 'Fira Code', 'Roboto Mono', monospace;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg-primary: #171923;
+          --bg-secondary: #1a202c;
+          --bg-selected: #2d3748;
+          --bg-hover: #2d3748;
+          --bg-header: #171923;
+          --bg-dialog: rgba(0, 0, 0, 0.8);
+          --bg-dialog-content: #1a202c;
+          --text-primary: #f7fafc;
+          --text-secondary: #a0aec0;
+          --text-muted: #718096;
+          --border-color: #2d3748;
+          --border-input: #4a5568;
+          --drawer-bg: #1a202c;
+          --border-accent: #63b3ed;
+          --button-primary: #3182ce;
+          --button-primary-hover: #2b6cb0;
+          --button-secondary: #2d3748;
+          --button-secondary-hover: #4a5568;
+          --button-secondary-text: #e2e8f0;
+          --button-text: #f7fafc;
+          --button-disabled: #4a5568;
+          --toolbar-border: #2d3748;
+          --ai-assistant-color: #b794f4;
+          --ai-assistant-bg: #2d2447;
+          --ai-assistant-bg-hover: #352b54;
+          --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+          --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+          --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+          --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        .CodeMirror {
+          background-color: #282a36 !important;
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body,
+      #root {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        overflow: hidden;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        font-size: var(--font-size-md);
+        line-height: 1.5;
+      }
+
+      .app-container {
+        display: flex;
+        height: calc(100vh - var(--space-12));
+      }
+
+      .header {
+        height: var(--space-12);
+        background-color: var(--bg-header);
+        border-bottom: 1px solid var(--toolbar-border);
+        display: flex;
+        align-items: center;
+        padding: 0 var(--space-5);
+        box-shadow: var(--shadow-sm);
+        position: relative;
+        z-index: 10;
+        justify-content: space-between;
+      }
+
+      .header-logo {
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        font-size: var(--font-size-lg);
+        color: var(--text-primary);
+      }
+
+      .header-logo span {
+        color: var(--border-accent);
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+      }
+
+      .sidebar {
+        width: 300px;
+        border-right: 1px solid var(--border-color);
+        background: var(--bg-secondary);
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .sidebar-header {
+        padding: var(--space-4) var(--space-5);
+        border-bottom: 1px solid var(--border-color);
+        font-weight: 600;
+        font-size: var(--font-size-lg);
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+      }
+
+      .challenges-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .challenge-item {
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .challenge-header {
+        padding: var(--space-4) var(--space-5);
+        cursor: pointer;
+        display: flex;
+        gap: var(--space-3);
+        align-items: center;
+        transition: background-color 0.2s;
+      }
+
+      .challenge-header:hover {
+        background: var(--bg-hover);
+      }
+
+      .challenge-header.selected {
+        background: var(--bg-selected);
+        border-left: 3px solid var(--border-accent);
+        padding-left: calc(var(--space-5) - 3px);
+      }
+
+      .challenge-title {
+        font-weight: 500;
+        font-size: var(--font-size-md);
+        flex: 1;
+        color: var(--text-primary);
+      }
+
+      .challenge-checkbox {
+        width: 18px;
+        height: 18px;
+        border-radius: var(--radius-sm);
+        margin-right: var(--space-2);
+      }
+
+      .challenge-expand {
+        color: var(--text-secondary);
+        transition: transform 0.2s;
+      }
+
+      .challenge-expand.open {
+        transform: rotate(90deg);
+      }
+
+      .challenge-content {
+        padding: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        background-color: var(--bg-primary);
+      }
+
+      .challenge-content.open {
+        padding: var(--space-4) var(--space-5);
+        max-height: 200px;
+        overflow-y: auto;
+      }
+
+      .challenge-description {
+        font-size: var(--font-size-sm);
+        color: var(--text-secondary);
+        margin-bottom: var(--space-3);
+        line-height: 1.5;
+      }
+
+      .main-content {
+        flex: 1;
+        display: flex;
+        position: relative;
+        flex-direction: column;
+        margin-right: 50px; /* Updated from 70px to match new sidebar width */
+      }
+
+      .editor-container {
+        flex: 1;
+        overflow: auto;
+      }
+
+      .sidebar-right {
+        background: var(--bg-secondary);
+        border-left: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: var(--space-2) var(--space-1);
+        z-index: 90;
+        position: fixed; /* Fixed positioning to align with drawer */
+        right: 0;
+        top: var(--space-12); /* Top space for header */
+        bottom: 0;
+      }
+      
+      .fab-container {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2); /* Further reduced gap */
+        align-items: center;
+        height: 100%; /* Take full height of sidebar */
+        padding: var(--space-2); /* Equal padding on all sides */
+      }
+
+      .fab-button {
+        width: 40px; /* Reduced size from 50px to 40px */
+        height: 40px; /* Reduced size from 50px to 40px */
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--ai-assistant-bg);
+        color: var(--ai-assistant-color);
+        border: 1px solid var(--ai-assistant-color);
+        box-shadow: var(--shadow-md);
+        transition: all 0.2s ease;
+        padding: 0;
+      }
+
+      .fab-button:hover {
+        transform: scale(1.05);
+        background-color: var(--ai-assistant-bg-hover);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .fab-button:active {
+        transform: scale(0.95);
+      }
+
+      .fab-button svg {
+        width: 22px; /* Reduced from 28px */
+        height: 22px; /* Reduced from 28px */
+        margin: 0;
+      }
+      
+      .fab-run {
+        background-color: #48bb78;
+        color: white;
+        border-color: #38a169;
+      }
+      
+      .fab-run:hover {
+        background-color: #38a169;
+      }
+      
+      .fab-preview {
+        background-color: #4299e1;
+        color: white;
+        border-color: #3182ce;
+      }
+      
+      .fab-preview:hover {
+        background-color: #3182ce;
+      }
+      
+      .fab-reset {
+        background-color: #e53e3e;
+        color: white;
+        border-color: #c53030;
+      }
+      
+      .fab-reset:hover {
+        background-color: #c53030;
+      }
+      
+      .toast-container {
+        position: fixed;
+        bottom: 24px;
+        left: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 1000;
+      }
+      
+      .toast-notification {
+        padding: 12px 16px;
+        border-radius: var(--radius-md);
+        color: #fff;
+        font-size: var(--font-size-sm);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-width: 300px;
+        max-width: 400px;
+        box-shadow: var(--shadow-lg);
+        animation: slide-in 0.2s ease-out;
+      }
+      
+      @keyframes slide-in {
+        from {
+          transform: translateX(-100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+      
+      .toast-notification.success {
+        background-color: #48bb78;
+      }
+      
+      .toast-notification.error {
+        background-color: #f56565;
+      }
+      
+      .toast-notification.warning {
+        background-color: #ed8936;
+      }
+      
+      .toast-notification.info {
+        background-color: #4299e1;
+      }
+      
+      .toast-close {
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 18px;
+        cursor: pointer;
+        margin-left: 8px;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: none;
+      }
+      
+      .toast-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+      }
+
+      .preview-drawer {
+        position: fixed; /* Changed to fixed positioning */
+        right: 50px; /* Position from the right edge of the viewport - updated from 70px to match new sidebar width */
+        top: var(--space-12); /* Top space for header */
+        bottom: 0;
+        width: 40%;
+        background: var(--drawer-bg);
+        border-left: 1px solid var(--border-color);
+        transform: translateX(calc(100% + 50px)); /* Move off-screen - updated from 70px to match new sidebar width */
+        transition: transform 0.3s ease;
+        display: flex;
+        box-shadow: var(--shadow-md);
+        z-index: 80;
+      }
+      
+      .preview-drawer.open {
+        transform: translateX(0);
+      }
+
+      .CodeMirror {
+        height: 100% !important;
+        font-family: var(--font-mono);
+        font-size: var(--font-size-sm);
+        line-height: 1.6;
+      }
+
+      .CodeMirror-lines {
+        padding: var(--space-4) 0;
+      }
+
+      .CodeMirror pre.CodeMirror-line, 
+      .CodeMirror pre.CodeMirror-line-like {
+        padding: 0 var(--space-4);
+      }
+
+      button {
+        background-color: var(--button-primary);
+        color: var(--button-text);
+        border: none;
+        padding: var(--space-2) var(--space-4);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        font-family: var(--font-sans);
+        font-weight: 500;
+        font-size: var(--font-size-sm);
+        transition: all 0.2s ease;
+        box-shadow: var(--shadow-sm);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 36px;
+      }
+
+      button.primary {
+        background-color: var(--button-primary);
+        color: var(--button-text);
+      }
+
+      button.primary:hover {
+        background-color: var(--button-primary-hover);
+        box-shadow: var(--shadow-md);
+      }
+
+      button.secondary {
+        background-color: var(--button-secondary);
+        color: var(--button-secondary-text);
+      }
+
+      button.secondary:hover {
+        background-color: var(--button-secondary-hover);
+      }
+
+      button.success {
+        background-color: #48bb78;
+      }
+
+      button.success:hover {
+        background-color: #38a169;
+      }
+
+      button:hover {
+        box-shadow: var(--shadow-md);
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
+      button:disabled {
+        background-color: var(--button-disabled);
+        cursor: not-allowed;
+        opacity: 0.5;
+        box-shadow: none;
+      }
+
+      button svg {
+        margin-right: var(--space-2);
+      }
+
+      .preview-container {
+        flex: 1;
+        display: flex;
+        position: relative;
+      }
+
+      .preview-container iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background-color: #fff;
+      }
+
+      .preview-rerun-button {
+        position: absolute;
+        bottom: var(--space-5);
+        right: var(--space-5);
+        padding: var(--space-2) var(--space-4);
+        background-color: var(--button-primary);
+        color: var(--button-text);
+        border: none;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        opacity: 0.9;
+        transition: all 0.2s ease;
+        box-shadow: var(--shadow-md);
+      }
+
+      .preview-rerun-button:hover {
+        opacity: 1;
+        transform: translateY(-1px);
+      }
+
+      .preview-rerun-button:active {
+        transform: translateY(0);
+      }
+
+      .preview-rerun-button:disabled {
+        background-color: var(--button-disabled);
+        cursor: not-allowed;
+        opacity: 0.5;
+        box-shadow: var(--shadow-sm);
+      }
+
+      /* Dialog styles */
+      .dialog-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--bg-dialog);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+
+      .dialog-content {
+        background: var(--bg-dialog-content);
+        border-radius: var(--radius-lg);
+        width: 90%;
+        max-width: 500px;
+        padding: var(--space-6);
+        box-shadow: var(--shadow-xl);
+      }
+
+      .dialog-header {
+        margin-bottom: var(--space-4);
+      }
+
+      .dialog-title {
+        font-size: var(--font-size-xl);
+        font-weight: 600;
+        margin: 0;
+        margin-bottom: var(--space-2);
+      }
+
+      .dialog-description {
+        color: var(--text-secondary);
+        margin: 0;
+        line-height: 1.5;
+      }
+
+      .dialog-form {
+        margin-top: var(--space-6);
+      }
+
+      .dialog-form-group {
+        margin-bottom: var(--space-4);
+      }
+
+      .dialog-label {
+        display: block;
+        margin-bottom: var(--space-2);
+        font-weight: 500;
+      }
+
+      .dialog-input {
+        width: 100%;
+        padding: var(--space-3);
+        border: 1px solid var(--border-input);
+        border-radius: var(--radius-md);
+        font-family: var(--font-sans);
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+      }
+
+      .dialog-input:focus {
+        outline: none;
+        border-color: var(--border-accent);
+        box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
+      }
+
+      .dialog-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--space-4);
+        margin-top: var(--space-6);
+      }
+
+      .provider-option {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-3);
+        border: 1px solid var(--border-input);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-3);
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .provider-option:hover {
+        border-color: var(--border-accent);
+        background-color: var(--bg-hover);
+      }
+
+      .provider-option.selected {
+        border-color: var(--border-accent);
+        background-color: var(--bg-selected);
+      }
+
+      .provider-option-input {
+        width: 18px;
+        height: 18px;
+      }
+
+      .provider-option-label {
+        font-weight: 500;
+      }
+
+      /* Scrollbar styling for modern browsers */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--bg-secondary);
+        border-radius: var(--radius-sm);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--text-secondary);
+        opacity: 0.5;
+        border-radius: var(--radius-sm);
+        border: 2px solid var(--bg-secondary);
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--border-accent);
+      }
+
+      /* SVG Icons */
+      .icon-code {
+        width: 20px;
+        height: 20px;
+        margin-right: 8px;
+      }
+
+      .icon-submit {
+        width: 16px;
+        height: 16px;
+      }
+
+      .icon-preview {
+        width: 16px;
+        height: 16px;
+      }
+
+      .icon-chevron {
+        width: 16px;
+        height: 16px;
+      }
+
+      .icon-ai {
+        width: 18px;
+        height: 18px;
+      }
+
+      .icon-settings {
+        width: 14px;
+        height: 14px;
+      }
+
+      .icon-spinner {
+        animation: spin 1s linear infinite;
+        width: 16px;
+        height: 16px;
+      }
+
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "https://ga.jspm.io/npm:react@18.3.1/index.js",
+          "react-dom": "https://ga.jspm.io/npm:react-dom@18.3.1/index.js"
+        },
+        "scopes": {
+          "https://ga.jspm.io/": {
+            "scheduler": "https://ga.jspm.io/npm:scheduler@0.23.2/index.js"
+          }
+        }
+      }
+    </script>
+
+    <!-- ES Module Shims: Import maps polyfill for older browsers -->
+    <script
+      async
+      src="https://ga.jspm.io/npm:es-module-shims@1.10.0/dist/es-module-shims.js"
+      crossorigin="anonymous"
+    ></script>
+
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel" data-presets="react" data-type="module">
+      import React, { useState, useCallback, useEffect, useRef, useMemo, createContext, useContext } from "react";
+      import ReactDOM from "react-dom";
+
+      // =========== APP CONSTANTS AND CONTEXT ===========
+
+      // Theme Context
+      const ThemeContext = createContext({
+        isDarkMode: false,
+      });
+
+      function ThemeProvider({ children }) {
+        const [isDarkMode, setIsDarkMode] = useState(() => 
+          window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        );
+        
+        useEffect(() => {
+          const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+          const handleDarkModeChange = (e) => setIsDarkMode(e.matches);
+          
+          darkModeMediaQuery.addEventListener('change', handleDarkModeChange);
+          return () => darkModeMediaQuery.removeEventListener('change', handleDarkModeChange);
+        }, []);
+        
+        return (
+          <ThemeContext.Provider value={{ isDarkMode }}>
+            {children}
+          </ThemeContext.Provider>
+        );
+      }
+
+      const useTheme = () => useContext(ThemeContext);
+
+      // Challenge Context
+      const ChallengeContext = createContext({
+        challenges: [],
+        currentChallengeId: '',
+        challengeCodes: {},
+        getChallengeById: () => null,
+        getCurrentChallenge: () => null,
+        updateChallengeCode: () => {},
+        selectChallenge: () => {},
+        markChallengeCompleted: () => {}
+      });
+
+      function ChallengeProvider({ children, initialChallenges }) {
+        const [state, setState] = useState(() => {
+          const savedState = JSON.parse(
+            localStorage.getItem("codeEditor") || "{}"
+          );
+          
+          // Initialize with starter code for challenges without saved code
+          const initial = {};
+          initialChallenges.forEach((challenge) => {
+            initial[challenge.id] = 
+              (savedState.challengeCodes && savedState.challengeCodes[challenge.id]) || 
+              challenge.starterCode;
+          });
+          
+          return {
+            currentChallengeId: savedState.currentChallengeId || initialChallenges[0].id,
+            challenges: savedState.challenges || initialChallenges,
+            challengeCodes: initial
+          };
+        });
+        
+        // Debounced save to localStorage
+        const saveToLocalStorage = useCallback(
+          debounce((newState) => {
+            localStorage.setItem(
+              "codeEditor",
+              JSON.stringify(newState)
+            );
+          }, 1000),
+          []
+        );
+        
+        // Save state to localStorage
+        useEffect(() => {
+          saveToLocalStorage(state);
+        }, [state, saveToLocalStorage]);
+
+        // Context value with state and methods
+        const value = useMemo(() => ({
+          ...state,
+          getChallengeById: (id) => state.challenges.find(c => c.id === id),
+          getCurrentChallenge: () => state.challenges.find(c => c.id === state.currentChallengeId),
+          updateChallengeCode: (challengeId, code) => {
+            setState(prev => ({
+              ...prev,
+              challengeCodes: {
+                ...prev.challengeCodes,
+                [challengeId]: code
+              }
+            }));
+          },
+          selectChallenge: (challengeId) => {
+            setState(prev => ({
+              ...prev,
+              currentChallengeId: challengeId
+            }));
+          },
+          markChallengeCompleted: (challengeId) => {
+            setState(prev => ({
+              ...prev,
+              challenges: prev.challenges.map(c => 
+                c.id === challengeId ? { ...c, completed: true } : c
+              )
+            }));
+          }
+        }), [state]);
+
+        return (
+          <ChallengeContext.Provider value={value}>
+            {children}
+          </ChallengeContext.Provider>
+        );
+      }
+
+      const useChallenges = () => useContext(ChallengeContext);
+
+      // AI Provider Context
+      const AI_PROVIDERS = {
+        OPENAI: {
+          name: 'OpenAI',
+          endpoint: 'https://api.openai.com/v1/chat/completions',
+          apiKeyName: 'OPENAI_API_KEY',
+          defaultModel: 'gpt-3.5-turbo',
+          models: [
+            { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo' },
+            { id: 'gpt-4', name: 'GPT-4' },
+            { id: 'gpt-4-turbo', name: 'GPT-4 Turbo' }
+          ],
+          formatRequest: (prompt, code, model) => ({
+            model: model || 'gpt-3.5-turbo',
+            messages: [
+              {
+                role: 'system',
+                content: `You are a helpful AI assistant that helps write and improve code for a browser-based React application. 
+                    
+IMPORTANT ENVIRONMENT CONSTRAINTS:
+- This is a pure browser environment using ES modules (no Node.js, no build steps)
+- Code uses React 18 with Babel standalone for JSX transpilation
+- All imports must use ES module syntax (import React from 'react')
+- No npm packages are available except those explicitly imported via CDN/import maps
+- Available libraries: React, ReactDOM, CodeMirror
+- No server-side code, database access, or file system operations
+- All code must run entirely in the browser
+
+AVAILABLE COMPONENTS:
+- Header: Main application header with logo and action buttons
+- Sidebar: Shows list of coding challenges
+- ChallengeItem: Individual challenge in the sidebar with accordion expansion
+- CodeEditor: CodeMirror-based editor component
+- Preview: Live preview of code execution 
+- AIAssistant: AI code generation assistant (this component)
+- APIKeyDialog: Dialog for API configuration
+
+Respond with only the code changes requested. No explanations, just the code.`
+              },
+              {
+                role: 'user',
+                content: `I have the following code:\n\n\`\`\`\n${code}\n\`\`\`\n\nRequest: ${prompt}`
+              }
+            ],
+            temperature: 0.7,
+            max_tokens: 2048
+          }),
+          customHeaders: (apiKey) => ({
+            'Authorization': `Bearer ${apiKey}`
+          }),
+          extractResponse: (data) => data.choices[0].message.content
+        },
+        ANTHROPIC: {
+          name: 'Anthropic',
+          endpoint: 'https://api.anthropic.com/v1/messages',
+          apiKeyName: 'ANTHROPIC_API_KEY',
+          defaultModel: 'claude-3-haiku-20240307',
+          models: [
+            { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku' },
+            { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet' },
+            { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus' }
+          ],
+          formatRequest: (prompt, code, model) => ({
+            model: model || 'claude-3-haiku-20240307',
+            max_tokens: 2048,
+            messages: [
+              {
+                role: 'system',
+                content: `You are a helpful AI assistant that helps write and improve code for a browser-based React application.
+                    
+IMPORTANT ENVIRONMENT CONSTRAINTS:
+- This is a pure browser environment using ES modules (no Node.js, no build steps)
+- Code uses React 18 with Babel standalone for JSX transpilation
+- All imports must use ES module syntax (import React from 'react')
+- No npm packages are available except those explicitly imported via CDN/import maps
+- Available libraries: React, ReactDOM, CodeMirror
+- No server-side code, database access, or file system operations
+- All code must run entirely in the browser
+
+AVAILABLE COMPONENTS:
+- Header: Main application header with logo and action buttons
+- Sidebar: Shows list of coding challenges
+- ChallengeItem: Individual challenge in the sidebar with accordion expansion
+- CodeEditor: CodeMirror-based editor component
+- Preview: Live preview of code execution 
+- AIAssistant: AI code generation assistant (this component)
+- APIKeyDialog: Dialog for API configuration`
+              },
+              {
+                role: 'user',
+                content: `I have the following code:\n\n\`\`\`\n${code}\n\`\`\`\n\nRequest: ${prompt}\n\nRespond with only the code changes requested. No explanations, just the code.`
+              }
+            ]
+          }),
+          customHeaders: (apiKey) => ({
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01'
+          }),
+          extractResponse: (data) => data.content[0].text
+        }
+      };
+
+      const AIContext = createContext({
+        provider: 'OPENAI',
+        apiKey: '',
+        model: '',
+        isConfigured: false,
+        setApiConfig: () => {},
+        generateCompletions: async () => {},
+      });
+
+      function AIProvider({ children }) {
+        const [config, setConfig] = useState(() => {
+          const provider = localStorage.getItem('ai_provider') || 'OPENAI';
+          const apiKey = localStorage.getItem(AI_PROVIDERS[provider]?.apiKeyName || '');
+          const model = localStorage.getItem(`${provider}_MODEL`) || AI_PROVIDERS[provider]?.defaultModel;
+          
+          return { 
+            provider, 
+            apiKey, 
+            model,
+            isProcessing: false,
+            status: ''
+          };
+        });
+        
+        const { getCurrentChallenge } = useChallenges();
+        
+        const setApiConfig = useCallback((newConfig) => {
+          // Store in localStorage
+          localStorage.setItem('ai_provider', newConfig.provider);
+          localStorage.setItem(AI_PROVIDERS[newConfig.provider].apiKeyName, newConfig.apiKey);
+          localStorage.setItem(`${newConfig.provider}_MODEL`, newConfig.model);
+          
+          setConfig(prev => ({
+            ...prev,
+            ...newConfig
+          }));
+        }, []);
+        
+        const generateCompletions = useCallback(async (prompt, code, onSuccess) => {
+          if (!prompt.trim()) {
+            setConfig(prev => ({ ...prev, status: 'Please enter a prompt' }));
+            return false;
+          }
+
+          if (!config.apiKey) {
+            return false;
+          }
+
+          setConfig(prev => ({ 
+            ...prev, 
+            isProcessing: true,
+            status: 'Processing your request...'
+          }));
+
+          try {
+            const provider = AI_PROVIDERS[config.provider];
+            
+            // Get context about the current challenge
+            const currentChallenge = getCurrentChallenge();
+            const challengeContext = currentChallenge 
+              ? `Current challenge: ${currentChallenge.title} - ${currentChallenge.description}`
+              : "";
+            
+            // Enhance the prompt with context about the current challenge
+            const enhancedPrompt = challengeContext 
+              ? `${challengeContext}\n\n${prompt}`
+              : prompt;
+            
+            const headers = {
+              'Content-Type': 'application/json',
+              ...(provider.customHeaders ? provider.customHeaders(config.apiKey) : {})
+            };
+
+            const response = await fetch(provider.endpoint, {
+              method: 'POST',
+              headers,
+              body: JSON.stringify(provider.formatRequest(enhancedPrompt, code, config.model))
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error?.message || 'Failed to get response from AI service');
+            }
+
+            const data = await response.json();
+            const result = provider.extractResponse(data);
+            
+            // Strip code blocks and unnecessary formatting from result
+            let codeResult = result;
+            if (result.includes('```')) {
+              const codeBlockMatch = result.match(/```(?:jsx?|tsx?|javascript)?\n([\s\S]+?)```/);
+              if (codeBlockMatch && codeBlockMatch[1]) {
+                codeResult = codeBlockMatch[1];
+              }
+            }
+            
+            // Check for browser-incompatible patterns
+            const incompatiblePatterns = [
+              { pattern: /import\s+.+\s+from\s+['"](?!react|react-dom)([^/][^'"]*)['"];?/g, message: 'Unsupported import from non-CDN source' },
+              { pattern: /require\s*\(/g, message: 'require() is not supported in browser environment' },
+              { pattern: /fs\.|path\.|process\.env|__dirname|__filename/g, message: 'Node.js APIs are not available in browser' },
+              { pattern: /module\.exports|exports\./g, message: 'CommonJS module system not supported' }
+            ];
+            
+            let isValidCode = true;
+            let validationMessage = '';
+            
+            for (const { pattern, message } of incompatiblePatterns) {
+              if (pattern.test(codeResult)) {
+                isValidCode = false;
+                validationMessage = message;
+                break;
+              }
+            }
+            
+            if (!isValidCode) {
+              setConfig(prev => ({
+                ...prev,
+                status: `Error: ${validationMessage}. The AI generated code that isn't compatible with the browser environment. Try a different prompt.`
+              }));
+              
+              return false;
+            } else {
+              // Try to parse the code with Babel to ensure it's valid
+              try {
+                // Only perform this check for complete function/component definitions
+                if (codeResult.includes('function') || codeResult.includes('class') || codeResult.includes('=>')) {
+                  window.Babel.transform(codeResult, { presets: ['react'] });
+                }
+                
+                // Update the code through callback
+                onSuccess(codeResult);
+                
+                setConfig(prev => ({
+                  ...prev,
+                  status: 'Code updated successfully'
+                }));
+                
+                return true;
+              } catch (syntaxError) {
+                setConfig(prev => ({
+                  ...prev,
+                  status: `Syntax error in generated code: ${syntaxError.message}. Try a different prompt.`
+                }));
+                
+                return false;
+              }
+            }
+          } catch (error) {
+            console.error('Error generating completions:', error);
+            
+            setConfig(prev => ({
+              ...prev,
+              status: `Error: ${error.message}`
+            }));
+            
+            return false;
+          } finally {
+            setConfig(prev => ({ 
+              ...prev, 
+              isProcessing: false 
+            }));
+          }
+        }, [config.apiKey, config.model, config.provider, getCurrentChallenge]);
+
+        const value = useMemo(() => ({
+          ...config,
+          isConfigured: !!config.apiKey,
+          setApiConfig,
+          generateCompletions,
+          providers: AI_PROVIDERS
+        }), [config, setApiConfig, generateCompletions]);
+
+        return (
+          <AIContext.Provider value={value}>
+            {children}
+          </AIContext.Provider>
+        );
+      }
+
+      const useAI = () => useContext(AIContext);
+
+      // =========== UTILITIES ===========
+
+      // SVG Icons
+      const Icons = {
+        Code: () => (
+          <svg className="icon-code" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+          </svg>
+        ),
+        Run: () => (
+          <svg className="icon-submit" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        ),
+        Preview: () => (
+          <svg className="icon-preview" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+          </svg>
+        ),
+        HidePreview: () => (
+          <svg className="icon-preview" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+          </svg>
+        ),
+        Check: () => (
+          <svg className="icon-submit" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        ),
+        ChevronRight: () => (
+          <svg className="icon-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        ),
+        AI: () => (
+          <svg className="icon-ai" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+          </svg>
+        ),
+        Reset: () => (
+          <svg className="icon-reset" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        ),
+        Settings: () => (
+          <svg className="icon-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        ),
+        Spinner: () => (
+          <svg className="icon-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        )
+      };
+
+      // Debounce utility
+      function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+          const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+          };
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+        };
+      }
+
+      // Challenge data
+      const initialChallengesData = [
+        {
+          id: "1",
+          title: "Reverse a String",
+          description: "Write a function that reverses a given string.",
+          starterCode: `function reverseString(str) {
+  // TODO: Implement this
+  return '';
+}`,
+          tests: [
+            { input: "'hello'", expected: "'olleh'" },
+            { input: "'abc'", expected: "'cba'" },
+          ],
+          completed: false,
+        },
+        {
+          id: "2",
+          title: "Sum an Array",
+          description:
+            "Write a function that returns the sum of all numbers in an array.",
+          starterCode: `function sumArray(arr) {
+  // TODO: Implement this
+  return 0;
+}
+`,
+          tests: [
+            { input: `[1,2,3]`, expected: `6` },
+            { input: `[10,-5,5]`, expected: `10` },
+          ],
+          completed: false,
+        },
+        {
+          id: "3",
+          title: "Create a Counter Component",
+          description:
+            "Create a counter component with increment and decrement buttons. The counter should display the current value and not go below 0.",
+          starterCode: `function Counter() {
+  // TODO: Implement state for the counter
+  // TODO: Implement increment and decrement functions
+  
+  return (
+    <div style={{ textAlign: 'center', padding: '20px' }}>
+      <h2>Counter: ?</h2>
+      <button>-</button>
+      <button>+</button>
+    </div>
+  );
+}`,
+          tests: [
+            {
+              type: "component",
+              matcher: "contains",
+              element: "button",
+              count: 2,
+            },
+            {
+              type: "component",
+              matcher: "text",
+              element: "h2",
+              contains: "Counter:",
+            },
+          ],
+          completed: false,
+        },
+      ];
+
+      // Test runner
+      async function runTests(challengeId, userCode, challenges = initialChallengesData) {
+        const challenge = challenges.find(c => c.id === challengeId);
+        
+        if (!challenge) return { success: false, error: 'Challenge not found' };
+        
+        try {
+          const match = challenge.starterCode.match(/function\s+(\w+)/);
+          if (!match) return { success: false, error: 'Cannot identify function name' };
+          
+          const funcName = match[1];
+          const func = new Function(`${userCode}\nreturn ${funcName};`)();
+
+          for (let t of challenge.tests) {
+            const input = eval(t.input);
+            const output = func(input);
+            if (output !== eval(t.expected)) {
+              return {
+                success: false,
+                failedTest: t,
+                output: output,
+                expected: t.expected,
+              };
+            }
+          }
+          return { success: true };
+        } catch (e) {
+          return { success: false, error: e };
+        }
+      }
+
+      // =========== COMPONENTS ===========
+
+      // Generic Dialog Component
+      function Dialog({ isOpen, onClose, children }) {
+        if (!isOpen) return null;
+        
+        return (
+          <div className="dialog-overlay" onClick={onClose}>
+            <div className="dialog-content" onClick={e => e.stopPropagation()}>
+              {children}
+            </div>
+          </div>
+        );
+      }
+
+      // API Key Dialog Component
+      function APIKeyDialog({ isOpen, onClose }) {
+        const { providers, provider, setApiConfig } = useAI();
+        const [formState, setFormState] = useState({
+          provider,
+          apiKey: '',
+          model: ''
+        });
+        const [error, setError] = useState('');
+
+        // Reset model when provider changes
+        useEffect(() => {
+          setFormState(prev => ({
+            ...prev,
+            model: providers[prev.provider]?.defaultModel || ''
+          }));
+        }, [formState.provider, providers]);
+
+        const handleProviderChange = (provider) => {
+          setFormState(prev => ({ ...prev, provider }));
+        };
+
+        const handleSubmit = (e) => {
+          e.preventDefault();
+          if (!formState.apiKey) {
+            setError('API key is required');
+            return;
+          }
+
+          // Update context
+          setApiConfig(formState);
+          onClose();
+        };
+
+        const renderModelOptions = () => {
+          const providerConfig = providers[formState.provider];
+          if (!providerConfig?.models) return null;
+          
+          return providerConfig.models.map(model => (
+            <option key={model.id} value={model.id}>{model.name}</option>
+          ));
+        };
+
+        return (
+          <Dialog isOpen={isOpen} onClose={onClose}>
+            <div className="dialog-header">
+              <h2 className="dialog-title">Configure AI Assistant</h2>
+              <p className="dialog-description">
+                To enable AI-powered code edits, please provide an API key for one of the supported services.
+                Your key will be stored securely in your browser's local storage.
+              </p>
+            </div>
+
+            <form className="dialog-form" onSubmit={handleSubmit}>
+              <div className="dialog-form-group">
+                <label className="dialog-label">Select AI Provider</label>
+                {Object.keys(providers).map(key => (
+                  <div 
+                    key={key}
+                    className={`provider-option ${formState.provider === key ? 'selected' : ''}`} 
+                    onClick={() => handleProviderChange(key)}
+                  >
+                    <input 
+                      type="radio" 
+                      className="provider-option-input" 
+                      checked={formState.provider === key} 
+                      onChange={() => handleProviderChange(key)}
+                    />
+                    <span className="provider-option-label">{providers[key].name}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="dialog-form-group">
+                <label className="dialog-label">API Key</label>
+                <input
+                  type="password"
+                  className="dialog-input"
+                  value={formState.apiKey}
+                  onChange={e => {
+                    setFormState(prev => ({ ...prev, apiKey: e.target.value }));
+                    setError('');
+                  }}
+                  placeholder={`Enter your ${providers[formState.provider].name} API key`}
+                />
+                {error && <div style={{ color: '#e53e3e', fontSize: 'var(--font-size-sm)', marginTop: '4px' }}>{error}</div>}
+              </div>
+
+              <div className="dialog-form-group">
+                <label className="dialog-label">Model</label>
+                <select 
+                  className="dialog-input" 
+                  value={formState.model} 
+                  onChange={e => setFormState(prev => ({ ...prev, model: e.target.value }))}
+                >
+                  {renderModelOptions()}
+                </select>
+              </div>
+
+              <div className="dialog-footer">
+                <button 
+                  type="button" 
+                  className="secondary" 
+                  onClick={onClose}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="primary"
+                >
+                  Save
+                </button>
+              </div>
+            </form>
+          </Dialog>
+        );
+      }
+
+      // Toast notification component
+      function Toast({ message, type, onClose }) {
+        useEffect(() => {
+          const timer = setTimeout(() => {
+            onClose();
+          }, 5000);
+          
+          return () => clearTimeout(timer);
+        }, [onClose]);
+        
+        return (
+          <div className={`toast-notification ${type}`}>
+            {message}
+            <button className="toast-close" onClick={onClose}>×</button>
+          </div>
+        );
+      }
+      
+      // Toast provider component
+      function ToastProvider({ children }) {
+        const [toasts, setToasts] = useState([]);
+        
+        const addToast = useCallback((message, type = 'info') => {
+          const id = Date.now();
+          setToasts(prev => [...prev, { id, message, type }]);
+          return id;
+        }, []);
+        
+        const removeToast = useCallback((id) => {
+          setToasts(prev => prev.filter(toast => toast.id !== id));
+        }, []);
+        
+        const value = useMemo(() => ({
+          addToast,
+          removeToast
+        }), [addToast, removeToast]);
+        
+        return (
+          <ToastContext.Provider value={value}>
+            {children}
+            <div className="toast-container">
+              {toasts.map(toast => (
+                <Toast 
+                  key={toast.id}
+                  message={toast.message}
+                  type={toast.type}
+                  onClose={() => removeToast(toast.id)}
+                />
+              ))}
+            </div>
+          </ToastContext.Provider>
+        );
+      }
+      
+      const ToastContext = createContext({
+        addToast: () => {},
+        removeToast: () => {}
+      });
+      
+      const useToast = () => useContext(ToastContext);
+      
+      // Process TODO comments in code
+      function ProcessTodoButton() {
+        const { generateCompletions, isConfigured } = useAI();
+        const { currentChallengeId, challengeCodes, updateChallengeCode } = useChallenges();
+        const toast = useToast();
+        const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
+        
+        const handleClick = () => {
+          const code = challengeCodes[currentChallengeId];
+          
+          // Check if API is configured
+          if (!isConfigured) {
+            toast.addToast('Please configure your AI API key first', 'error');
+            setShowApiKeyDialog(true);
+            return;
+          }
+          
+          // Extract TODO comments from the code
+          const todoRegex = /\/\/\s*TODO:(.+?)($|\n)/g;
+          const todos = [];
+          let match;
+          
+          while ((match = todoRegex.exec(code)) !== null) {
+            todos.push(match[1].trim());
+          }
+          
+          if (todos.length === 0) {
+            toast.addToast('No TODO comments found in your code!', 'warning');
+            return;
+          }
+          
+          // Create a prompt from the TODO comments
+          const prompt = `Please implement the following TODOs in the code:\n${todos.join('\n')}`;
+          
+          // Show toast notification
+          toast.addToast(`Processing ${todos.length} TODOs...`, 'info');
+          
+          // Use the AI to generate completions based on the TODOs
+          generateCompletions(prompt, code, (newCode) => {
+            updateChallengeCode(currentChallengeId, newCode);
+            toast.addToast('TODOs implemented successfully!', 'success');
+          });
+        };
+        
+        return (
+          <>
+            <button 
+              className="fab-button" 
+              onClick={handleClick}
+              title="Process TODO comments in code"
+            >
+              <Icons.AI />
+            </button>
+            
+            <APIKeyDialog 
+              isOpen={showApiKeyDialog} 
+              onClose={() => setShowApiKeyDialog(false)} 
+            />
+          </>
+        );
+      }
+
+      // Header Component
+      function Header() {
+        return (
+          <div className="header">
+            <div className="header-logo">
+              <Icons.Code />
+              React<span>Coder</span>
+            </div>
+            <div className="header-actions">
+              {/* Header actions removed and moved to FABs */}
+            </div>
+          </div>
+        );
+      }
+
+      // Challenge Item Component 
+      function ChallengeItem({ challenge, isSelected, onSelect, isExpanded, onToggleExpand }) {
+        return (
+          <div className="challenge-item">
+            <div 
+              className={`challenge-header ${isSelected ? 'selected' : ''}`} 
+              onClick={() => onSelect(challenge.id)}
+            >
+              <input
+                type="checkbox"
+                className="challenge-checkbox"
+                checked={challenge.completed}
+                readOnly
+                onClick={(e) => e.stopPropagation()}
+              />
+              <div className="challenge-title">{challenge.title}</div>
+              <div 
+                className={`challenge-expand ${isExpanded ? 'open' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleExpand(challenge.id);
+                }}
+              >
+                <Icons.ChevronRight />
+              </div>
+            </div>
+            <div className={`challenge-content ${isExpanded ? 'open' : ''}`}>
+              <div className="challenge-description">{challenge.description}</div>
+            </div>
+          </div>
+        );
+      }
+
+      // Sidebar Component
+      function Sidebar() {
+        const { challenges, currentChallengeId, selectChallenge } = useChallenges();
+        const [expandedId, setExpandedId] = useState(currentChallengeId);
+        
+        // Automatically expand the selected challenge
+        useEffect(() => {
+          setExpandedId(currentChallengeId);
+        }, [currentChallengeId]);
+        
+        const handleToggleExpand = (id) => {
+          setExpandedId(expandedId === id ? null : id);
+        };
+        
+        return (
+          <div className="sidebar">
+            <div className="sidebar-header">
+              <span>Challenges</span>
+            </div>
+            <div className="challenges-list">
+              {challenges.map((challenge) => (
+                <ChallengeItem
+                  key={challenge.id}
+                  challenge={challenge}
+                  isSelected={challenge.id === currentChallengeId}
+                  onSelect={selectChallenge}
+                  isExpanded={expandedId === challenge.id}
+                  onToggleExpand={handleToggleExpand}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      // Preview Component
+      function Preview() {
+        const { currentChallengeId, challengeCodes } = useChallenges();
+        const code = challengeCodes[currentChallengeId] || '';
+        const iframeRef = useRef(null);
+        const [hasChanges, setHasChanges] = useState(false);
+        const [lastRenderedCode, setLastRenderedCode] = useState(code);
+        const isDrawerOpen = useRef(false); // Ref to track drawer state
+
+        // Get drawer open state from parent component
+        useEffect(() => {
+          const drawer = document.querySelector('.preview-drawer');
+          if (drawer) {
+            const observer = new MutationObserver((mutations) => {
+              mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                  isDrawerOpen.current = drawer.classList.contains('open');
+                  // If drawer just opened and there are changes, render preview
+                  if (isDrawerOpen.current && hasChanges) {
+                    renderPreview();
+                  }
+                }
+              });
+            });
+            
+            observer.observe(drawer, { attributes: true });
+            isDrawerOpen.current = drawer.classList.contains('open');
+            
+            return () => observer.disconnect();
+          }
+        }, [hasChanges]);
+
+        // Reset lastRenderedCode when challenge changes
+        useEffect(() => {
+          setLastRenderedCode(""); // Reset on challenge change
+          setHasChanges(true);
+          
+          // Only render immediately if drawer is open
+          if (isDrawerOpen.current) {
+            renderPreview();
+          }
+        }, [currentChallengeId]);
+
+        useEffect(() => {
+          if (code !== lastRenderedCode) {
+            setHasChanges(true);
+            
+            // Only auto-update if drawer is open
+            if (isDrawerOpen.current) {
+              renderPreview();
+            }
+          }
+        }, [code, lastRenderedCode]);
+
+        const renderPreview = useCallback(() => {
+          const iframe = iframeRef.current;
+          if (!iframe) return;
+
+          // Determine if the code contains React/JSX syntax
+          const isReactComponent =
+            code.includes("function") &&
+            code.includes("return") &&
+            code.includes("<");
+
+          // make sure to avoid writing <script> directly here
+          // use string literal instead, e.g. ${script}
+          const script = "script";
+
+          const html = `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <${script} type="importmap">
+                  {
+                    "imports": {
+                      "react": "https://ga.jspm.io/npm:react@18.3.1/index.js",
+                      "react-dom": "https://ga.jspm.io/npm:react-dom@18.3.1/index.js"
+                    },
+                    "scopes": {
+                      "https://ga.jspm.io/": {
+                        "scheduler": "https://ga.jspm.io/npm:scheduler@0.23.2/index.js"
+                      }
+                    }
+                  }
+                </${script}>
+                <${script} async src="https://ga.jspm.io/npm:es-module-shims@1.10.0/dist/es-module-shims.js"></${script}>
+                <${script} src="https://unpkg.com/@babel/standalone/babel.min.js"></${script}>
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+                <style>
+                  :root {
+                    --blue-500: #3182ce;
+                    --blue-600: #2b6cb0;
+                    --gray-100: #f7fafc;
+                    --gray-200: #edf2f7;
+                    --gray-700: #4a5568;
+                    --gray-900: #1a202c;
+                    --red-500: #f56565;
+                    --green-500: #48bb78;
+                  }
+                  
+                  * {
+                    box-sizing: border-box;
+                  }
+                  
+                  body {
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                    padding: 24px;
+                    line-height: 1.5;
+                    color: var(--gray-900);
+                    font-size: 16px;
+                    margin: 0;
+                  }
+                  
+                  .dark-mode {
+                    background-color: var(--gray-900);
+                    color: var(--gray-100);
+                  }
+
+                  h1, h2, h3, h4, h5 {
+                    margin-top: 0;
+                    line-height: 1.2;
+                  }
+                  
+                  button {
+                    margin: 0 6px;
+                    padding: 6px 12px;
+                    background: var(--blue-500);
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-family: inherit;
+                    font-size: 14px;
+                    font-weight: 500;
+                  }
+                  
+                  button:hover {
+                    background: var(--blue-600);
+                  }
+                  
+                  pre {
+                    background: var(--gray-100);
+                    padding: 16px;
+                    border-radius: 8px;
+                    overflow: auto;
+                    font-size: 14px;
+                    border: 1px solid var(--gray-200);
+                  }
+                  
+                  .error {
+                    color: var(--red-500);
+                    padding: 12px;
+                    border-radius: 6px;
+                    background-color: rgba(245, 101, 101, 0.1);
+                    margin: 16px 0;
+                  }
+                  
+                  .success {
+                    color: var(--green-500);
+                    padding: 12px;
+                    border-radius: 6px;
+                    background-color: rgba(72, 187, 120, 0.1);
+                    margin: 16px 0;
+                  }
+                  
+                  @media (prefers-color-scheme: dark) {
+                    body {
+                      background-color: var(--gray-900);
+                      color: var(--gray-100);
+                    }
+                    pre {
+                      background: rgba(255, 255, 255, 0.1);
+                      border-color: rgba(255, 255, 255, 0.2);
+                    }
+                  }
+                </style>
+              </head>
+              <body>
+                <div id="root"></div>
+                <${script} type="text/babel" data-presets="react" data-type="module">
+                  import React from 'react';
+                  import ReactDOM from 'react-dom';
+
+                  ${code}
+                  ${
+                    isReactComponent
+                      ? `
+                    // Extract the component name from the code
+                    const match = ${JSON.stringify(
+                      code
+                    )}.match(/function\\s+(\\w+)/);
+                    if (match) {
+                      const ComponentName = eval(match[1]);
+                      ReactDOM.render(React.createElement(ComponentName), document.getElementById('root'));
+                    }
+                  `
+                      : `
+                    // For non-React challenges, show the function result
+                    const match = ${JSON.stringify(
+                      code
+                    )}.match(/function\\s+(\\w+)/);
+                    if (match) {
+                      const funcName = match[1];
+                      const func = eval('(' + ${JSON.stringify(code)} + ')');
+                      document.getElementById('root').innerHTML = '<h3>Function: ' + funcName + '</h3>' +
+                        '<p>Try calling this function in the browser console!</p>' +
+                        '<div class="success">✓ Function defined successfully</div>';
+                      window[funcName] = func;
+                      console.log("✓ Function " + funcName + " is available in the console.");
+                    }
+                  `
+                  }
+                </${script}>
+              </body>
+            </html>`;
+
+          iframe.srcdoc = html;
+          setLastRenderedCode(code);
+          setHasChanges(false);
+        }, [code]);
+
+        return (
+          <div className="preview-container">
+            <iframe ref={iframeRef} title="Preview" sandbox="allow-scripts" />
+            <button 
+              className="preview-rerun-button" 
+              onClick={renderPreview}
+              disabled={!hasChanges}
+            >
+              {hasChanges ? "Re-run" : "Up to date"}
+            </button>
+          </div>
+        );
+      }
+
+      // CodeEditor Component
+      function CodeEditor({ code, onChange }) {
+        const editorRef = useRef(null);
+        const cmRef = useRef(null);
+        const isInternalChange = useRef(false);
+        const callbackRef = useRef({ onChange });
+        const { isDarkMode } = useTheme();
+
+        // Keep the callback ref updated
+        useEffect(() => {
+          callbackRef.current = { onChange };
+        }, [onChange]);
+
+        // Initialize CodeMirror
+        useEffect(() => {
+          if (!editorRef.current) return;
+          
+          cmRef.current = CodeMirror(editorRef.current, {
+            value: code,
+            mode: "jsx",
+            lineNumbers: true,
+            theme: isDarkMode ? "dracula" : "default",
+            autoCloseBrackets: true,
+            matchBrackets: true,
+            tabSize: 2,
+            indentWithTabs: false,
+            lineWrapping: true
+          });
+          
+          cmRef.current.on("change", (instance) => {
+            if (!isInternalChange.current) {
+              callbackRef.current.onChange(instance.getValue());
+            }
+          });
+
+          return () => {
+            if (cmRef.current) {
+              cmRef.current.toTextArea();
+            }
+          };
+        }, []);
+
+        // Update code when prop changes
+        useEffect(() => {
+          if (cmRef.current && cmRef.current.getValue() !== code) {
+            isInternalChange.current = true;
+            cmRef.current.setValue(code);
+            isInternalChange.current = false;
+          }
+        }, [code]);
+        
+        // Update theme when darkMode changes
+        useEffect(() => {
+          if (cmRef.current) {
+            cmRef.current.setOption('theme', isDarkMode ? 'dracula' : 'default');
+          }
+        }, [isDarkMode]);
+
+        return <div style={{ flex: 1 }} ref={editorRef}></div>;
+      }
+
+      // Main IDE Component
+      function IDEPage() {
+        const { 
+          currentChallengeId, 
+          challengeCodes, 
+          updateChallengeCode, 
+          markChallengeCompleted,
+          challenges 
+        } = useChallenges();
+        const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+        const { isConfigured } = useAI();
+        const toast = useToast();
+        
+        // Get current code based on selected challenge
+        const currentCode = challengeCodes[currentChallengeId];
+        
+        const handleCodeChange = useCallback(newCode => {
+          updateChallengeCode(currentChallengeId, newCode);
+        }, [currentChallengeId, updateChallengeCode]);
+
+        const handleSubmit = async () => {
+          const result = await runTests(currentChallengeId, currentCode);
+          
+          if (result.success) {
+            markChallengeCompleted(currentChallengeId);
+            alert("All tests passed! Challenge completed.");
+          } else {
+            alert("Some tests failed. Check your code and try again.");
+          }
+        };
+
+        return (
+          <div
+            style={{
+              height: "100vh",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Header />
+            <div className="app-container">
+              <Sidebar />
+              <div className="main-content">
+                <div className="editor-container">
+                  <CodeEditor code={currentCode} onChange={handleCodeChange} />
+                </div>
+              </div>
+            </div>
+            
+            {/* Fixed positioned elements outside the normal flow */}
+            <div className="sidebar-right">
+              <div className="fab-container">
+                {/* Preview and Run buttons moved to the top */}
+                <button 
+                  className="fab-button fab-preview" 
+                  onClick={() => setIsPreviewOpen(!isPreviewOpen)}
+                  title={isPreviewOpen ? "Hide Preview" : "Show Preview"}
+                >
+                  {isPreviewOpen ? <Icons.HidePreview /> : <Icons.Preview />}
+                </button>
+                <button 
+                  className="fab-button fab-run" 
+                  onClick={handleSubmit}
+                  title="Run Tests"
+                >
+                  <Icons.Run />
+                </button>
+
+                <ProcessTodoButton />
+                
+                <button 
+                  className="fab-button fab-reset" 
+                  onClick={() => {
+                    const challenge = challenges.find(c => c.id === currentChallengeId);
+                    if (challenge && window.confirm("Reset code to default state? This cannot be undone.")) {
+                      updateChallengeCode(currentChallengeId, challenge.starterCode);
+                      toast.addToast("Code reset to default state", "success");
+                    }
+                  }}
+                  title="Reset to Default"
+                >
+                  <Icons.Reset />
+                </button>
+              </div>
+            </div>
+            
+            <div
+              className={`preview-drawer ${isPreviewOpen ? "open" : ""}`}
+            >
+              <Preview />
+            </div>
+          </div>
+        );
+      }
+
+      // Root App Component wrapping all providers
+      function App() {
+        return (
+          <ThemeProvider>
+            <ChallengeProvider initialChallenges={initialChallengesData}>
+              <AIProvider>
+                <ToastProvider>
+                  <IDEPage />
+                </ToastProvider>
+              </AIProvider>
+            </ChallengeProvider>
+          </ThemeProvider>
+        );
+      }
+
+      // Render the application
+      ReactDOM.render(<App />, document.getElementById("root"));
+    </script>
+  </body>
+</html>
