@@ -35,9 +35,13 @@ const EndpointContext = createContext({
   endpoints: [],
   currentEndpointId: '',
   endpointCodes: {},
+  modifiedEndpoints: new Set(),
   getEndpointById: () => null,
   getCurrentEndpoint: () => null,
+  getEndpointCode: () => '',
+  isEndpointModified: () => false,
   updateEndpointCode: () => {},
+  resetEndpointCode: () => {},
   selectEndpoint: () => {},
   markEndpointCompleted: () => {},
   loadEndpointsFromSpec: () => {}
@@ -52,27 +56,29 @@ function EndpointProvider({ children, initialEndpoints }) {
     // Use saved endpoints if available, otherwise use initial
     const endpointsToUse = savedState.endpoints || initialEndpoints;
 
-    // Initialize with starter code for endpoints without saved code
-    const initial = {};
-    endpointsToUse.forEach((endpoint) => {
-      initial[endpoint.id] =
-        (savedState.endpointCodes && savedState.endpointCodes[endpoint.id]) ||
-        endpoint.starterCode;
-    });
+    // Only load saved codes for modified endpoints
+    const savedCodes = savedState.endpointCodes || {};
+    const savedModified = savedState.modifiedEndpoints || [];
 
     return {
       currentEndpointId: savedState.currentEndpointId || endpointsToUse[0].id,
       endpoints: endpointsToUse,
-      endpointCodes: initial
+      endpointCodes: savedCodes,
+      modifiedEndpoints: new Set(savedModified)
     };
   });
 
   // Debounced save to localStorage
   const saveToLocalStorage = useCallback(
     debounce((newState) => {
+      // Convert Set to Array for JSON serialization
+      const stateToSave = {
+        ...newState,
+        modifiedEndpoints: Array.from(newState.modifiedEndpoints)
+      };
       localStorage.setItem(
         "apiExplorer",
-        JSON.stringify(newState)
+        JSON.stringify(stateToSave)
       );
     }, 1000),
     []
@@ -88,14 +94,42 @@ function EndpointProvider({ children, initialEndpoints }) {
     ...state,
     getEndpointById: (id) => state.endpoints.find(e => e.id === id),
     getCurrentEndpoint: () => state.endpoints.find(e => e.id === state.currentEndpointId),
+    getEndpointCode: (endpointId) => {
+      // If endpoint has been modified, return saved code
+      if (state.modifiedEndpoints.has(endpointId)) {
+        return state.endpointCodes[endpointId] || '';
+      }
+      // Otherwise, return dynamic code from endpoint.starterCode
+      const endpoint = state.endpoints.find(e => e.id === endpointId);
+      return endpoint?.starterCode || '';
+    },
+    isEndpointModified: (endpointId) => state.modifiedEndpoints.has(endpointId),
     updateEndpointCode: (endpointId, code) => {
-      setState(prev => ({
-        ...prev,
-        endpointCodes: {
-          ...prev.endpointCodes,
-          [endpointId]: code
-        }
-      }));
+      setState(prev => {
+        const newModified = new Set(prev.modifiedEndpoints);
+        newModified.add(endpointId);
+        return {
+          ...prev,
+          endpointCodes: {
+            ...prev.endpointCodes,
+            [endpointId]: code
+          },
+          modifiedEndpoints: newModified
+        };
+      });
+    },
+    resetEndpointCode: (endpointId) => {
+      setState(prev => {
+        const newModified = new Set(prev.modifiedEndpoints);
+        newModified.delete(endpointId);
+        const newCodes = { ...prev.endpointCodes };
+        delete newCodes[endpointId];
+        return {
+          ...prev,
+          endpointCodes: newCodes,
+          modifiedEndpoints: newModified
+        };
+      });
     },
     selectEndpoint: (endpointId) => {
       setState(prev => ({
@@ -112,16 +146,12 @@ function EndpointProvider({ children, initialEndpoints }) {
       }));
     },
     loadEndpointsFromSpec: (endpoints, bearerToken) => {
-      // Initialize codes for new endpoints
-      const newCodes = {};
-      endpoints.forEach(endpoint => {
-        newCodes[endpoint.id] = endpoint.starterCode;
-      });
-
+      // Don't initialize codes - let them be generated dynamically
       setState({
         currentEndpointId: endpoints[0]?.id || '',
         endpoints: endpoints,
-        endpointCodes: newCodes,
+        endpointCodes: {}, // Empty - codes will be dynamic until modified
+        modifiedEndpoints: new Set(), // Reset modified tracking
         bearerToken: bearerToken || null
       });
     }

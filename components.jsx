@@ -298,12 +298,12 @@ function ToastProvider({ children }) {
 // Process TODO comments in code
 function ProcessTodoButton() {
   const { generateCompletions, isConfigured } = useAI();
-  const { currentEndpointId, endpointCodes, updateEndpointCode } = useEndpoints();
+  const { currentEndpointId, getEndpointCode, updateEndpointCode } = useEndpoints();
   const toast = useToast();
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
 
   const handleClick = () => {
-    const code = endpointCodes[currentEndpointId];
+    const code = getEndpointCode(currentEndpointId);
 
     // Check if API is configured
     if (!isConfigured) {
@@ -395,7 +395,7 @@ function Header() {
 }
 
 // Endpoint Item Component
-function EndpointItem({ endpoint, isSelected, onSelect, isExpanded, onToggleExpand }) {
+function EndpointItem({ endpoint, isSelected, onSelect, isExpanded, onToggleExpand, isModified }) {
   return (
     <div className="challenge-item">
       <div
@@ -409,7 +409,24 @@ function EndpointItem({ endpoint, isSelected, onSelect, isExpanded, onToggleExpa
           readOnly
           onClick={(e) => e.stopPropagation()}
         />
-        <div className="challenge-title">{endpoint.title}</div>
+        <div className="challenge-title">
+          {endpoint.title}
+          {isModified && (
+            <span
+              className="modified-indicator"
+              title="Code has been modified"
+              style={{
+                display: 'inline-block',
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: '#3182ce',
+                marginLeft: '8px',
+                verticalAlign: 'middle'
+              }}
+            />
+          )}
+        </div>
         <div
           className={`challenge-expand ${isExpanded ? 'open' : ''}`}
           onClick={(e) => {
@@ -429,7 +446,7 @@ function EndpointItem({ endpoint, isSelected, onSelect, isExpanded, onToggleExpa
 
 // Sidebar Component
 function Sidebar() {
-  const { endpoints, currentEndpointId, selectEndpoint } = useEndpoints();
+  const { endpoints, currentEndpointId, selectEndpoint, isEndpointModified } = useEndpoints();
   const [expandedId, setExpandedId] = useState(currentEndpointId);
 
   // Automatically expand the selected endpoint
@@ -455,6 +472,7 @@ function Sidebar() {
             onSelect={selectEndpoint}
             isExpanded={expandedId === endpoint.id}
             onToggleExpand={handleToggleExpand}
+            isModified={isEndpointModified(endpoint.id)}
           />
         ))}
       </div>
@@ -464,8 +482,8 @@ function Sidebar() {
 
 // Preview Component
 function Preview() {
-  const { currentEndpointId, endpointCodes } = useEndpoints();
-  const code = endpointCodes[currentEndpointId] || '';
+  const { currentEndpointId, getEndpointCode } = useEndpoints();
+  const code = getEndpointCode(currentEndpointId);
   const iframeRef = useRef(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [lastRenderedCode, setLastRenderedCode] = useState(code);
@@ -775,8 +793,9 @@ function CodeEditor({ code, onChange }) {
 function IDEPage() {
   const {
     currentEndpointId,
-    endpointCodes,
+    getEndpointCode,
     updateEndpointCode,
+    resetEndpointCode,
     markEndpointCompleted,
     endpoints
   } = useEndpoints();
@@ -785,7 +804,7 @@ function IDEPage() {
   const toast = useToast();
 
   // Get current code based on selected endpoint
-  const currentCode = endpointCodes[currentEndpointId];
+  const currentCode = getEndpointCode(currentEndpointId);
 
   const handleCodeChange = useCallback(newCode => {
     updateEndpointCode(currentEndpointId, newCode);
@@ -846,9 +865,8 @@ function IDEPage() {
           <button
             className="fab-button fab-reset"
             onClick={() => {
-              const endpoint = endpoints.find(e => e.id === currentEndpointId);
-              if (endpoint && window.confirm("Reset code to default state? This cannot be undone.")) {
-                updateEndpointCode(currentEndpointId, endpoint.starterCode);
+              if (window.confirm("Reset code to default state? This cannot be undone.")) {
+                resetEndpointCode(currentEndpointId);
                 toast.addToast("Code reset to default state", "success");
               }
             }}
