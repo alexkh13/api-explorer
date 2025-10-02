@@ -25,21 +25,21 @@ function waitForDependencies() {
 // Initialize app after dependencies are ready
 waitForDependencies().then(() => {
   // Get everything from global scope
-  const { ThemeProvider, ChallengeProvider, AIProvider } = window.AppContexts;
+  const { ThemeProvider, EndpointProvider, AIProvider } = window.AppContexts;
   const { ToastProvider, IDEPage } = window.AppComponents;
-  const { initialChallengesData } = window.AppConstants;
+  const { initialEndpointsData } = window.AppConstants;
 
   // Root App Component wrapping all providers
   function App() {
     return (
       <ThemeProvider>
-        <ChallengeProvider initialChallenges={initialChallengesData}>
+        <EndpointProvider initialEndpoints={initialEndpointsData}>
           <AIProvider>
             <ToastProvider>
               <IDEPage />
             </ToastProvider>
           </AIProvider>
-        </ChallengeProvider>
+        </EndpointProvider>
       </ThemeProvider>
     );
   }

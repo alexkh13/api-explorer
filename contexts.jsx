@@ -1,7 +1,7 @@
 // Context providers - requires Babel transpilation
 import React, { useState, useCallback, useEffect, useMemo, createContext, useContext } from "react";
 const { debounce } = window.AppUtils;
-const { initialChallengesData, AI_PROVIDERS } = window.AppConstants;
+const { initialEndpointsData, AI_PROVIDERS } = window.AppConstants;
 
 // Theme Context
 const ThemeContext = createContext({
@@ -30,36 +30,37 @@ function ThemeProvider({ children }) {
 
 const useTheme = () => useContext(ThemeContext);
 
-// Challenge Context
-const ChallengeContext = createContext({
-  challenges: [],
-  currentChallengeId: '',
-  challengeCodes: {},
-  getChallengeById: () => null,
-  getCurrentChallenge: () => null,
-  updateChallengeCode: () => {},
-  selectChallenge: () => {},
-  markChallengeCompleted: () => {}
+// Endpoint Context
+const EndpointContext = createContext({
+  endpoints: [],
+  currentEndpointId: '',
+  endpointCodes: {},
+  getEndpointById: () => null,
+  getCurrentEndpoint: () => null,
+  updateEndpointCode: () => {},
+  selectEndpoint: () => {},
+  markEndpointCompleted: () => {},
+  loadEndpointsFromSpec: () => {}
 });
 
-function ChallengeProvider({ children, initialChallenges }) {
+function EndpointProvider({ children, initialEndpoints }) {
   const [state, setState] = useState(() => {
     const savedState = JSON.parse(
-      localStorage.getItem("codeEditor") || "{}"
+      localStorage.getItem("apiExplorer") || "{}"
     );
 
-    // Initialize with starter code for challenges without saved code
+    // Initialize with starter code for endpoints without saved code
     const initial = {};
-    initialChallenges.forEach((challenge) => {
-      initial[challenge.id] =
-        (savedState.challengeCodes && savedState.challengeCodes[challenge.id]) ||
-        challenge.starterCode;
+    initialEndpoints.forEach((endpoint) => {
+      initial[endpoint.id] =
+        (savedState.endpointCodes && savedState.endpointCodes[endpoint.id]) ||
+        endpoint.starterCode;
     });
 
     return {
-      currentChallengeId: savedState.currentChallengeId || initialChallenges[0].id,
-      challenges: savedState.challenges || initialChallenges,
-      challengeCodes: initial
+      currentEndpointId: savedState.currentEndpointId || initialEndpoints[0].id,
+      endpoints: savedState.endpoints || initialEndpoints,
+      endpointCodes: initial
     };
   });
 
@@ -67,7 +68,7 @@ function ChallengeProvider({ children, initialChallenges }) {
   const saveToLocalStorage = useCallback(
     debounce((newState) => {
       localStorage.setItem(
-        "codeEditor",
+        "apiExplorer",
         JSON.stringify(newState)
       );
     }, 1000),
@@ -82,41 +83,55 @@ function ChallengeProvider({ children, initialChallenges }) {
   // Context value with state and methods
   const value = useMemo(() => ({
     ...state,
-    getChallengeById: (id) => state.challenges.find(c => c.id === id),
-    getCurrentChallenge: () => state.challenges.find(c => c.id === state.currentChallengeId),
-    updateChallengeCode: (challengeId, code) => {
+    getEndpointById: (id) => state.endpoints.find(e => e.id === id),
+    getCurrentEndpoint: () => state.endpoints.find(e => e.id === state.currentEndpointId),
+    updateEndpointCode: (endpointId, code) => {
       setState(prev => ({
         ...prev,
-        challengeCodes: {
-          ...prev.challengeCodes,
-          [challengeId]: code
+        endpointCodes: {
+          ...prev.endpointCodes,
+          [endpointId]: code
         }
       }));
     },
-    selectChallenge: (challengeId) => {
+    selectEndpoint: (endpointId) => {
       setState(prev => ({
         ...prev,
-        currentChallengeId: challengeId
+        currentEndpointId: endpointId
       }));
     },
-    markChallengeCompleted: (challengeId) => {
+    markEndpointCompleted: (endpointId) => {
       setState(prev => ({
         ...prev,
-        challenges: prev.challenges.map(c =>
-          c.id === challengeId ? { ...c, completed: true } : c
+        endpoints: prev.endpoints.map(e =>
+          e.id === endpointId ? { ...e, completed: true } : e
         )
       }));
+    },
+    loadEndpointsFromSpec: (endpoints, bearerToken) => {
+      // Initialize codes for new endpoints
+      const newCodes = {};
+      endpoints.forEach(endpoint => {
+        newCodes[endpoint.id] = endpoint.starterCode;
+      });
+
+      setState({
+        currentEndpointId: endpoints[0]?.id || '',
+        endpoints: endpoints,
+        endpointCodes: newCodes,
+        bearerToken: bearerToken || null
+      });
     }
   }), [state]);
 
   return (
-    <ChallengeContext.Provider value={value}>
+    <EndpointContext.Provider value={value}>
       {children}
-    </ChallengeContext.Provider>
+    </EndpointContext.Provider>
   );
 }
 
-const useChallenges = () => useContext(ChallengeContext);
+const useEndpoints = () => useContext(EndpointContext);
 
 // AI Provider Context
 const AIContext = createContext({
@@ -143,7 +158,7 @@ function AIProvider({ children }) {
     };
   });
 
-  const { getCurrentChallenge } = useChallenges();
+  const { getCurrentEndpoint } = useEndpoints();
 
   const setApiConfig = useCallback((newConfig) => {
     // Store in localStorage
@@ -176,15 +191,15 @@ function AIProvider({ children }) {
     try {
       const provider = AI_PROVIDERS[config.provider];
 
-      // Get context about the current challenge
-      const currentChallenge = getCurrentChallenge();
-      const challengeContext = currentChallenge
-        ? `Current challenge: ${currentChallenge.title} - ${currentChallenge.description}`
+      // Get context about the current endpoint
+      const currentEndpoint = getCurrentEndpoint();
+      const endpointContext = currentEndpoint
+        ? `Current endpoint: ${currentEndpoint.title} - ${currentEndpoint.description}`
         : "";
 
-      // Enhance the prompt with context about the current challenge
-      const enhancedPrompt = challengeContext
-        ? `${challengeContext}\n\n${prompt}`
+      // Enhance the prompt with context about the current endpoint
+      const enhancedPrompt = endpointContext
+        ? `${endpointContext}\n\n${prompt}`
         : prompt;
 
       const headers = {
@@ -282,7 +297,7 @@ function AIProvider({ children }) {
         isProcessing: false
       }));
     }
-  }, [config.apiKey, config.model, config.provider, getCurrentChallenge]);
+  }, [config.apiKey, config.model, config.provider, getCurrentEndpoint]);
 
   const value = useMemo(() => ({
     ...config,
@@ -314,9 +329,9 @@ window.AppContexts = {
   ThemeContext,
   ThemeProvider,
   useTheme,
-  ChallengeContext,
-  ChallengeProvider,
-  useChallenges,
+  EndpointContext,
+  EndpointProvider,
+  useEndpoints,
   AIContext,
   AIProvider,
   useAI,

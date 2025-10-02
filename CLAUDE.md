@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a browser-based React coding challenge application that runs entirely in the browser with **no build step**. It uses Babel Standalone for JSX transpilation at runtime.
+This is a browser-based **API Explorer** application that runs entirely in the browser with **no build step**. It uses Babel Standalone for JSX transpilation at runtime. The app allows users to explore API endpoints, load OpenAPI v3 specifications, and generate interactive React components for testing API calls.
 
 ## Architecture
 
@@ -38,10 +38,10 @@ This application uses a unique architecture designed to work without any build t
 ```
 index.html          - Main HTML, loads all scripts in correct order
 styles.css          - All CSS styles with CSS variables for theming
-constants.js        - Plain JS: challenge data, AI_PROVIDERS config, runTests utility
+constants.js        - Plain JS: endpoint data, OpenAPI parser, AI_PROVIDERS config, runTests utility
 utils.js            - Plain JS: utility functions (debounce)
 icons.jsx           - JSX module: SVG icon components, attaches to window.Icons
-contexts.jsx        - JSX module: React contexts (Theme, Challenge, AI, Toast), attaches to window.AppContexts
+contexts.jsx        - JSX module: React contexts (Theme, Endpoint, AI, Toast), attaches to window.AppContexts
 components.jsx      - JSX module: All UI components, attaches to window.AppComponents
 app.jsx             - JSX module: Main App component, waits for dependencies, renders to DOM
 ```
@@ -50,11 +50,11 @@ app.jsx             - JSX module: Main App component, waits for dependencies, re
 
 1. **State Management**: React Context API with multiple providers:
    - `ThemeProvider` - Dark/light mode based on system preference
-   - `ChallengeProvider` - Challenge state, code storage, localStorage persistence
+   - `EndpointProvider` - Endpoint state, code storage, localStorage persistence
    - `AIProvider` - AI configuration, API calls for code generation
    - `ToastProvider` - Toast notifications
 
-2. **Code Persistence**: All challenge code and state saved to `localStorage` with debounced writes
+2. **Code Persistence**: All endpoint code and state saved to `localStorage` with debounced writes (key: `apiExplorer`)
 
 3. **Live Preview**: Uses `<iframe>` with `srcdoc` to sandbox and execute user code safely
 
@@ -64,6 +64,18 @@ The app supports multiple AI providers (OpenAI, Anthropic) for code generation:
 - Configuration stored in `constants.js` under `AI_PROVIDERS`
 - Each provider has custom request format, headers, and response extraction
 - Browser compatibility validation prevents Node.js-specific code
+
+### OpenAPI Spec Loading
+
+The app can load OpenAPI v3 specifications from remote URLs:
+- **Parser**: `window.parseOpenAPISpec(spec, bearerToken)` in `constants.js`
+- **Code Generation**: `generateStarterCode(endpoint, baseUrl, bearerToken)` creates React components for each endpoint
+- **Bearer Token Support**: Optional authentication token included as `Authorization: Bearer [token]` header in generated code
+- **Automatic UI Generation**:
+  - GET requests: Interactive UI with parameter inputs and live data display
+  - POST/PUT/PATCH: Forms based on request body schema with submit buttons
+  - DELETE: Simple button to trigger the request
+- All generated code uses React hooks (useState, useEffect) and Promise chains (no async functions at component level)
 
 ## Development
 
@@ -89,6 +101,8 @@ Then open `http://localhost:8000`
 - Always include `import React from "react"` at the top
 - Export components/utilities to `window` object for cross-file access
 - Never try to import JSX from another JSX file - use `window` instead
+- **IMPORTANT**: Never use `async function` for React components - they return Promises which React cannot render
+- Use regular `function` with React hooks (useState, useEffect) and Promise chains (.then/.catch)
 
 **When adding new JSX files:**
 - Add to `index.html` as `<script type="text/babel" data-type="module" src="./yourfile.jsx"></script>`
@@ -97,7 +111,7 @@ Then open `http://localhost:8000`
 
 **When modifying contexts:**
 - All contexts are in `contexts.jsx`
-- Custom hooks (useTheme, useChallenges, useAI, useToast) exported via `window.AppContexts`
+- Custom hooks (useTheme, useEndpoints, useAI, useToast) exported via `window.AppContexts`
 
 **When adding new components:**
 - Add to `components.jsx`
@@ -111,6 +125,7 @@ This is a **pure browser environment**:
 - No build tools, no bundlers, no transpilation except Babel Standalone
 - No server-side code or file system operations
 - All imports must resolve via import maps or be available on window
+- **No async functions for React components** - use regular functions with hooks and Promise chains
 
 ### CodeMirror Integration
 
@@ -119,10 +134,36 @@ CodeMirror 5 is used for the code editor:
 - Initialized in `CodeEditor` component with JSX mode
 - Theme switches between default/dracula based on system dark mode
 
-## Testing Challenges
+## Endpoint Management
+
+### Default Endpoints
+
+Three sample endpoints are provided in `constants.js` under `initialEndpointsData`:
+1. GET /users - Fetch list of users from JSONPlaceholder API
+2. GET /posts/:id - Fetch specific post with parameter input
+3. POST /posts - Create new post with form inputs
+
+### Loading OpenAPI Specs
+
+Users can load endpoints from an OpenAPI v3 JSON specification:
+1. Click the "Load Spec" button (FAB with code icon)
+2. Enter the URL of the OpenAPI spec
+3. Optionally provide a bearer token for authentication
+4. The app parses the spec and generates interactive React components for each endpoint
+
+### Code Generation
+
+The `generateStarterCode()` function in `constants.js` automatically creates:
+- State management with React hooks
+- Fetch calls with proper headers (including bearer token if provided)
+- Loading states and error handling
+- Input forms for parameters and request bodies
+- Response display with JSON formatting
+
+### Endpoint Validation
 
 The test runner is in `constants.js` as `window.runTests()`:
-- Extracts function name from starter code
-- Executes user code with `new Function()`
-- Runs test cases and compares output
-- Returns success/failure with details
+- Validates that the code contains a valid function
+- Uses Babel to parse and validate JSX syntax
+- Returns success/failure with validation messages
+- Does not execute the code (validation only)

@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import ReactDOM from "react-dom";
 const { Icons } = window;
-const { useTheme, useChallenges, useAI, useToast } = window.AppContexts;
+const { useTheme, useEndpoints, useAI, useToast } = window.AppContexts;
 
 // Generic Dialog Component
 function Dialog({ isOpen, onClose, children }) {
@@ -136,6 +136,111 @@ function APIKeyDialog({ isOpen, onClose }) {
   );
 }
 
+// Load OpenAPI Spec Dialog Component
+function LoadSpecDialog({ isOpen, onClose }) {
+  const [url, setUrl] = useState('');
+  const [bearerToken, setBearerToken] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { loadEndpointsFromSpec } = useEndpoints();
+  const toast = useToast();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!url.trim()) {
+      setError('URL is required');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch spec: ${response.statusText}`);
+      }
+
+      const spec = await response.json();
+      const endpoints = window.parseOpenAPISpec(spec, bearerToken.trim() || null);
+
+      loadEndpointsFromSpec(endpoints, bearerToken.trim() || null);
+      toast.addToast(`Loaded ${endpoints.length} endpoints from spec`, 'success');
+      onClose();
+      setUrl('');
+      setBearerToken('');
+    } catch (err) {
+      console.error('Error loading spec:', err);
+      setError(err.message || 'Failed to load OpenAPI spec');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog isOpen={isOpen} onClose={onClose}>
+      <div className="dialog-header">
+        <h2 className="dialog-title">Load OpenAPI Spec</h2>
+        <p className="dialog-description">
+          Enter the URL of an OpenAPI v3 JSON specification to load all endpoints.
+          Optionally provide a bearer token to include in API requests.
+        </p>
+      </div>
+
+      <form className="dialog-form" onSubmit={handleSubmit}>
+        <div className="dialog-form-group">
+          <label className="dialog-label">Spec URL</label>
+          <input
+            type="url"
+            className="dialog-input"
+            value={url}
+            onChange={e => {
+              setUrl(e.target.value);
+              setError('');
+            }}
+            placeholder="https://api.example.com/openapi.json"
+            disabled={loading}
+          />
+          {error && <div style={{ color: '#e53e3e', fontSize: 'var(--font-size-sm)', marginTop: '4px' }}>{error}</div>}
+        </div>
+
+        <div className="dialog-form-group">
+          <label className="dialog-label">Bearer Token (optional)</label>
+          <input
+            type="password"
+            className="dialog-input"
+            value={bearerToken}
+            onChange={e => setBearerToken(e.target.value)}
+            placeholder="Enter bearer token for API authentication"
+            disabled={loading}
+          />
+          <div style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)', marginTop: '4px' }}>
+            Will be included as "Authorization: Bearer [token]" in generated code
+          </div>
+        </div>
+
+        <div className="dialog-footer">
+          <button
+            type="button"
+            className="secondary"
+            onClick={onClose}
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="primary"
+            disabled={loading}
+          >
+            {loading ? 'Loading...' : 'Load Spec'}
+          </button>
+        </div>
+      </form>
+    </Dialog>
+  );
+}
+
 // Toast notification component
 function Toast({ message, type, onClose }) {
   useEffect(() => {
@@ -193,12 +298,12 @@ function ToastProvider({ children }) {
 // Process TODO comments in code
 function ProcessTodoButton() {
   const { generateCompletions, isConfigured } = useAI();
-  const { currentChallengeId, challengeCodes, updateChallengeCode } = useChallenges();
+  const { currentEndpointId, endpointCodes, updateEndpointCode } = useEndpoints();
   const toast = useToast();
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
 
   const handleClick = () => {
-    const code = challengeCodes[currentChallengeId];
+    const code = endpointCodes[currentEndpointId];
 
     // Check if API is configured
     if (!isConfigured) {
@@ -229,7 +334,7 @@ function ProcessTodoButton() {
 
     // Use the AI to generate completions based on the TODOs
     generateCompletions(prompt, code, (newCode) => {
-      updateChallengeCode(currentChallengeId, newCode);
+      updateEndpointCode(currentEndpointId, newCode);
       toast.addToast('TODOs implemented successfully!', 'success');
     });
   };
@@ -252,13 +357,35 @@ function ProcessTodoButton() {
   );
 }
 
+// Load Spec Button
+function LoadSpecButton() {
+  const [showDialog, setShowDialog] = useState(false);
+
+  return (
+    <>
+      <button
+        className="fab-button"
+        onClick={() => setShowDialog(true)}
+        title="Load OpenAPI Spec"
+      >
+        <Icons.Code />
+      </button>
+
+      <LoadSpecDialog
+        isOpen={showDialog}
+        onClose={() => setShowDialog(false)}
+      />
+    </>
+  );
+}
+
 // Header Component
 function Header() {
   return (
     <div className="header">
       <div className="header-logo">
         <Icons.Code />
-        React<span>Coder</span>
+        API<span>Explorer</span>
       </div>
       <div className="header-actions">
         {/* Header actions removed and moved to FABs */}
@@ -267,34 +394,34 @@ function Header() {
   );
 }
 
-// Challenge Item Component
-function ChallengeItem({ challenge, isSelected, onSelect, isExpanded, onToggleExpand }) {
+// Endpoint Item Component
+function EndpointItem({ endpoint, isSelected, onSelect, isExpanded, onToggleExpand }) {
   return (
     <div className="challenge-item">
       <div
         className={`challenge-header ${isSelected ? 'selected' : ''}`}
-        onClick={() => onSelect(challenge.id)}
+        onClick={() => onSelect(endpoint.id)}
       >
         <input
           type="checkbox"
           className="challenge-checkbox"
-          checked={challenge.completed}
+          checked={endpoint.completed}
           readOnly
           onClick={(e) => e.stopPropagation()}
         />
-        <div className="challenge-title">{challenge.title}</div>
+        <div className="challenge-title">{endpoint.title}</div>
         <div
           className={`challenge-expand ${isExpanded ? 'open' : ''}`}
           onClick={(e) => {
             e.stopPropagation();
-            onToggleExpand(challenge.id);
+            onToggleExpand(endpoint.id);
           }}
         >
           <Icons.ChevronRight />
         </div>
       </div>
       <div className={`challenge-content ${isExpanded ? 'open' : ''}`}>
-        <div className="challenge-description">{challenge.description}</div>
+        <div className="challenge-description">{endpoint.description}</div>
       </div>
     </div>
   );
@@ -302,13 +429,13 @@ function ChallengeItem({ challenge, isSelected, onSelect, isExpanded, onToggleEx
 
 // Sidebar Component
 function Sidebar() {
-  const { challenges, currentChallengeId, selectChallenge } = useChallenges();
-  const [expandedId, setExpandedId] = useState(currentChallengeId);
+  const { endpoints, currentEndpointId, selectEndpoint } = useEndpoints();
+  const [expandedId, setExpandedId] = useState(currentEndpointId);
 
-  // Automatically expand the selected challenge
+  // Automatically expand the selected endpoint
   useEffect(() => {
-    setExpandedId(currentChallengeId);
-  }, [currentChallengeId]);
+    setExpandedId(currentEndpointId);
+  }, [currentEndpointId]);
 
   const handleToggleExpand = (id) => {
     setExpandedId(expandedId === id ? null : id);
@@ -317,16 +444,16 @@ function Sidebar() {
   return (
     <div className="sidebar">
       <div className="sidebar-header">
-        <span>Challenges</span>
+        <span>Endpoints</span>
       </div>
       <div className="challenges-list">
-        {challenges.map((challenge) => (
-          <ChallengeItem
-            key={challenge.id}
-            challenge={challenge}
-            isSelected={challenge.id === currentChallengeId}
-            onSelect={selectChallenge}
-            isExpanded={expandedId === challenge.id}
+        {endpoints.map((endpoint) => (
+          <EndpointItem
+            key={endpoint.id}
+            endpoint={endpoint}
+            isSelected={endpoint.id === currentEndpointId}
+            onSelect={selectEndpoint}
+            isExpanded={expandedId === endpoint.id}
             onToggleExpand={handleToggleExpand}
           />
         ))}
@@ -337,8 +464,8 @@ function Sidebar() {
 
 // Preview Component
 function Preview() {
-  const { currentChallengeId, challengeCodes } = useChallenges();
-  const code = challengeCodes[currentChallengeId] || '';
+  const { currentEndpointId, endpointCodes } = useEndpoints();
+  const code = endpointCodes[currentEndpointId] || '';
   const iframeRef = useRef(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [lastRenderedCode, setLastRenderedCode] = useState(code);
@@ -367,7 +494,7 @@ function Preview() {
     }
   }, [hasChanges]);
 
-  // Reset lastRenderedCode when challenge changes
+  // Reset lastRenderedCode when endpoint changes
   useEffect(() => {
     setLastRenderedCode("");
     setHasChanges(true);
@@ -376,7 +503,7 @@ function Preview() {
     if (isDrawerOpen.current) {
       renderPreview();
     }
-  }, [currentChallengeId]);
+  }, [currentEndpointId]);
 
   useEffect(() => {
     if (code !== lastRenderedCode) {
@@ -530,7 +657,7 @@ function Preview() {
               }
             `
                 : `
-              // For non-React challenges, show the function result
+              // For non-React endpoints, show the function result
               const match = ${JSON.stringify(
                 code
               )}.match(/function\\s+(\\w+)/);
@@ -632,31 +759,31 @@ function CodeEditor({ code, onChange }) {
 // Main IDE Component
 function IDEPage() {
   const {
-    currentChallengeId,
-    challengeCodes,
-    updateChallengeCode,
-    markChallengeCompleted,
-    challenges
-  } = useChallenges();
+    currentEndpointId,
+    endpointCodes,
+    updateEndpointCode,
+    markEndpointCompleted,
+    endpoints
+  } = useEndpoints();
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const { isConfigured } = useAI();
   const toast = useToast();
 
-  // Get current code based on selected challenge
-  const currentCode = challengeCodes[currentChallengeId];
+  // Get current code based on selected endpoint
+  const currentCode = endpointCodes[currentEndpointId];
 
   const handleCodeChange = useCallback(newCode => {
-    updateChallengeCode(currentChallengeId, newCode);
-  }, [currentChallengeId, updateChallengeCode]);
+    updateEndpointCode(currentEndpointId, newCode);
+  }, [currentEndpointId, updateEndpointCode]);
 
-  const handleSubmit = async () => {
-    const result = await window.runTests(currentChallengeId, currentCode);
+  const handleSubmit = () => {
+    const result = window.runTests(currentEndpointId, currentCode);
 
     if (result.success) {
-      markChallengeCompleted(currentChallengeId);
-      alert("All tests passed! Challenge completed.");
+      markEndpointCompleted(currentEndpointId);
+      toast.addToast(result.message || 'Code validated successfully!', 'success');
     } else {
-      alert("Some tests failed. Check your code and try again.");
+      toast.addToast(result.error || 'Code validation failed', 'error');
     }
   };
 
@@ -692,19 +819,21 @@ function IDEPage() {
           <button
             className="fab-button fab-run"
             onClick={handleSubmit}
-            title="Run Tests"
+            title="Validate Code"
           >
             <Icons.Run />
           </button>
+
+          <LoadSpecButton />
 
           <ProcessTodoButton />
 
           <button
             className="fab-button fab-reset"
             onClick={() => {
-              const challenge = challenges.find(c => c.id === currentChallengeId);
-              if (challenge && window.confirm("Reset code to default state? This cannot be undone.")) {
-                updateChallengeCode(currentChallengeId, challenge.starterCode);
+              const endpoint = endpoints.find(e => e.id === currentEndpointId);
+              if (endpoint && window.confirm("Reset code to default state? This cannot be undone.")) {
+                updateEndpointCode(currentEndpointId, endpoint.starterCode);
                 toast.addToast("Code reset to default state", "success");
               }
             }}
@@ -728,11 +857,13 @@ function IDEPage() {
 window.AppComponents = {
   Dialog,
   APIKeyDialog,
+  LoadSpecDialog,
   Toast,
   ToastProvider,
   ProcessTodoButton,
+  LoadSpecButton,
   Header,
-  ChallengeItem,
+  EndpointItem,
   Sidebar,
   Preview,
   CodeEditor,
