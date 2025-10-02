@@ -710,39 +710,54 @@ function CodeEditor({ code, onChange }) {
 
   // Initialize CodeMirror
   useEffect(() => {
-    if (!editorRef.current) return;
+    if (!editorRef.current || typeof window.CodeMirror === 'undefined') return;
 
-    cmRef.current = CodeMirror(editorRef.current, {
-      value: code,
-      mode: "jsx",
-      lineNumbers: true,
-      theme: isDarkMode ? "dracula" : "default",
-      autoCloseBrackets: true,
-      matchBrackets: true,
-      tabSize: 2,
-      indentWithTabs: false,
-      lineWrapping: true
-    });
+    // Clear any existing content
+    editorRef.current.innerHTML = '';
 
-    cmRef.current.on("change", (instance) => {
-      if (!isInternalChange.current) {
-        callbackRef.current.onChange(instance.getValue());
-      }
-    });
+    try {
+      cmRef.current = window.CodeMirror(editorRef.current, {
+        value: code || '',
+        mode: "jsx",
+        lineNumbers: true,
+        theme: isDarkMode ? "dracula" : "default",
+        autoCloseBrackets: true,
+        matchBrackets: true,
+        tabSize: 2,
+        indentWithTabs: false,
+        lineWrapping: true
+      });
+
+      cmRef.current.on("change", (instance) => {
+        if (!isInternalChange.current) {
+          callbackRef.current.onChange(instance.getValue());
+        }
+      });
+    } catch (e) {
+      console.error('Error initializing CodeMirror:', e);
+    }
 
     return () => {
-      if (cmRef.current) {
-        cmRef.current.toTextArea();
+      if (cmRef.current && typeof cmRef.current.toTextArea === 'function') {
+        try {
+          cmRef.current.toTextArea();
+        } catch (e) {
+          console.warn('Error cleaning up CodeMirror:', e);
+        }
       }
+      cmRef.current = null;
     };
   }, []);
 
   // Update code when prop changes
   useEffect(() => {
-    if (cmRef.current && cmRef.current.getValue() !== code) {
-      isInternalChange.current = true;
-      cmRef.current.setValue(code);
-      isInternalChange.current = false;
+    if (cmRef.current && typeof cmRef.current.getValue === 'function') {
+      const currentValue = cmRef.current.getValue();
+      if (currentValue !== code) {
+        isInternalChange.current = true;
+        cmRef.current.setValue(code || '');
+        isInternalChange.current = false;
+      }
     }
   }, [code]);
 
