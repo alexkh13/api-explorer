@@ -5,7 +5,7 @@ window.AppConstants = {
   initialEndpointsData: [
     {
       id: "1",
-      title: "GET /users",
+      title: "Users List",
       description: "Fetch a list of all users",
       method: "GET",
       path: "/users",
@@ -38,7 +38,7 @@ window.AppConstants = {
     },
     {
       id: "2",
-      title: "GET /posts/:id",
+      title: "Post Details",
       description: "Fetch a specific post by ID",
       method: "GET",
       path: "/posts/:id",
@@ -78,7 +78,7 @@ window.AppConstants = {
     },
     {
       id: "3",
-      title: "POST /posts",
+      title: "Create Post",
       description: "Create a new post",
       method: "POST",
       path: "/posts",

@@ -9,8 +9,8 @@ function Dialog({ isOpen, onClose, children }) {
   if (!isOpen) return null;
 
   return (
-    <div className="dialog-overlay" onClick={onClose}>
-      <div className="dialog-content" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000]" onClick={onClose}>
+      <div className="bg-[var(--bg-primary)] rounded-lg w-[90%] max-w-lg p-6 shadow-[var(--shadow-lg)]" onClick={e => e.stopPropagation()}>
         {children}
       </div>
     </div>
@@ -62,39 +62,43 @@ function APIKeyDialog({ isOpen, onClose }) {
 
   return (
     <Dialog isOpen={isOpen} onClose={onClose}>
-      <div className="dialog-header">
-        <h2 className="dialog-title">Configure AI Assistant</h2>
-        <p className="dialog-description">
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold mb-2 text-[var(--text-primary)]">Configure AI Assistant</h2>
+        <p className="text-[var(--text-secondary)] text-sm leading-relaxed">
           To enable AI-powered code edits, please provide an API key for one of the supported services.
           Your key will be stored securely in your browser's local storage.
         </p>
       </div>
 
-      <form className="dialog-form" onSubmit={handleSubmit}>
-        <div className="dialog-form-group">
-          <label className="dialog-label">Select AI Provider</label>
+      <form className="mt-6" onSubmit={handleSubmit}>
+        <div className="mb-4">
+          <label className="block mb-2 font-medium text-sm text-[var(--text-primary)]">Select AI Provider</label>
           {Object.keys(providers).map(key => (
             <div
               key={key}
-              className={`provider-option ${formState.provider === key ? 'selected' : ''}`}
+              className={`flex items-center gap-3 p-3 border rounded-md mb-3 cursor-pointer transition-all
+                ${formState.provider === key
+                  ? 'border-[var(--accent-primary)] bg-[var(--bg-muted)]'
+                  : 'border-[var(--border-default)] hover:border-[var(--accent-primary)] hover:bg-[var(--bg-accent)]'
+                }`}
               onClick={() => handleProviderChange(key)}
             >
               <input
                 type="radio"
-                className="provider-option-input"
+                className="w-[18px] h-[18px]"
                 checked={formState.provider === key}
                 onChange={() => handleProviderChange(key)}
               />
-              <span className="provider-option-label">{providers[key].name}</span>
+              <span className="font-medium text-[var(--text-primary)]">{providers[key].name}</span>
             </div>
           ))}
         </div>
 
-        <div className="dialog-form-group">
-          <label className="dialog-label">API Key</label>
+        <div className="mb-4">
+          <label className="block mb-2 font-medium text-sm text-[var(--text-primary)]">API Key</label>
           <input
             type="password"
-            className="dialog-input"
+            className="w-full p-3 border border-[var(--border-default)] rounded-md font-[var(--font-sans)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-[var(--accent-primary)]/20"
             value={formState.apiKey}
             onChange={e => {
               setFormState(prev => ({ ...prev, apiKey: e.target.value }));
@@ -102,13 +106,13 @@ function APIKeyDialog({ isOpen, onClose }) {
             }}
             placeholder={`Enter your ${providers[formState.provider].name} API key`}
           />
-          {error && <div style={{ color: '#e53e3e', fontSize: 'var(--font-size-sm)', marginTop: '4px' }}>{error}</div>}
+          {error && <div className="text-red-500 text-sm mt-1">{error}</div>}
         </div>
 
-        <div className="dialog-form-group">
-          <label className="dialog-label">Model</label>
+        <div className="mb-6">
+          <label className="block mb-2 font-medium text-sm text-[var(--text-primary)]">Model</label>
           <select
-            className="dialog-input"
+            className="w-full p-3 border border-[var(--border-default)] rounded-md font-[var(--font-sans)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-[var(--accent-primary)]/20"
             value={formState.model}
             onChange={e => setFormState(prev => ({ ...prev, model: e.target.value }))}
           >
@@ -116,17 +120,17 @@ function APIKeyDialog({ isOpen, onClose }) {
           </select>
         </div>
 
-        <div className="dialog-footer">
+        <div className="flex justify-end gap-3">
           <button
             type="button"
-            className="secondary"
+            className="px-4 py-2 bg-[var(--bg-muted)] text-[var(--text-primary)] border-none rounded-md cursor-pointer font-medium text-sm transition-all hover:bg-[var(--bg-secondary)] shadow-sm"
             onClick={onClose}
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="primary"
+            className="px-4 py-2 bg-[var(--accent-primary)] text-white border-none rounded-md cursor-pointer font-medium text-sm transition-all hover:bg-[var(--accent-primary-hover)] shadow-sm"
           >
             Save
           </button>
@@ -179,20 +183,20 @@ function LoadSpecDialog({ isOpen, onClose }) {
 
   return (
     <Dialog isOpen={isOpen} onClose={onClose}>
-      <div className="dialog-header">
-        <h2 className="dialog-title">Load OpenAPI Spec</h2>
-        <p className="dialog-description">
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold mb-2 text-[var(--text-primary)]">Load OpenAPI Spec</h2>
+        <p className="text-[var(--text-secondary)] text-sm leading-relaxed">
           Enter the URL of an OpenAPI v3 JSON specification to load all endpoints.
           Optionally provide a bearer token to include in API requests.
         </p>
       </div>
 
-      <form className="dialog-form" onSubmit={handleSubmit}>
-        <div className="dialog-form-group">
-          <label className="dialog-label">Spec URL</label>
+      <form className="mt-6" onSubmit={handleSubmit}>
+        <div className="mb-4">
+          <label className="block mb-2 font-medium text-sm text-[var(--text-primary)]">Spec URL</label>
           <input
             type="url"
-            className="dialog-input"
+            className="w-full p-3 border border-[var(--border-default)] rounded-md font-[var(--font-sans)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-[var(--accent-primary)]/20"
             value={url}
             onChange={e => {
               setUrl(e.target.value);
@@ -201,28 +205,28 @@ function LoadSpecDialog({ isOpen, onClose }) {
             placeholder="https://api.example.com/openapi.json"
             disabled={loading}
           />
-          {error && <div style={{ color: '#e53e3e', fontSize: 'var(--font-size-sm)', marginTop: '4px' }}>{error}</div>}
+          {error && <div className="text-red-500 text-sm mt-1">{error}</div>}
         </div>
 
-        <div className="dialog-form-group">
-          <label className="dialog-label">Bearer Token (optional)</label>
+        <div className="mb-6">
+          <label className="block mb-2 font-medium text-sm text-[var(--text-primary)]">Bearer Token (optional)</label>
           <input
             type="password"
-            className="dialog-input"
+            className="w-full p-3 border border-[var(--border-default)] rounded-md font-[var(--font-sans)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-[var(--accent-primary)]/20"
             value={bearerToken}
             onChange={e => setBearerToken(e.target.value)}
             placeholder="Enter bearer token for API authentication"
             disabled={loading}
           />
-          <div style={{ color: 'var(--text-secondary)', fontSize: 'var(--font-size-sm)', marginTop: '4px' }}>
+          <div className="text-[var(--text-secondary)] text-xs mt-1">
             Will be included as "Authorization: Bearer [token]" in generated code
           </div>
         </div>
 
-        <div className="dialog-footer">
+        <div className="flex justify-end gap-3">
           <button
             type="button"
-            className="secondary"
+            className="px-4 py-2 bg-[var(--bg-muted)] text-[var(--text-primary)] border-none rounded-md cursor-pointer font-medium text-sm transition-all hover:bg-[var(--bg-secondary)] shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={onClose}
             disabled={loading}
           >
@@ -230,7 +234,7 @@ function LoadSpecDialog({ isOpen, onClose }) {
           </button>
           <button
             type="submit"
-            className="primary"
+            className="px-4 py-2 bg-[var(--accent-primary)] text-white border-none rounded-md cursor-pointer font-medium text-sm transition-all hover:bg-[var(--accent-primary-hover)] shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={loading}
           >
             {loading ? 'Loading...' : 'Load Spec'}
@@ -251,10 +255,17 @@ function Toast({ message, type, onClose }) {
     return () => clearTimeout(timer);
   }, [onClose]);
 
+  const bgColors = {
+    success: 'bg-green-500',
+    error: 'bg-red-500',
+    warning: 'bg-orange-500',
+    info: 'bg-blue-500'
+  };
+
   return (
-    <div className={`toast-notification ${type}`}>
+    <div className={`${bgColors[type]} text-white px-4 py-3 rounded-md text-sm flex items-center justify-between min-w-[300px] max-w-[400px] shadow-[var(--shadow-lg)] animate-slide-in`}>
       {message}
-      <button className="toast-close" onClick={onClose}>×</button>
+      <button className="bg-transparent border-none text-white text-lg cursor-pointer ml-2 p-0 w-6 h-6 flex items-center justify-center hover:bg-white/20 rounded-full" onClick={onClose}>×</button>
     </div>
   );
 }
@@ -281,7 +292,7 @@ function ToastProvider({ children }) {
   return (
     <window.AppContexts.ToastContext.Provider value={value}>
       {children}
-      <div className="toast-container">
+      <div className="fixed bottom-6 left-6 flex flex-col gap-2 z-[1000]">
         {toasts.map(toast => (
           <Toast
             key={toast.id}
@@ -342,7 +353,7 @@ function ProcessTodoButton() {
   return (
     <>
       <button
-        className="fab-button"
+        className="w-14 h-14 rounded-full flex items-center justify-center bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-2 border-purple-300 dark:border-purple-600 shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95 p-0"
         onClick={handleClick}
         title="Process TODO comments in code"
       >
@@ -364,7 +375,7 @@ function LoadSpecButton() {
   return (
     <>
       <button
-        className="fab-button"
+        className="w-14 h-14 rounded-full flex items-center justify-center bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-2 border-purple-300 dark:border-purple-600 shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95 p-0"
         onClick={() => setShowDialog(true)}
         title="Load OpenAPI Spec"
       >
@@ -380,15 +391,39 @@ function LoadSpecButton() {
 }
 
 // Header Component
-function Header() {
+function Header({ endpoint }) {
+  const getMethodClass = (method) => {
+    if (!method) return 'text-gray-600 dark:text-gray-400';
+    const methodColors = {
+      get: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
+      post: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800',
+      put: 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800',
+      patch: 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800',
+      delete: 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+    };
+    return methodColors[method.toLowerCase()] || 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700';
+  };
+
   return (
-    <div className="header">
-      <div className="header-logo">
+    <div className="h-12 flex-shrink-0 bg-[var(--bg-primary)] border-b border-[var(--border-default)] flex items-center px-5 shadow-sm relative z-10">
+      <div className="flex items-center gap-3 font-semibold text-lg text-[var(--text-primary)]">
         <Icons.Code />
-        API<span>Explorer</span>
-      </div>
-      <div className="header-actions">
-        {/* Header actions removed and moved to FABs */}
+        <span>API<span className="text-[var(--accent-primary)]">Explorer</span></span>
+        {endpoint && (
+          <>
+            <span className="text-[var(--text-muted)] text-base">|</span>
+            <div className="flex items-center gap-2 text-sm font-normal">
+              {endpoint.method && (
+                <span className={`font-semibold px-2 py-0.5 rounded text-xs uppercase border ${getMethodClass(endpoint.method)}`}>
+                  {endpoint.method}
+                </span>
+              )}
+              {endpoint.path && (
+                <span className="text-[var(--text-secondary)] font-mono text-xs">{endpoint.path || endpoint.url}</span>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -398,8 +433,27 @@ function Header() {
 function EndpointItem({ endpoint, isSelected, onSelect, isExpanded, onToggleExpand, isModified, showDetails = false }) {
   // Get method-based color class
   const getMethodClass = (method) => {
-    if (!method) return 'method-get';
-    return `method-${method.toLowerCase()}`;
+    if (!method) return 'text-[var(--method-get)]';
+    const methodColors = {
+      get: 'text-[var(--method-get)]',
+      post: 'text-[var(--method-post)]',
+      put: 'text-[var(--method-put)]',
+      patch: 'text-[var(--method-patch)]',
+      delete: 'text-[var(--method-delete)]'
+    };
+    return methodColors[method.toLowerCase()] || 'text-[var(--method-get)]';
+  };
+
+  const getMethodBadgeClass = (method) => {
+    if (!method) return 'bg-[var(--method-get-bg)] text-[var(--method-get)]';
+    const methodBadges = {
+      get: 'bg-[var(--method-get-bg)] text-[var(--method-get)]',
+      post: 'bg-[var(--method-post-bg)] text-[var(--method-post)]',
+      put: 'bg-[var(--method-put-bg)] text-[var(--method-put)]',
+      patch: 'bg-[var(--method-patch-bg)] text-[var(--method-patch)]',
+      delete: 'bg-[var(--method-delete-bg)] text-[var(--method-delete)]'
+    };
+    return methodBadges[method.toLowerCase()] || 'bg-[var(--method-get-bg)] text-[var(--method-get)]';
   };
 
   // Get consistent icon for this endpoint - with fallback
@@ -411,50 +465,45 @@ function EndpointItem({ endpoint, isSelected, onSelect, isExpanded, onToggleExpa
   ));
 
   return (
-    <div className="challenge-item">
+    <div className="border-b border-[var(--border-default)]">
       <div
-        className={`challenge-header ${isSelected ? 'selected' : ''}`}
+        className={`p-4 cursor-pointer flex gap-3 items-start transition-colors ${
+          isSelected
+            ? 'bg-[var(--bg-muted)] border-l-[3px] border-l-[var(--accent-primary)] pl-[calc(1rem-3px)]'
+            : 'hover:bg-[var(--bg-accent)]'
+        }`}
         onClick={() => onSelect(endpoint.id)}
       >
-        <div className={`endpoint-icon ${getMethodClass(endpoint.method)}`}>
+        <div className={`w-5 h-5 min-w-[20px] min-h-[20px] flex-shrink-0 transition-transform ${getMethodClass(endpoint.method)}`}>
           <EndpointIcon />
         </div>
-        <div className="challenge-title-container">
-          <div className="challenge-title">
+        <div className="flex-1 flex flex-col gap-1 min-w-0 overflow-hidden">
+          <div className="font-medium text-[var(--text-primary)] flex items-center gap-2">
             {endpoint.title}
             {isModified && (
               <span
-                className="modified-indicator"
+                className="inline-block w-1.5 h-1.5 rounded-full bg-blue-600"
                 title="Code has been modified"
-                style={{
-                  display: 'inline-block',
-                  width: '6px',
-                  height: '6px',
-                  borderRadius: '50%',
-                  backgroundColor: '#3182ce',
-                  marginLeft: '8px',
-                  verticalAlign: 'middle'
-                }}
               />
             )}
           </div>
           {showDetails && (
-            <div className="endpoint-details">
+            <div className="flex items-center gap-2 min-w-0 overflow-hidden">
               {endpoint.method && (
-                <span className={`method-badge ${getMethodClass(endpoint.method)}`}>
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded uppercase tracking-wide flex-shrink-0 ${getMethodBadgeClass(endpoint.method)}`}>
                   {endpoint.method}
                 </span>
               )}
-              <span className="endpoint-path">{endpoint.path || endpoint.url || ''}</span>
+              <span className="text-xs text-[var(--text-muted)] font-mono overflow-hidden text-ellipsis whitespace-nowrap min-w-0 flex-shrink">{endpoint.path || endpoint.url || ''}</span>
             </div>
           )}
           {showDetails && endpoint.description && (
-            <div className="endpoint-description-inline">{endpoint.description}</div>
+            <div className="text-xs text-[var(--text-secondary)] mt-1 leading-snug line-clamp-2">{endpoint.description}</div>
           )}
         </div>
         {!showDetails && (
           <div
-            className={`challenge-expand ${isExpanded ? 'open' : ''}`}
+            className={`text-[var(--text-secondary)] transition-transform ${isExpanded ? 'rotate-90' : ''}`}
             onClick={(e) => {
               e.stopPropagation();
               onToggleExpand(endpoint.id);
@@ -465,8 +514,10 @@ function EndpointItem({ endpoint, isSelected, onSelect, isExpanded, onToggleExpa
         )}
       </div>
       {!showDetails && (
-        <div className={`challenge-content ${isExpanded ? 'open' : ''}`}>
-          <div className="challenge-description">{endpoint.description}</div>
+        <div className={`transition-all overflow-hidden bg-[var(--bg-primary)] ${
+          isExpanded ? 'max-h-[200px] p-4 overflow-y-auto' : 'max-h-0 p-0'
+        }`}>
+          <div className="text-sm text-[var(--text-secondary)] leading-relaxed">{endpoint.description}</div>
         </div>
       )}
     </div>
@@ -488,11 +539,11 @@ function Sidebar() {
   };
 
   return (
-    <div className="sidebar">
-      <div className="sidebar-header">
+    <div className="w-[300px] min-w-[300px] flex-shrink-0 border-r border-[var(--border-default)] bg-[var(--bg-secondary)] overflow-y-auto hidden flex-col">
+      <div className="p-4 border-b border-[var(--border-default)] font-semibold text-lg text-[var(--text-primary)] flex items-center">
         <span>Endpoints</span>
       </div>
-      <div className="challenges-list">
+      <div className="list-none p-0 m-0 flex-1 overflow-y-auto">
         {endpoints.map((endpoint) => (
           <EndpointItem
             key={endpoint.id}
@@ -576,9 +627,28 @@ function Preview() {
           const funcName = match[1];
           renderCode = `
             window['${funcName}'] = ${funcName};
-            document.getElementById('root').innerHTML = '<h3>Function: ${funcName}</h3>' +
-              '<p>Try calling this function in the browser console!</p>' +
-              '<div class="success">✓ Function defined successfully</div>';
+            document.getElementById('root').innerHTML =
+              '<div class="max-w-2xl mx-auto">' +
+                '<div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 shadow-sm">' +
+                  '<div class="flex items-start gap-3">' +
+                    '<div class="flex-shrink-0 w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">' +
+                      '<svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>' +
+                    '</div>' +
+                    '<div class="flex-1">' +
+                      '<h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Function: <code class="text-blue-600 dark:text-blue-400">${funcName}</code></h3>' +
+                      '<p class="text-sm text-gray-600 dark:text-gray-400 mb-3">This function is now available in the browser console!</p>' +
+                      '<div class="bg-white dark:bg-gray-800 rounded-md p-3 border border-gray-200 dark:border-gray-700">' +
+                        '<p class="text-xs font-mono text-gray-700 dark:text-gray-300 mb-1">Try it in the console:</p>' +
+                        '<code class="text-xs font-mono text-green-600 dark:text-green-400">${funcName}()</code>' +
+                      '</div>' +
+                      '<div class="mt-4 flex items-center gap-2 text-sm text-green-600 dark:text-green-400">' +
+                        '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>' +
+                        '<span class="font-medium">Function defined successfully</span>' +
+                      '</div>' +
+                    '</div>' +
+                  '</div>' +
+                '</div>' +
+              '</div>';
             console.log("✓ Function ${funcName} is available in the console.");
           `;
         }
@@ -586,7 +656,23 @@ function Preview() {
     } catch (error) {
       // If transpilation fails, show error in iframe
       transpiledCode = `
-        document.getElementById('root').innerHTML = '<div class="error">Transpilation Error: ' + ${JSON.stringify(error.message)} + '</div>';
+        document.getElementById('root').innerHTML =
+          '<div class="max-w-2xl mx-auto mt-8">' +
+            '<div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 shadow-sm">' +
+              '<div class="flex items-start gap-3">' +
+                '<div class="flex-shrink-0 w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">' +
+                  '<svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+                '</div>' +
+                '<div class="flex-1">' +
+                  '<h3 class="text-lg font-semibold text-red-900 dark:text-red-100 mb-2">Transpilation Error</h3>' +
+                  '<div class="bg-white dark:bg-gray-800 rounded-md p-3 border border-red-200 dark:border-red-700 mt-3">' +
+                    '<code class="text-sm text-red-600 dark:text-red-400 font-mono whitespace-pre-wrap">' + ${JSON.stringify(error.message)} + '</code>' +
+                  '</div>' +
+                  '<p class="text-sm text-gray-600 dark:text-gray-400 mt-3">Please check your code syntax and try again.</p>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
       `;
       renderCode = '';
     }
@@ -598,6 +684,46 @@ function Preview() {
       <html>
         <head>
           <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+
+          <!-- Tailwind CSS -->
+          <${script} src="https://cdn.tailwindcss.com"></${script}>
+
+          <style>
+            /* Base element styling for user-generated code */
+            button {
+              margin: 0 4px;
+            }
+
+            h1, h2, h3, h4, h5, h6 {
+              margin-bottom: 0.5rem;
+              font-weight: 600;
+            }
+
+            h1 { font-size: 1.875rem; }
+            h2 { font-size: 1.5rem; }
+            h3 { font-size: 1.25rem; }
+            h4 { font-size: 1.125rem; }
+
+            pre, code {
+              font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+            }
+
+            pre {
+              background: #f3f4f6;
+              padding: 1rem;
+              border-radius: 0.5rem;
+              overflow: auto;
+              font-size: 0.875rem;
+            }
+
+            @media (prefers-color-scheme: dark) {
+              pre {
+                background: rgba(255, 255, 255, 0.05);
+              }
+            }
+          </style>
+
           <${script} type="importmap">
             {
               "imports": {
@@ -612,97 +738,8 @@ function Preview() {
             }
           </${script}>
           <${script} async src="https://ga.jspm.io/npm:es-module-shims@1.10.0/dist/es-module-shims.js"></${script}>
-          <style>
-            :root {
-              --blue-500: #3182ce;
-              --blue-600: #2b6cb0;
-              --gray-100: #f7fafc;
-              --gray-200: #edf2f7;
-              --gray-700: #4a5568;
-              --gray-900: #1a202c;
-              --red-500: #f56565;
-              --green-500: #48bb78;
-            }
-
-            * {
-              box-sizing: border-box;
-            }
-
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-              padding: 12px;
-              line-height: 1.5;
-              color: var(--gray-900);
-              font-size: 16px;
-              margin: 0;
-              background-color: #ffffff;
-            }
-
-            .dark-mode {
-              background-color: var(--gray-900);
-              color: var(--gray-100);
-            }
-
-            h1, h2, h3, h4, h5 {
-              margin-top: 0;
-              line-height: 1.2;
-            }
-
-            button {
-              margin: 0 6px;
-              padding: 6px 12px;
-              background: var(--blue-500);
-              color: white;
-              border: none;
-              border-radius: 6px;
-              cursor: pointer;
-              font-family: inherit;
-              font-size: 14px;
-              font-weight: 500;
-            }
-
-            button:hover {
-              background: var(--blue-600);
-            }
-
-            pre {
-              background: var(--gray-100);
-              padding: 16px;
-              border-radius: 8px;
-              overflow: auto;
-              font-size: 14px;
-              border: 1px solid var(--gray-200);
-            }
-
-            .error {
-              color: var(--red-500);
-              padding: 12px;
-              border-radius: 6px;
-              background-color: rgba(245, 101, 101, 0.1);
-              margin: 16px 0;
-            }
-
-            .success {
-              color: var(--green-500);
-              padding: 12px;
-              border-radius: 6px;
-              background-color: rgba(72, 187, 120, 0.1);
-              margin: 16px 0;
-            }
-
-            @media (prefers-color-scheme: dark) {
-              body {
-                background-color: var(--gray-900);
-                color: var(--gray-100);
-              }
-              pre {
-                background: rgba(255, 255, 255, 0.1);
-                border-color: rgba(255, 255, 255, 0.2);
-              }
-            }
-          </style>
         </head>
-        <body>
+        <body class="font-sans p-4 leading-relaxed text-gray-900 dark:text-gray-100 dark:bg-gray-900 bg-white">
           <div id="root"></div>
           <${script} type="module">
             import React from 'react';
@@ -712,13 +749,11 @@ function Preview() {
             window.APIExplorer = {
               // Layout component for consistent UI
               Layout: ({ title, children, loading }) => {
-                return React.createElement('div', { style: { padding: '2px', maxWidth: '100%' } },
-                  React.createElement('div', {
-                    style: { borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginBottom: '6px' }
-                  },
-                    React.createElement('h3', { style: { margin: 0, fontSize: '16px', fontWeight: 600 } }, title)
+                return React.createElement('div', { className: 'max-w-full' },
+                  loading && React.createElement('div', { className: 'flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-4' },
+                    React.createElement('div', { className: 'animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full' }),
+                    React.createElement('span', null, 'Loading...')
                   ),
-                  loading && React.createElement('p', { style: { fontSize: '13px', color: '#718096' } }, 'Loading...'),
                   !loading && children
                 );
               },
@@ -726,136 +761,192 @@ function Preview() {
               // Parameters section with collapsible UI
               Params: ({ children }) => {
                 const [open, setOpen] = React.useState(false);
-                return React.createElement('div', {
-                  style: { backgroundColor: '#f8f9fa', borderRadius: '6px', marginBottom: '6px', border: '1px solid #e2e8f0' }
-                },
+                return React.createElement('div', { className: 'bg-gray-50 dark:bg-gray-800 rounded-lg mb-3 border border-gray-200 dark:border-gray-700 overflow-hidden' },
                   React.createElement('div', {
                     onClick: () => setOpen(!open),
-                    style: {
-                      padding: '4px 6px', cursor: 'pointer', display: 'flex',
-                      justifyContent: 'space-between', alignItems: 'center',
-                      fontSize: '13px', fontWeight: 600, color: '#4a5568', userSelect: 'none'
-                    }
+                    className: 'px-4 py-3 cursor-pointer flex justify-between items-center text-sm font-semibold text-gray-700 dark:text-gray-300 select-none hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors'
                   },
-                    React.createElement('span', null, '\u2699\uFE0F Parameters'),
+                    React.createElement('span', { className: 'flex items-center gap-2' },
+                      React.createElement('span', null, '\u2699\uFE0F'),
+                      React.createElement('span', null, 'Parameters')
+                    ),
                     React.createElement('span', {
-                      style: { transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', fontSize: '10px' }
+                      className: 'text-xs transition-transform ' + (open ? 'rotate-90' : '')
                     }, '\u25B6')
                   ),
-                  open && React.createElement('div', {
-                    style: { padding: '6px', borderTop: '1px solid #e2e8f0', backgroundColor: '#fff' }
-                  }, children)
+                  open && React.createElement('div', { className: 'p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 space-y-3' }, children)
                 );
               },
 
               // Input field component
               Input: ({ label, value, onChange, type = 'text' }) => {
-                return React.createElement('div', { style: { marginBottom: '4px' } },
-                  React.createElement('label', {
-                    style: { display: 'block', fontSize: '12px', fontWeight: 500, marginBottom: '2px', color: '#4a5568' }
-                  }, label + ':'),
+                return React.createElement('div', { className: 'space-y-1.5' },
+                  React.createElement('label', { className: 'block text-xs font-medium text-gray-700 dark:text-gray-300' }, label + ':'),
                   React.createElement('input', {
                     type, value,
                     onChange: (e) => onChange(type === 'number' ? parseInt(e.target.value) : e.target.value),
-                    style: { width: '100%', padding: '4px 6px', fontSize: '13px', border: '1px solid #cbd5e0', borderRadius: '4px' }
+                    className: 'w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow'
                   })
                 );
               },
 
               // Textarea component
               Textarea: ({ label, value, onChange }) => {
-                return React.createElement('div', { style: { marginBottom: '4px' } },
-                  React.createElement('label', {
-                    style: { display: 'block', fontSize: '12px', fontWeight: 500, marginBottom: '2px', color: '#4a5568' }
-                  }, label + ':'),
+                return React.createElement('div', { className: 'space-y-1.5' },
+                  React.createElement('label', { className: 'block text-xs font-medium text-gray-700 dark:text-gray-300' }, label + ':'),
                   React.createElement('textarea', {
                     value, onChange: (e) => onChange(e.target.value),
-                    style: {
-                      display: 'block', width: '100%', padding: '4px 6px', fontSize: '13px',
-                      border: '1px solid #cbd5e0', borderRadius: '4px', minHeight: '60px', fontFamily: 'inherit'
-                    }
+                    className: 'w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 min-h-[80px] font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow resize-y'
+                  })
+                );
+              },
+
+              // Nested data cell component with popover
+              NestedDataCell: ({ data }) => {
+                const [showPopover, setShowPopover] = React.useState(false);
+                const [popoverPosition, setPopoverPosition] = React.useState({ x: 0, y: 0 });
+                const buttonRef = React.useRef(null);
+
+                const handleClick = (e) => {
+                  e.stopPropagation();
+                  if (buttonRef.current) {
+                    const rect = buttonRef.current.getBoundingClientRect();
+                    setPopoverPosition({ x: rect.left, y: rect.bottom + 5 });
+                  }
+                  setShowPopover(!showPopover);
+                };
+
+                const jsonString = JSON.stringify(data);
+                const truncated = jsonString.length > 50 ? jsonString.substring(0, 50) + '...' : jsonString;
+
+                return React.createElement('div', { className: 'relative' },
+                  React.createElement('button', {
+                    ref: buttonRef,
+                    onClick: handleClick,
+                    className: 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-mono text-xs bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors cursor-pointer'
+                  }, truncated),
+                  showPopover && React.createElement('div', {
+                    className: 'fixed bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-xl p-4 max-w-lg max-h-96 overflow-auto z-50',
+                    style: { left: popoverPosition.x + 'px', top: popoverPosition.y + 'px' },
+                    onClick: (e) => e.stopPropagation()
+                  },
+                    React.createElement('div', { className: 'flex justify-between items-start mb-3' },
+                      React.createElement('h4', { className: 'text-sm font-semibold text-gray-900 dark:text-gray-100' }, 'Nested Data'),
+                      React.createElement('button', {
+                        onClick: () => setShowPopover(false),
+                        className: 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 ml-4'
+                      }, '×')
+                    ),
+                    React.createElement(window.APIExplorer.DataDisplay, { data })
+                  ),
+                  showPopover && React.createElement('div', {
+                    className: 'fixed inset-0 z-40',
+                    onClick: () => setShowPopover(false)
                   })
                 );
               },
 
               // Data display with automatic formatting
-              DataDisplay: ({ data }) => {
+              DataDisplay: ({ data, inTableCell }) => {
                 if (data === null || data === undefined) {
-                  return React.createElement('span', { style: { color: '#999', fontSize: '13px' } }, 'null');
+                  return React.createElement('span', { className: 'text-gray-400 text-sm italic' }, 'null');
                 }
 
                 if (Array.isArray(data)) {
-                  if (data.length === 0) return React.createElement('span', { style: { color: '#999', fontSize: '13px' } }, '[]');
+                  if (data.length === 0) return React.createElement('span', { className: 'text-gray-400 text-sm italic' }, '[]');
+
+                  // If in table cell, show as clickable JSON
+                  if (inTableCell) {
+                    return React.createElement(window.APIExplorer.NestedDataCell, { data });
+                  }
 
                   const firstItem = data[0];
                   if (typeof firstItem === 'object' && firstItem !== null) {
                     const keys = Object.keys(firstItem);
-                    return React.createElement('div', { style: { overflowX: 'auto', margin: '8px 0' } },
-                      React.createElement('table', {
-                        style: { width: '100%', borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #e2e8f0' }
-                      },
+                    return React.createElement('div', { className: 'overflow-x-auto my-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm' },
+                      React.createElement('table', { className: 'min-w-full border-collapse text-sm' },
                         React.createElement('thead', null,
-                          React.createElement('tr', { style: { backgroundColor: '#4a5568', color: '#fff' } },
+                          React.createElement('tr', { className: 'bg-gradient-to-r from-slate-700 to-slate-600 dark:from-slate-800 dark:to-slate-700' },
                             keys.map(key => React.createElement('th', {
                               key,
-                              style: {
-                                padding: '6px 10px', textAlign: 'left', fontWeight: 600,
-                                borderBottom: '2px solid #2d3748', fontSize: '12px',
-                                textTransform: 'uppercase', letterSpacing: '0.5px'
-                              }
+                              className: 'px-6 py-3 text-left font-semibold text-white text-xs uppercase tracking-wider border-b-2 border-slate-800 dark:border-slate-900 whitespace-nowrap'
                             }, key))
                           )
                         ),
-                        React.createElement('tbody', null,
+                        React.createElement('tbody', { className: 'divide-y divide-gray-200 dark:divide-gray-700' },
                           data.map((item, idx) => React.createElement('tr', {
                             key: idx,
-                            style: {
-                              borderBottom: '1px solid #e2e8f0',
-                              backgroundColor: idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.02)'
-                            }
+                            className: 'hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors ' + (idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/50 dark:bg-gray-800/50')
                           },
-                            keys.map(key => React.createElement('td', {
-                              key,
-                              style: { padding: '6px 10px' }
-                            }, React.createElement(window.APIExplorer.DataDisplay, { data: item[key] })))
+                            keys.map(key => {
+                              const cellData = item[key];
+                              const isNested = (Array.isArray(cellData) || (typeof cellData === 'object' && cellData !== null));
+
+                              return React.createElement('td', {
+                                key,
+                                className: 'px-6 py-3 text-gray-900 dark:text-gray-100 whitespace-nowrap'
+                              }, isNested
+                                ? React.createElement(window.APIExplorer.NestedDataCell, { data: cellData })
+                                : React.createElement(window.APIExplorer.DataDisplay, { data: cellData, inTableCell: true })
+                              );
+                            })
                           ))
                         )
                       )
                     );
                   } else {
-                    return React.createElement('ul', { style: { margin: '4px 0', paddingLeft: '18px', fontSize: '13px' } },
+                    return React.createElement('ul', { className: 'my-2 pl-5 space-y-1 text-sm list-disc marker:text-gray-400' },
                       data.map((item, idx) => React.createElement('li', {
-                        key: idx, style: { marginBottom: '2px' }
+                        key: idx, className: 'text-gray-700 dark:text-gray-300'
                       }, React.createElement(window.APIExplorer.DataDisplay, { data: item })))
                     );
                   }
                 }
 
                 if (typeof data === 'object') {
-                  return React.createElement('div', { style: { marginLeft: '12px', fontSize: '13px' } },
+                  // If in table cell, show as clickable JSON
+                  if (inTableCell) {
+                    return React.createElement(window.APIExplorer.NestedDataCell, { data });
+                  }
+
+                  return React.createElement('div', { className: 'ml-4 space-y-2 text-sm border-l-2 border-gray-200 dark:border-gray-700 pl-4 my-2' },
                     Object.entries(data).map(([key, value]) => React.createElement('div', {
-                      key, style: { marginBottom: '4px' }
+                      key, className: 'flex flex-col gap-0.5'
                     },
-                      React.createElement('strong', { style: { color: '#2563eb', fontSize: '12px' } }, key + ':'),
-                      ' ',
-                      Array.isArray(value) || (typeof value === 'object' && value !== null)
-                        ? React.createElement(window.APIExplorer.DataDisplay, { data: value })
-                        : React.createElement('span', null, String(value))
+                      React.createElement('strong', { className: 'text-blue-600 dark:text-blue-400 text-xs font-semibold' }, key + ':'),
+                      React.createElement('div', { className: 'text-gray-700 dark:text-gray-300' },
+                        Array.isArray(value) || (typeof value === 'object' && value !== null)
+                          ? React.createElement(window.APIExplorer.DataDisplay, { data: value })
+                          : React.createElement('span', null, String(value))
+                      )
                     ))
                   );
                 }
 
-                return React.createElement('span', { style: { fontSize: '13px' } }, String(data));
+                return React.createElement('span', { className: 'text-sm text-gray-700 dark:text-gray-300' }, String(data));
               },
 
               // Response display wrapper
               Response: ({ data }) => {
                 if (!data) return null;
-                return React.createElement('div', null,
-                  React.createElement('div', {
-                    style: { fontSize: '13px', fontWeight: 600, marginBottom: '4px', color: '#4a5568' }
-                  }, 'Response:'),
-                  React.createElement(window.APIExplorer.DataDisplay, { data })
+                return React.createElement(window.APIExplorer.DataDisplay, { data });
+              },
+
+              // Error display component
+              ErrorDisplay: ({ error }) => {
+                if (!error) return null;
+                return React.createElement('div', { className: 'mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg' },
+                  React.createElement('div', { className: 'flex items-start gap-3' },
+                    React.createElement('div', { className: 'flex-shrink-0' },
+                      React.createElement('svg', { className: 'w-5 h-5 text-red-600 dark:text-red-400', fill: 'currentColor', viewBox: '0 0 20 20' },
+                        React.createElement('path', { fillRule: 'evenodd', d: 'M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z', clipRule: 'evenodd' })
+                      )
+                    ),
+                    React.createElement('div', { className: 'flex-1' },
+                      React.createElement('h4', { className: 'text-sm font-semibold text-red-900 dark:text-red-100 mb-1' }, 'Error'),
+                      React.createElement('p', { className: 'text-sm text-red-700 dark:text-red-300' }, error)
+                    )
+                  )
                 );
               },
 
@@ -899,15 +990,8 @@ function Preview() {
   }, [code]);
 
   return (
-    <div className="preview-container">
-      <iframe ref={iframeRef} title="Preview" sandbox="allow-scripts" />
-      <button
-        className="preview-rerun-button"
-        onClick={renderPreview}
-        disabled={!hasChanges}
-      >
-        {hasChanges ? "Re-run" : "Up to date"}
-      </button>
+    <div className="flex-1 flex flex-col overflow-auto">
+      <iframe ref={iframeRef} title="Preview" sandbox="allow-scripts" className="flex-1 w-full border-none bg-[var(--bg-primary)]" />
     </div>
   );
 }
@@ -985,7 +1069,7 @@ function CodeEditor({ code, onChange }) {
     }
   }, [isDarkMode]);
 
-  return <div style={{ flex: 1, overflow: 'auto' }} ref={editorRef}></div>;
+  return <div className="flex-1 overflow-auto" ref={editorRef}></div>;
 }
 
 // Action FAB Menu Component
@@ -1003,13 +1087,13 @@ function ActionFABMenu() {
   };
 
   return (
-    <div className="action-fab-menu">
+    <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end gap-3">
       {isMenuOpen && (
-        <div className="action-fab-items">
+        <div className="flex flex-col items-end gap-3 animate-slide-up">
           <LoadSpecButton />
           <ProcessTodoButton />
           <button
-            className="fab-button fab-reset"
+            className="w-14 h-14 rounded-full flex items-center justify-center bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-2 border-red-300 dark:border-red-600 shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95 p-0"
             onClick={handleReset}
             title="Reset to Default"
           >
@@ -1018,7 +1102,7 @@ function ActionFABMenu() {
         </div>
       )}
       <button
-        className="fab-button fab-main"
+        className="w-14 h-14 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-2 border-purple-300 dark:border-purple-600 shadow-lg flex items-center justify-center cursor-pointer text-2xl font-bold transition-all hover:scale-110 hover:rotate-90 hover:shadow-xl p-0"
         onClick={() => setIsMenuOpen(!isMenuOpen)}
         title="Actions"
       >
@@ -1034,7 +1118,10 @@ function IDEPage() {
     currentEndpointId,
     getEndpointCode,
     updateEndpointCode,
-    selectEndpoint
+    selectEndpoint,
+    endpoints,
+    isEndpointModified,
+    getCurrentEndpoint
   } = useEndpoints();
   const [showEndpointsList, setShowEndpointsList] = useState(false);
   const [showCodeEditor, setShowCodeEditor] = useState(false);
@@ -1042,6 +1129,7 @@ function IDEPage() {
 
   // Get current code based on selected endpoint
   const currentCode = getEndpointCode(currentEndpointId);
+  const currentEndpoint = getCurrentEndpoint();
 
   const handleCodeChange = useCallback(newCode => {
     updateEndpointCode(currentEndpointId, newCode);
@@ -1058,8 +1146,8 @@ function IDEPage() {
 
   return (
     <>
-      <Header />
-      <div className="mobile-main-container">
+      <Header endpoint={currentEndpoint} />
+      <div className="flex-1 flex bg-[var(--bg-primary)] overflow-hidden">
         {showCodeEditor ? (
           <CodeEditor code={currentCode} onChange={handleCodeChange} />
         ) : (
@@ -1069,19 +1157,19 @@ function IDEPage() {
 
       {/* Endpoints overlay */}
       {showEndpointsList && (
-        <div className="endpoints-overlay" onClick={() => setShowEndpointsList(false)}>
-          <div className="endpoints-panel" onClick={e => e.stopPropagation()}>
-            <div className="sidebar-header">
-              <span>Endpoints</span>
+        <div className="fixed top-12 left-0 right-0 bottom-0 bg-black/50 z-[999] flex items-stretch justify-start" onClick={() => setShowEndpointsList(false)}>
+          <div className="bg-[var(--bg-secondary)] max-w-[500px] w-[85vw] flex-1 shadow-[var(--shadow-lg)] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center sticky top-0 bg-[var(--bg-secondary)] z-10 border-b border-[var(--border-default)] p-4">
+              <span className="font-semibold text-lg text-[var(--text-primary)]">Endpoints</span>
               <button
-                className="close-button"
+                className="bg-transparent border-none text-[var(--text-primary)] text-3xl leading-none cursor-pointer p-0 w-8 h-8 flex items-center justify-center rounded-full transition-colors hover:bg-[var(--bg-accent)]"
                 onClick={() => setShowEndpointsList(false)}
               >
                 ×
               </button>
             </div>
-            <div className="challenges-list">
-              {useEndpoints().endpoints.map((endpoint) => (
+            <div className="list-none p-0 m-0 flex-1 overflow-y-auto">
+              {endpoints.map((endpoint) => (
                 <EndpointItem
                   key={endpoint.id}
                   endpoint={endpoint}
@@ -1089,7 +1177,7 @@ function IDEPage() {
                   onSelect={handleEndpointSelect}
                   isExpanded={false}
                   onToggleExpand={() => {}}
-                  isModified={useEndpoints().isEndpointModified(endpoint.id)}
+                  isModified={isEndpointModified(endpoint.id)}
                   showDetails={true}
                 />
               ))}
@@ -1100,7 +1188,7 @@ function IDEPage() {
 
       {/* Bottom-left FAB for endpoints */}
       <button
-        className="fab-button fab-endpoints"
+        className="fixed bottom-6 left-6 w-14 h-14 rounded-full bg-[var(--accent-primary)] text-white border-none shadow-lg z-[100] flex items-center justify-center cursor-pointer transition-all hover:scale-110 hover:shadow-xl p-0"
         onClick={() => setShowEndpointsList(!showEndpointsList)}
         title="Endpoints"
       >
@@ -1109,7 +1197,7 @@ function IDEPage() {
 
       {/* View toggle FAB (between endpoints and actions) */}
       <button
-        className="fab-button fab-toggle"
+        className="fixed bottom-6 left-[100px] w-14 h-14 rounded-full bg-purple-600 text-white border-2 border-purple-500 shadow-lg z-[100] flex items-center justify-center cursor-pointer transition-all hover:scale-110 hover:bg-purple-500 hover:shadow-xl p-0"
         onClick={toggleView}
         title={showCodeEditor ? "Show Preview" : "Show Code Editor"}
       >
