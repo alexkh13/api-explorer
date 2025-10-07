@@ -162,9 +162,9 @@ function LoadSpecDialog({ isOpen, onClose }) {
       }
 
       const spec = await response.json();
-      const endpoints = window.parseOpenAPISpec(spec, bearerToken.trim() || null);
+      const { endpoints, baseUrl } = window.parseOpenAPISpec(spec, bearerToken.trim() || null);
 
-      loadEndpointsFromSpec(endpoints, bearerToken.trim() || null);
+      loadEndpointsFromSpec(endpoints, baseUrl, bearerToken.trim() || null);
       toast.addToast(`Loaded ${endpoints.length} endpoints from spec`, 'success');
       onClose();
       setUrl('');
@@ -368,7 +368,7 @@ function LoadSpecButton() {
         onClick={() => setShowDialog(true)}
         title="Load OpenAPI Spec"
       >
-        <Icons.Code />
+        <Icons.File />
       </button>
 
       <LoadSpecDialog
@@ -630,7 +630,7 @@ function Preview() {
 
             body {
               font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-              padding: 24px;
+              padding: 12px;
               line-height: 1.5;
               color: var(--gray-900);
               font-size: 16px;
@@ -712,7 +712,7 @@ function Preview() {
             window.APIExplorer = {
               // Layout component for consistent UI
               Layout: ({ title, children, loading }) => {
-                return React.createElement('div', { style: { padding: '6px', maxWidth: '100%' } },
+                return React.createElement('div', { style: { padding: '2px', maxWidth: '100%' } },
                   React.createElement('div', {
                     style: { borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginBottom: '6px' }
                   },
@@ -985,25 +985,14 @@ function CodeEditor({ code, onChange }) {
     }
   }, [isDarkMode]);
 
-  return <div style={{ flex: 1 }} ref={editorRef}></div>;
+  return <div style={{ flex: 1, overflow: 'auto' }} ref={editorRef}></div>;
 }
 
 // Action FAB Menu Component
 function ActionFABMenu() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { currentEndpointId, getEndpointCode, resetEndpointCode } = useEndpoints();
+  const { currentEndpointId, resetEndpointCode } = useEndpoints();
   const toast = useToast();
-  const currentCode = getEndpointCode(currentEndpointId);
-
-  const handleSubmit = () => {
-    const result = window.runTests(currentEndpointId, currentCode);
-    if (result.success) {
-      toast.addToast(result.message || 'Code validated successfully!', 'success');
-    } else {
-      toast.addToast(result.error || 'Code validation failed', 'error');
-    }
-    setIsMenuOpen(false);
-  };
 
   const handleReset = () => {
     if (window.confirm("Reset code to default state? This cannot be undone.")) {
@@ -1017,13 +1006,6 @@ function ActionFABMenu() {
     <div className="action-fab-menu">
       {isMenuOpen && (
         <div className="action-fab-items">
-          <button
-            className="fab-button fab-run"
-            onClick={handleSubmit}
-            title="Validate Code"
-          >
-            <Icons.Run />
-          </button>
           <LoadSpecButton />
           <ProcessTodoButton />
           <button
@@ -1055,6 +1037,7 @@ function IDEPage() {
     selectEndpoint
   } = useEndpoints();
   const [showEndpointsList, setShowEndpointsList] = useState(false);
+  const [showCodeEditor, setShowCodeEditor] = useState(false);
   const toast = useToast();
 
   // Get current code based on selected endpoint
@@ -1069,17 +1052,19 @@ function IDEPage() {
     setShowEndpointsList(false);
   };
 
+  const toggleView = () => {
+    setShowCodeEditor(!showCodeEditor);
+  };
+
   return (
-    <div
-      style={{
-        height: "100vh",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <>
       <Header />
       <div className="mobile-main-container">
-        <Preview />
+        {showCodeEditor ? (
+          <CodeEditor code={currentCode} onChange={handleCodeChange} />
+        ) : (
+          <Preview />
+        )}
       </div>
 
       {/* Endpoints overlay */}
@@ -1122,9 +1107,18 @@ function IDEPage() {
         <Icons.List />
       </button>
 
+      {/* View toggle FAB (between endpoints and actions) */}
+      <button
+        className="fab-button fab-toggle"
+        onClick={toggleView}
+        title={showCodeEditor ? "Show Preview" : "Show Code Editor"}
+      >
+        {showCodeEditor ? <Icons.Preview /> : <Icons.Edit />}
+      </button>
+
       {/* Bottom-right FAB menu for actions */}
       <ActionFABMenu />
-    </div>
+    </>
   );
 }
 

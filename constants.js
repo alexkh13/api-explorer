@@ -236,6 +236,7 @@ AVAILABLE COMPONENTS:
 };
 
 // Parse OpenAPI v3 spec and convert to endpoints
+// Returns an object with endpoints (metadata only) and baseUrl for dynamic code generation
 window.parseOpenAPISpec = function(spec, bearerToken) {
   const endpoints = [];
 
@@ -258,7 +259,8 @@ window.parseOpenAPISpec = function(spec, bearerToken) {
           description: operation.summary || operation.description || `${method.toUpperCase()} request to ${path}`,
           method: method.toUpperCase(),
           path: path,
-          completed: false
+          completed: false,
+          isFromSpec: true  // Mark this as a spec-loaded endpoint for dynamic generation
         };
 
         // Extract parameters
@@ -292,14 +294,13 @@ window.parseOpenAPISpec = function(spec, bearerToken) {
           }
         }
 
-        // Generate starter code
-        endpoint.starterCode = generateStarterCode(endpoint, baseUrl, bearerToken);
+        // Do NOT generate starterCode here - it will be generated dynamically
         endpoints.push(endpoint);
       }
     });
   });
 
-  return endpoints;
+  return { endpoints, baseUrl };
 };
 
 // Import shared utilities from APIExplorer global
@@ -521,23 +522,5 @@ ${IMPORTS}
   }
 }
 
-// Test runner utility (updated for endpoints)
-window.runTests = function(endpointId, userCode, endpoints) {
-  endpoints = endpoints || window.AppConstants.initialEndpointsData;
-  const endpoint = endpoints.find(e => e.id === endpointId);
-
-  if (!endpoint) return { success: false, error: 'Endpoint not found' };
-
-  try {
-    // For API endpoints, we just validate that the code is valid
-    const match = userCode.match(/function\s+(\w+)/);
-    if (!match) return { success: false, error: 'Cannot identify function name' };
-
-    // Try to parse the code with Babel to ensure it's valid
-    window.Babel.transform(userCode, { presets: ['react'] });
-
-    return { success: true, message: 'Code is valid and ready to run' };
-  } catch (e) {
-    return { success: false, error: e.message || 'Code validation failed' };
-  }
-};
+// Export generateStarterCode to window for dynamic code generation
+window.generateStarterCode = generateStarterCode;

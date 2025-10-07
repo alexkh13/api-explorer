@@ -64,7 +64,9 @@ function EndpointProvider({ children, initialEndpoints }) {
       currentEndpointId: savedState.currentEndpointId || endpointsToUse[0].id,
       endpoints: endpointsToUse,
       endpointCodes: savedCodes,
-      modifiedEndpoints: new Set(savedModified)
+      modifiedEndpoints: new Set(savedModified),
+      baseUrl: savedState.baseUrl || '',
+      bearerToken: savedState.bearerToken || null
     };
   });
 
@@ -99,9 +101,18 @@ function EndpointProvider({ children, initialEndpoints }) {
       if (state.modifiedEndpoints.has(endpointId)) {
         return state.endpointCodes[endpointId] || '';
       }
-      // Otherwise, return dynamic code from endpoint.starterCode
+
+      // Otherwise, generate code dynamically
       const endpoint = state.endpoints.find(e => e.id === endpointId);
-      return endpoint?.starterCode || '';
+      if (!endpoint) return '';
+
+      // If endpoint is from spec, generate code dynamically
+      if (endpoint.isFromSpec && window.generateStarterCode) {
+        return window.generateStarterCode(endpoint, state.baseUrl, state.bearerToken);
+      }
+
+      // Otherwise, use starterCode from endpoint (for demo endpoints)
+      return endpoint.starterCode || '';
     },
     isEndpointModified: (endpointId) => state.modifiedEndpoints.has(endpointId),
     updateEndpointCode: (endpointId, code) => {
@@ -145,13 +156,14 @@ function EndpointProvider({ children, initialEndpoints }) {
         )
       }));
     },
-    loadEndpointsFromSpec: (endpoints, bearerToken) => {
+    loadEndpointsFromSpec: (endpoints, baseUrl, bearerToken) => {
       // Don't initialize codes - let them be generated dynamically
       setState({
         currentEndpointId: endpoints[0]?.id || '',
         endpoints: endpoints,
         endpointCodes: {}, // Empty - codes will be dynamic until modified
         modifiedEndpoints: new Set(), // Reset modified tracking
+        baseUrl: baseUrl || '',
         bearerToken: bearerToken || null
       });
     }

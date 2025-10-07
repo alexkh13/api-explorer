@@ -38,7 +38,7 @@ This application uses a unique architecture designed to work without any build t
 ```
 index.html          - Main HTML, loads all scripts in correct order
 styles.css          - All CSS styles with CSS variables for theming
-constants.js        - Plain JS: endpoint data, OpenAPI parser, AI_PROVIDERS config, runTests utility
+constants.js        - Plain JS: endpoint data, OpenAPI parser, AI_PROVIDERS config
 utils.js            - Plain JS: utility functions (debounce)
 icons.jsx           - JSX module: SVG icon components, attaches to window.Icons
 contexts.jsx        - JSX module: React contexts (Theme, Endpoint, AI, Toast), attaches to window.AppContexts
@@ -186,11 +186,3 @@ The `generateStarterCode()` function in `constants.js` automatically creates:
 - Loading states and error handling
 - Input forms for parameters and request bodies
 - Response display with JSON formatting
-
-### Endpoint Validation
-
-The test runner is in `constants.js` as `window.runTests()`:
-- Validates that the code contains a valid function
-- Uses Babel to parse and validate JSX syntax
-- Returns success/failure with validation messages
-- Does not execute the code (validation only)

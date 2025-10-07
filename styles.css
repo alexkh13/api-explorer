@@ -114,8 +114,7 @@
 }
 
 html,
-body,
-#root {
+body {
   margin: 0;
   padding: 0;
   height: 100vh;
@@ -127,6 +126,13 @@ body,
   line-height: 1.5;
 }
 
+#root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 .app-container {
   display: flex;
   height: calc(100vh - var(--space-12));
@@ -134,6 +140,7 @@ body,
 
 .header {
   height: var(--space-12);
+  flex-shrink: 0;
   background-color: var(--bg-header);
   border-bottom: 1px solid var(--toolbar-border);
   display: flex;
@@ -577,14 +584,35 @@ body,
   }
 }
 
+/* View toggle FAB (between endpoints and actions) */
 .fab-toggle {
+  position: fixed;
+  bottom: 24px;
+  left: 100px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
   background-color: #805ad5;
   color: white;
-  border-color: #6b46c1;
+  border: 2px solid #6b46c1;
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .fab-toggle:hover {
   background-color: #6b46c1;
+  transform: scale(1.1);
+  box-shadow: var(--shadow-xl);
+}
+
+.fab-toggle svg {
+  width: 24px;
+  height: 24px;
 }
 
 .CodeMirror {
@@ -592,6 +620,11 @@ body,
   font-family: var(--font-mono);
   font-size: var(--font-size-sm);
   line-height: 1.6;
+}
+
+.CodeMirror-scroll {
+  overflow: auto !important;
+  height: 100% !important;
 }
 
 .CodeMirror-lines {
@@ -670,12 +703,13 @@ button svg {
 .preview-container {
   flex: 1;
   display: flex;
-  position: relative;
+  flex-direction: column;
+  overflow: auto;
 }
 
 .preview-container iframe {
+  flex: 1;
   width: 100%;
-  height: 100%;
   border: none;
   background-color: var(--bg-primary);
 }
@@ -934,8 +968,8 @@ button svg {
 .mobile-main-container {
   flex: 1;
   display: flex;
-  overflow: hidden;
   background: var(--bg-primary);
+  overflow: hidden;
 }
 
 /* Endpoints overlay */
