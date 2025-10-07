@@ -10,79 +10,16 @@ window.AppConstants = {
       method: "GET",
       path: "/users",
       starterCode: `function fetchUsers() {
-  const [users, setUsers] = React.useState([]);
+  const { Layout, Response } = window.APIExplorer;
+  const [data, setData] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
-
-  const DataDisplay = ({ data }) => {
-    if (data === null || data === undefined) return <span style={{ color: '#999', fontSize: '13px' }}>null</span>;
-
-    if (Array.isArray(data)) {
-      if (data.length === 0) return <span style={{ color: '#999', fontSize: '13px' }}>[]</span>;
-
-      const firstItem = data[0];
-      if (typeof firstItem === 'object' && firstItem !== null) {
-        const keys = Object.keys(firstItem);
-        return (
-          <div style={{ overflowX: 'auto', margin: '8px 0' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #e2e8f0' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#4a5568', color: '#fff' }}>
-                  {keys.map(key => (
-                    <th key={key} style={{ padding: '6px 10px', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #2d3748', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{key}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((item, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.02)' }}>
-                    {keys.map(key => (
-                      <td key={key} style={{ padding: '6px 10px' }}>
-                        <DataDisplay data={item[key]} />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
-      } else {
-        return (
-          <ul style={{ margin: '4px 0', paddingLeft: '18px', fontSize: '13px' }}>
-            {data.map((item, idx) => (
-              <li key={idx} style={{ marginBottom: '2px' }}><DataDisplay data={item} /></li>
-            ))}
-          </ul>
-        );
-      }
-    }
-
-    if (typeof data === 'object') {
-      return (
-        <div style={{ marginLeft: '12px', fontSize: '13px' }}>
-          {Object.entries(data).map(([key, value]) => (
-            <div key={key} style={{ marginBottom: '4px' }}>
-              <strong style={{ color: '#2563eb', fontSize: '12px' }}>{key}:</strong>{' '}
-              {Array.isArray(value) || (typeof value === 'object' && value !== null) ? (
-                <DataDisplay data={value} />
-              ) : (
-                <span>{String(value)}</span>
-              )}
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    return <span style={{ fontSize: '13px' }}>{String(data)}</span>;
-  };
 
   React.useEffect(() => {
     setLoading(true);
     fetch('https://jsonplaceholder.typicode.com/users')
       .then(response => response.json())
-      .then(data => {
-        setUsers(data);
+      .then(result => {
+        setData(result);
         setLoading(false);
       })
       .catch(error => {
@@ -92,18 +29,9 @@ window.AppConstants = {
   }, []);
 
   return (
-    <div style={{ padding: '6px', maxWidth: '100%' }}>
-      <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginBottom: '6px' }}>
-        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>Users List</h3>
-      </div>
-      {loading && <p style={{ fontSize: '13px', color: '#718096' }}>Loading...</p>}
-      {!loading && users.length > 0 && (
-        <div>
-          <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '4px', color: '#4a5568' }}>Response:</div>
-          <DataDisplay data={users} />
-        </div>
-      )}
-    </div>
+    <Layout title="Users List" loading={loading}>
+      <Response data={data} />
+    </Layout>
   );
 }`,
       completed: false,
@@ -118,136 +46,32 @@ window.AppConstants = {
         { name: "id", in: "path", type: "integer", default: 1 }
       ],
       starterCode: `function fetchPost() {
-  const [postId, setPostId] = React.useState(1);
-  const [post, setPost] = React.useState(null);
+  const { Layout, Params, Input, Response } = window.APIExplorer;
+  const [id, setId] = React.useState(1);
+  const [data, setData] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
-  const [paramsOpen, setParamsOpen] = React.useState(false);
-
-  const DataDisplay = ({ data }) => {
-    if (data === null || data === undefined) return <span style={{ color: '#999', fontSize: '13px' }}>null</span>;
-
-    if (Array.isArray(data)) {
-      if (data.length === 0) return <span style={{ color: '#999', fontSize: '13px' }}>[]</span>;
-
-      const firstItem = data[0];
-      if (typeof firstItem === 'object' && firstItem !== null) {
-        const keys = Object.keys(firstItem);
-        return (
-          <div style={{ overflowX: 'auto', margin: '8px 0' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #e2e8f0' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#4a5568', color: '#fff' }}>
-                  {keys.map(key => (
-                    <th key={key} style={{ padding: '6px 10px', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #2d3748', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{key}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((item, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.02)' }}>
-                    {keys.map(key => (
-                      <td key={key} style={{ padding: '6px 10px' }}>
-                        <DataDisplay data={item[key]} />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
-      } else {
-        return (
-          <ul style={{ margin: '4px 0', paddingLeft: '18px', fontSize: '13px' }}>
-            {data.map((item, idx) => (
-              <li key={idx} style={{ marginBottom: '2px' }}><DataDisplay data={item} /></li>
-            ))}
-          </ul>
-        );
-      }
-    }
-
-    if (typeof data === 'object') {
-      return (
-        <div style={{ marginLeft: '12px', fontSize: '13px' }}>
-          {Object.entries(data).map(([key, value]) => (
-            <div key={key} style={{ marginBottom: '4px' }}>
-              <strong style={{ color: '#2563eb', fontSize: '12px' }}>{key}:</strong>{' '}
-              {Array.isArray(value) || (typeof value === 'object' && value !== null) ? (
-                <DataDisplay data={value} />
-              ) : (
-                <span>{String(value)}</span>
-              )}
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    return <span style={{ fontSize: '13px' }}>{String(data)}</span>;
-  };
 
   React.useEffect(() => {
     setLoading(true);
-    fetch(\`https://jsonplaceholder.typicode.com/posts/\${postId}\`)
+    fetch(\`https://jsonplaceholder.typicode.com/posts/\${id}\`)
       .then(response => response.json())
-      .then(data => {
-        setPost(data);
+      .then(result => {
+        setData(result);
         setLoading(false);
       })
       .catch(error => {
         console.error('Error:', error);
         setLoading(false);
       });
-  }, [postId]);
+  }, [id]);
 
   return (
-    <div style={{ padding: '6px', maxWidth: '100%' }}>
-      <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginBottom: '6px' }}>
-        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>Post Details</h3>
-      </div>
-      <div style={{ backgroundColor: '#f8f9fa', borderRadius: '6px', marginBottom: '6px', border: '1px solid #e2e8f0' }}>
-        <div
-          onClick={() => setParamsOpen(!paramsOpen)}
-          style={{
-            padding: '4px 6px',
-            cursor: 'pointer',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            fontSize: '13px',
-            fontWeight: 600,
-            color: '#4a5568',
-            userSelect: 'none'
-          }}
-        >
-          <span>⚙️ Parameters</span>
-          <span style={{ transform: paramsOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', fontSize: '10px' }}>▶</span>
-        </div>
-        {paramsOpen && (
-          <div style={{ padding: '6px', borderTop: '1px solid #e2e8f0', backgroundColor: '#fff' }}>
-            <div style={{ marginBottom: '4px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, marginBottom: '2px', color: '#4a5568' }}>Post ID:</label>
-              <input
-                type="number"
-                value={postId}
-                onChange={(e) => setPostId(parseInt(e.target.value))}
-                min="1"
-                max="100"
-                style={{ width: '100%', padding: '4px 6px', fontSize: '13px', border: '1px solid #cbd5e0', borderRadius: '4px' }}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-      {loading && <p style={{ fontSize: '13px', color: '#718096' }}>Loading...</p>}
-      {post && (
-        <div>
-          <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '4px', color: '#4a5568' }}>Response:</div>
-          <DataDisplay data={post} />
-        </div>
-      )}
-    </div>
+    <Layout title="Post Details" loading={loading}>
+      <Params>
+        <Input label="id" value={id} onChange={setId} type="number" />
+      </Params>
+      <Response data={data} />
+    </Layout>
   );
 }`,
       completed: false,
@@ -267,86 +91,17 @@ window.AppConstants = {
         }
       },
       starterCode: `function createPost() {
-  const [formData, setFormData] = React.useState({
-    title: '',
-    body: '',
-    userId: 1
-  });
+  const { Layout, Input, Textarea, Response } = window.APIExplorer;
+  const [formData, setFormData] = React.useState({title: '', body: '', userId: 1});
   const [result, setResult] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
-
-  const DataDisplay = ({ data }) => {
-    if (data === null || data === undefined) return <span style={{ color: '#999', fontSize: '13px' }}>null</span>;
-
-    if (Array.isArray(data)) {
-      if (data.length === 0) return <span style={{ color: '#999', fontSize: '13px' }}>[]</span>;
-
-      const firstItem = data[0];
-      if (typeof firstItem === 'object' && firstItem !== null) {
-        const keys = Object.keys(firstItem);
-        return (
-          <div style={{ overflowX: 'auto', margin: '8px 0' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #e2e8f0' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#4a5568', color: '#fff' }}>
-                  {keys.map(key => (
-                    <th key={key} style={{ padding: '6px 10px', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #2d3748', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{key}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((item, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.02)' }}>
-                    {keys.map(key => (
-                      <td key={key} style={{ padding: '6px 10px' }}>
-                        <DataDisplay data={item[key]} />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
-      } else {
-        return (
-          <ul style={{ margin: '4px 0', paddingLeft: '18px', fontSize: '13px' }}>
-            {data.map((item, idx) => (
-              <li key={idx} style={{ marginBottom: '2px' }}><DataDisplay data={item} /></li>
-            ))}
-          </ul>
-        );
-      }
-    }
-
-    if (typeof data === 'object') {
-      return (
-        <div style={{ marginLeft: '12px', fontSize: '13px' }}>
-          {Object.entries(data).map(([key, value]) => (
-            <div key={key} style={{ marginBottom: '4px' }}>
-              <strong style={{ color: '#2563eb', fontSize: '12px' }}>{key}:</strong>{' '}
-              {Array.isArray(value) || (typeof value === 'object' && value !== null) ? (
-                <DataDisplay data={value} />
-              ) : (
-                <span>{String(value)}</span>
-              )}
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    return <span style={{ fontSize: '13px' }}>{String(data)}</span>;
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
     fetch('https://jsonplaceholder.typicode.com/posts', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(formData)
     })
       .then(response => response.json())
@@ -361,48 +116,17 @@ window.AppConstants = {
   };
 
   return (
-    <div style={{ padding: '6px', maxWidth: '100%' }}>
-      <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginBottom: '6px' }}>
-        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>Create New Post</h3>
-      </div>
+    <Layout title="Create New Post" loading={loading}>
       <form onSubmit={handleSubmit} style={{ marginBottom: '6px' }}>
-        <div style={{ marginBottom: '4px' }}>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, marginBottom: '2px', color: '#4a5568' }}>Title:</label>
-          <input
-            type="text"
-            value={formData.title}
-            onChange={(e) => setFormData({...formData, title: e.target.value})}
-            style={{ display: 'block', width: '100%', padding: '4px 6px', fontSize: '13px', border: '1px solid #cbd5e0', borderRadius: '4px' }}
-          />
-        </div>
-        <div style={{ marginBottom: '4px' }}>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, marginBottom: '2px', color: '#4a5568' }}>Body:</label>
-          <textarea
-            value={formData.body}
-            onChange={(e) => setFormData({...formData, body: e.target.value})}
-            style={{ display: 'block', width: '100%', padding: '4px 6px', fontSize: '13px', border: '1px solid #cbd5e0', borderRadius: '4px', minHeight: '60px', fontFamily: 'inherit' }}
-          />
-        </div>
-        <div style={{ marginBottom: '4px' }}>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, marginBottom: '2px', color: '#4a5568' }}>User ID:</label>
-          <input
-            type="number"
-            value={formData.userId}
-            onChange={(e) => setFormData({...formData, userId: parseInt(e.target.value)})}
-            style={{ display: 'block', width: '100%', padding: '4px 6px', fontSize: '13px', border: '1px solid #cbd5e0', borderRadius: '4px' }}
-          />
-        </div>
+        <Input label="title" value={formData.title} onChange={(val) => setFormData({...formData, title: val})} type="text" />
+        <Textarea label="body" value={formData.body} onChange={(val) => setFormData({...formData, body: val})} />
+        <Input label="userId" value={formData.userId} onChange={(val) => setFormData({...formData, userId: val})} type="number" />
         <button type="submit" disabled={loading} style={{ marginTop: '2px', padding: '6px 12px', fontSize: '13px', fontWeight: 600 }}>
           {loading ? 'Creating...' : 'Create Post'}
         </button>
       </form>
-      {result && (
-        <div>
-          <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '4px', color: '#4a5568' }}>Response:</div>
-          <DataDisplay data={result} />
-        </div>
-      )}
-    </div>
+      <Response data={result} />
+    </Layout>
   );
 }`,
       completed: false,
@@ -578,70 +302,8 @@ window.parseOpenAPISpec = function(spec, bearerToken) {
   return endpoints;
 };
 
-// Shared DataDisplay component code
-const DATA_DISPLAY_COMPONENT = `  const DataDisplay = ({ data }) => {
-    if (data === null || data === undefined) return <span style={{ color: '#999', fontSize: '13px' }}>null</span>;
-
-    if (Array.isArray(data)) {
-      if (data.length === 0) return <span style={{ color: '#999', fontSize: '13px' }}>[]</span>;
-
-      const firstItem = data[0];
-      if (typeof firstItem === 'object' && firstItem !== null) {
-        const keys = Object.keys(firstItem);
-        return (
-          <div style={{ overflowX: 'auto', margin: '8px 0' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #e2e8f0' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#4a5568', color: '#fff' }}>
-                  {keys.map(key => (
-                    <th key={key} style={{ padding: '6px 10px', textAlign: 'left', fontWeight: 600, borderBottom: '2px solid #2d3748', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{key}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((item, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', backgroundColor: idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.02)' }}>
-                    {keys.map(key => (
-                      <td key={key} style={{ padding: '6px 10px' }}>
-                        <DataDisplay data={item[key]} />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
-      } else {
-        return (
-          <ul style={{ margin: '4px 0', paddingLeft: '18px', fontSize: '13px' }}>
-            {data.map((item, idx) => (
-              <li key={idx} style={{ marginBottom: '2px' }}><DataDisplay data={item} /></li>
-            ))}
-          </ul>
-        );
-      }
-    }
-
-    if (typeof data === 'object') {
-      return (
-        <div style={{ marginLeft: '12px', fontSize: '13px' }}>
-          {Object.entries(data).map(([key, value]) => (
-            <div key={key} style={{ marginBottom: '4px' }}>
-              <strong style={{ color: '#2563eb', fontSize: '12px' }}>{key}:</strong>{' '}
-              {Array.isArray(value) || (typeof value === 'object' && value !== null) ? (
-                <DataDisplay data={value} />
-              ) : (
-                <span>{String(value)}</span>
-              )}
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    return <span style={{ fontSize: '13px' }}>{String(data)}</span>;
-  };`;
+// Import shared utilities from APIExplorer global
+const IMPORTS = `const { Layout, Params, Input, Textarea, Response } = window.APIExplorer;`;
 
 // Generate starter code for an endpoint
 function generateStarterCode(endpoint, baseUrl, bearerToken) {
@@ -677,19 +339,15 @@ function generateStarterCode(endpoint, baseUrl, bearerToken) {
   if (endpoint.method === 'GET') {
     // Generate GET request with parameters
     if (endpoint.parameters && endpoint.parameters.length > 0) {
-      const pathParams = endpoint.parameters.filter(p => p.in === 'path');
-      const queryParams = endpoint.parameters.filter(p => p.in === 'query');
+      const allParams = endpoint.parameters;
+      const pathParams = allParams.filter(p => p.in === 'path');
+      const queryParams = allParams.filter(p => p.in === 'query');
 
-      let stateInit = '';
-      let stateVars = '';
-      pathParams.forEach(param => {
-        stateInit += `  const [${param.name}, set${param.name.charAt(0).toUpperCase() + param.name.slice(1)}] = React.useState(${JSON.stringify(param.default)});\n`;
-        stateVars += param.name + ', ';
-      });
-      queryParams.forEach(param => {
-        stateInit += `  const [${param.name}, set${param.name.charAt(0).toUpperCase() + param.name.slice(1)}] = React.useState(${JSON.stringify(param.default)});\n`;
-        stateVars += param.name + ', ';
-      });
+      const stateInit = allParams.map(p =>
+        `  const [${p.name}, set${p.name.charAt(0).toUpperCase() + p.name.slice(1)}] = React.useState(${JSON.stringify(p.default)});`
+      ).join('\n');
+
+      const stateVars = allParams.map(p => p.name).join(', ');
 
       let urlConstruction = `\`${fullUrl}\``;
       pathParams.forEach(param => {
@@ -697,18 +355,20 @@ function generateStarterCode(endpoint, baseUrl, bearerToken) {
       });
 
       if (queryParams.length > 0) {
-        urlConstruction += ' + "?" + ';
-        urlConstruction += queryParams.map(p => `"${p.name}=" + ${p.name}`).join(' + "&" + ');
+        urlConstruction += ' + "?" + ' + queryParams.map(p => `"${p.name}=" + ${p.name}`).join(' + "&" + ');
       }
 
       const fetchOptions = generateFetchOptions(null, false);
 
-      return `function ${funcName}() {
-${stateInit}  const [data, setData] = React.useState(null);
-  const [loading, setLoading] = React.useState(false);
-  const [paramsOpen, setParamsOpen] = React.useState(false);
+      const paramInputs = allParams.map(p =>
+        `        <Input label="${p.name}" value={${p.name}} onChange={set${p.name.charAt(0).toUpperCase() + p.name.slice(1)}} type="${p.type === 'integer' ? 'number' : 'text'}" />`
+      ).join('\n');
 
-${DATA_DISPLAY_COMPONENT}
+      return `function ${funcName}() {
+${IMPORTS}
+${stateInit}
+  const [data, setData] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
 
   React.useEffect(() => {
     setLoading(true);
@@ -722,62 +382,15 @@ ${DATA_DISPLAY_COMPONENT}
         console.error('Error:', error);
         setLoading(false);
       });
-  }, [${stateVars.slice(0, -2)}]);
+  }, [${stateVars}]);
 
   return (
-    <div style={{ padding: '6px', maxWidth: '100%' }}>
-      <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginBottom: '6px' }}>
-        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>${endpoint.title}</h3>
-      </div>
-      <div style={{ backgroundColor: '#f8f9fa', borderRadius: '6px', marginBottom: '6px', border: '1px solid #e2e8f0' }}>
-        <div
-          onClick={() => setParamsOpen(!paramsOpen)}
-          style={{
-            padding: '4px 6px',
-            cursor: 'pointer',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            fontSize: '13px',
-            fontWeight: 600,
-            color: '#4a5568',
-            userSelect: 'none'
-          }}
-        >
-          <span>⚙️ Parameters</span>
-          <span style={{ transform: paramsOpen ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', fontSize: '10px' }}>▶</span>
-        </div>
-        {paramsOpen && (
-          <div style={{ padding: '6px', borderTop: '1px solid #e2e8f0', backgroundColor: '#fff' }}>
-${pathParams.map(p => `            <div style={{ marginBottom: '4px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, marginBottom: '2px', color: '#4a5568' }}>${p.name}:</label>
-              <input
-                type="${p.type === 'integer' ? 'number' : 'text'}"
-                value={${p.name}}
-                onChange={(e) => set${p.name.charAt(0).toUpperCase() + p.name.slice(1)}(${p.type === 'integer' ? 'parseInt(e.target.value)' : 'e.target.value'})}
-                style={{ width: '100%', padding: '4px 6px', fontSize: '13px', border: '1px solid #cbd5e0', borderRadius: '4px' }}
-              />
-            </div>`).join('\n')}
-${queryParams.map(p => `            <div style={{ marginBottom: '4px' }}>
-              <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, marginBottom: '2px', color: '#4a5568' }}>${p.name}:</label>
-              <input
-                type="${p.type === 'integer' ? 'number' : 'text'}"
-                value={${p.name}}
-                onChange={(e) => set${p.name.charAt(0).toUpperCase() + p.name.slice(1)}(${p.type === 'integer' ? 'parseInt(e.target.value)' : 'e.target.value'})}
-                style={{ width: '100%', padding: '4px 6px', fontSize: '13px', border: '1px solid #cbd5e0', borderRadius: '4px' }}
-              />
-            </div>`).join('\n')}
-          </div>
-        )}
-      </div>
-      {loading && <p style={{ fontSize: '13px', color: '#718096' }}>Loading...</p>}
-      {data && (
-        <div>
-          <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '4px', color: '#4a5568' }}>Response:</div>
-          <DataDisplay data={data} />
-        </div>
-      )}
-    </div>
+    <Layout title="${endpoint.title}" loading={loading}>
+      <Params>
+${paramInputs}
+      </Params>
+      <Response data={data} />
+    </Layout>
   );
 }`;
     } else {
@@ -785,10 +398,9 @@ ${queryParams.map(p => `            <div style={{ marginBottom: '4px' }}>
       const fetchOptions = generateFetchOptions(null, false);
 
       return `function ${funcName}() {
+${IMPORTS}
   const [data, setData] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
-
-${DATA_DISPLAY_COMPONENT}
 
   React.useEffect(() => {
     setLoading(true);
@@ -805,18 +417,9 @@ ${DATA_DISPLAY_COMPONENT}
   }, []);
 
   return (
-    <div style={{ padding: '6px', maxWidth: '100%' }}>
-      <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginBottom: '6px' }}>
-        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>${endpoint.title}</h3>
-      </div>
-      {loading && <p style={{ fontSize: '13px', color: '#718096' }}>Loading...</p>}
-      {data && (
-        <div>
-          <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '4px', color: '#4a5568' }}>Response:</div>
-          <DataDisplay data={data} />
-        </div>
-      )}
-    </div>
+    <Layout title="${endpoint.title}" loading={loading}>
+      <Response data={data} />
+    </Layout>
   );
 }`;
     }
@@ -832,12 +435,28 @@ ${DATA_DISPLAY_COMPONENT}
 
       const fetchOptions = generateFetchOptions(endpoint.method, true);
 
+      const formFields = propNames.map(name => {
+        const prop = props[name];
+        const isTextarea = prop.type === 'string' && name.toLowerCase().includes('body');
+        const setter = `(val) => setFormData({...formData, ${name}: val})`;
+
+        if (isTextarea) {
+          return `        <Textarea label="${name}" value={formData.${name}} onChange=${setter} />`;
+        } else if (prop.type === 'boolean') {
+          return `        <label style={{ display: 'flex', alignItems: 'center', fontSize: '13px', marginBottom: '4px', cursor: 'pointer' }}>
+          <input type="checkbox" checked={formData.${name}} onChange={(e) => setFormData({...formData, ${name}: e.target.checked})} style={{ marginRight: '4px' }} />
+          ${name}
+        </label>`;
+        } else {
+          return `        <Input label="${name}" value={formData.${name}} onChange=${setter} type="${prop.type === 'integer' ? 'number' : 'text'}" />`;
+        }
+      }).join('\n');
+
       return `function ${funcName}() {
+${IMPORTS}
   const [formData, setFormData] = React.useState(${initialState});
   const [result, setResult] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
-
-${DATA_DISPLAY_COMPONENT}
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -855,60 +474,15 @@ ${DATA_DISPLAY_COMPONENT}
   };
 
   return (
-    <div style={{ padding: '6px', maxWidth: '100%' }}>
-      <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginBottom: '6px' }}>
-        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>${endpoint.title}</h3>
-      </div>
+    <Layout title="${endpoint.title}" loading={loading}>
       <form onSubmit={handleSubmit} style={{ marginBottom: '6px' }}>
-${propNames.map(name => {
-  const prop = props[name];
-  const inputType = prop.type === 'integer' ? 'number' : prop.type === 'boolean' ? 'checkbox' : 'text';
-  const isTextarea = prop.type === 'string' && name.toLowerCase().includes('body');
-
-  if (isTextarea) {
-    return `        <div style={{ marginBottom: '4px' }}>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, marginBottom: '2px', color: '#4a5568' }}>${name}:</label>
-          <textarea
-            value={formData.${name}}
-            onChange={(e) => setFormData({...formData, ${name}: e.target.value})}
-            style={{ display: 'block', width: '100%', padding: '4px 6px', fontSize: '13px', border: '1px solid #cbd5e0', borderRadius: '4px', minHeight: '60px', fontFamily: 'inherit' }}
-          />
-        </div>`;
-  } else if (prop.type === 'boolean') {
-    return `        <div style={{ marginBottom: '4px' }}>
-          <label style={{ display: 'flex', alignItems: 'center', fontSize: '13px', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={formData.${name}}
-              onChange={(e) => setFormData({...formData, ${name}: e.target.checked})}
-              style={{ marginRight: '4px' }}
-            />
-            ${name}
-          </label>
-        </div>`;
-  } else {
-    return `        <div style={{ marginBottom: '4px' }}>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: 500, marginBottom: '2px', color: '#4a5568' }}>${name}:</label>
-          <input
-            type="${inputType}"
-            value={formData.${name}}
-            onChange={(e) => setFormData({...formData, ${name}: ${prop.type === 'integer' ? 'parseInt(e.target.value)' : 'e.target.value'}})}
-            style={{ display: 'block', width: '100%', padding: '4px 6px', fontSize: '13px', border: '1px solid #cbd5e0', borderRadius: '4px' }}
-          />
-        </div>`;
-  }
-}).join('\n')}
+${formFields}
         <button type="submit" disabled={loading} style={{ marginTop: '2px', padding: '6px 12px', fontSize: '13px', fontWeight: 600 }}>
           {loading ? 'Submitting...' : 'Submit'}
         </button>
       </form>
-      {result && (
-        <div>
-          <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '4px', color: '#4a5568' }}>Response:</div>
-          <DataDisplay data={result} />
-        </div>
-      )}
-    </div>
+      <Response data={result} />
+    </Layout>
   );
 }`;
     } else {
@@ -916,10 +490,9 @@ ${propNames.map(name => {
       const fetchOptions = generateFetchOptions(endpoint.method, false);
 
       return `function ${funcName}() {
+${IMPORTS}
   const [result, setResult] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
-
-${DATA_DISPLAY_COMPONENT}
 
   const handleClick = () => {
     setLoading(true);
@@ -936,20 +509,12 @@ ${DATA_DISPLAY_COMPONENT}
   };
 
   return (
-    <div style={{ padding: '6px', maxWidth: '100%' }}>
-      <div style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginBottom: '6px' }}>
-        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>${endpoint.title}</h3>
-      </div>
+    <Layout title="${endpoint.title}" loading={loading}>
       <button onClick={handleClick} disabled={loading} style={{ padding: '6px 12px', fontSize: '13px', fontWeight: 600 }}>
         {loading ? 'Processing...' : '${endpoint.method}'}
       </button>
-      {result && (
-        <div style={{ marginTop: '6px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '4px', color: '#4a5568' }}>Response:</div>
-          <DataDisplay data={result} />
-        </div>
-      )}
-    </div>
+      <Response data={result} />
+    </Layout>
   );
 }`;
     }

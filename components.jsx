@@ -708,6 +708,182 @@ function Preview() {
             import React from 'react';
             import ReactDOM from 'react-dom';
 
+            // Shared API Explorer utilities
+            window.APIExplorer = {
+              // Layout component for consistent UI
+              Layout: ({ title, children, loading }) => {
+                return React.createElement('div', { style: { padding: '6px', maxWidth: '100%' } },
+                  React.createElement('div', {
+                    style: { borderBottom: '1px solid #e2e8f0', paddingBottom: '4px', marginBottom: '6px' }
+                  },
+                    React.createElement('h3', { style: { margin: 0, fontSize: '16px', fontWeight: 600 } }, title)
+                  ),
+                  loading && React.createElement('p', { style: { fontSize: '13px', color: '#718096' } }, 'Loading...'),
+                  !loading && children
+                );
+              },
+
+              // Parameters section with collapsible UI
+              Params: ({ children }) => {
+                const [open, setOpen] = React.useState(false);
+                return React.createElement('div', {
+                  style: { backgroundColor: '#f8f9fa', borderRadius: '6px', marginBottom: '6px', border: '1px solid #e2e8f0' }
+                },
+                  React.createElement('div', {
+                    onClick: () => setOpen(!open),
+                    style: {
+                      padding: '4px 6px', cursor: 'pointer', display: 'flex',
+                      justifyContent: 'space-between', alignItems: 'center',
+                      fontSize: '13px', fontWeight: 600, color: '#4a5568', userSelect: 'none'
+                    }
+                  },
+                    React.createElement('span', null, '\u2699\uFE0F Parameters'),
+                    React.createElement('span', {
+                      style: { transform: open ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s', fontSize: '10px' }
+                    }, '\u25B6')
+                  ),
+                  open && React.createElement('div', {
+                    style: { padding: '6px', borderTop: '1px solid #e2e8f0', backgroundColor: '#fff' }
+                  }, children)
+                );
+              },
+
+              // Input field component
+              Input: ({ label, value, onChange, type = 'text' }) => {
+                return React.createElement('div', { style: { marginBottom: '4px' } },
+                  React.createElement('label', {
+                    style: { display: 'block', fontSize: '12px', fontWeight: 500, marginBottom: '2px', color: '#4a5568' }
+                  }, label + ':'),
+                  React.createElement('input', {
+                    type, value,
+                    onChange: (e) => onChange(type === 'number' ? parseInt(e.target.value) : e.target.value),
+                    style: { width: '100%', padding: '4px 6px', fontSize: '13px', border: '1px solid #cbd5e0', borderRadius: '4px' }
+                  })
+                );
+              },
+
+              // Textarea component
+              Textarea: ({ label, value, onChange }) => {
+                return React.createElement('div', { style: { marginBottom: '4px' } },
+                  React.createElement('label', {
+                    style: { display: 'block', fontSize: '12px', fontWeight: 500, marginBottom: '2px', color: '#4a5568' }
+                  }, label + ':'),
+                  React.createElement('textarea', {
+                    value, onChange: (e) => onChange(e.target.value),
+                    style: {
+                      display: 'block', width: '100%', padding: '4px 6px', fontSize: '13px',
+                      border: '1px solid #cbd5e0', borderRadius: '4px', minHeight: '60px', fontFamily: 'inherit'
+                    }
+                  })
+                );
+              },
+
+              // Data display with automatic formatting
+              DataDisplay: ({ data }) => {
+                if (data === null || data === undefined) {
+                  return React.createElement('span', { style: { color: '#999', fontSize: '13px' } }, 'null');
+                }
+
+                if (Array.isArray(data)) {
+                  if (data.length === 0) return React.createElement('span', { style: { color: '#999', fontSize: '13px' } }, '[]');
+
+                  const firstItem = data[0];
+                  if (typeof firstItem === 'object' && firstItem !== null) {
+                    const keys = Object.keys(firstItem);
+                    return React.createElement('div', { style: { overflowX: 'auto', margin: '8px 0' } },
+                      React.createElement('table', {
+                        style: { width: '100%', borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #e2e8f0' }
+                      },
+                        React.createElement('thead', null,
+                          React.createElement('tr', { style: { backgroundColor: '#4a5568', color: '#fff' } },
+                            keys.map(key => React.createElement('th', {
+                              key,
+                              style: {
+                                padding: '6px 10px', textAlign: 'left', fontWeight: 600,
+                                borderBottom: '2px solid #2d3748', fontSize: '12px',
+                                textTransform: 'uppercase', letterSpacing: '0.5px'
+                              }
+                            }, key))
+                          )
+                        ),
+                        React.createElement('tbody', null,
+                          data.map((item, idx) => React.createElement('tr', {
+                            key: idx,
+                            style: {
+                              borderBottom: '1px solid #e2e8f0',
+                              backgroundColor: idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.02)'
+                            }
+                          },
+                            keys.map(key => React.createElement('td', {
+                              key,
+                              style: { padding: '6px 10px' }
+                            }, React.createElement(window.APIExplorer.DataDisplay, { data: item[key] })))
+                          ))
+                        )
+                      )
+                    );
+                  } else {
+                    return React.createElement('ul', { style: { margin: '4px 0', paddingLeft: '18px', fontSize: '13px' } },
+                      data.map((item, idx) => React.createElement('li', {
+                        key: idx, style: { marginBottom: '2px' }
+                      }, React.createElement(window.APIExplorer.DataDisplay, { data: item })))
+                    );
+                  }
+                }
+
+                if (typeof data === 'object') {
+                  return React.createElement('div', { style: { marginLeft: '12px', fontSize: '13px' } },
+                    Object.entries(data).map(([key, value]) => React.createElement('div', {
+                      key, style: { marginBottom: '4px' }
+                    },
+                      React.createElement('strong', { style: { color: '#2563eb', fontSize: '12px' } }, key + ':'),
+                      ' ',
+                      Array.isArray(value) || (typeof value === 'object' && value !== null)
+                        ? React.createElement(window.APIExplorer.DataDisplay, { data: value })
+                        : React.createElement('span', null, String(value))
+                    ))
+                  );
+                }
+
+                return React.createElement('span', { style: { fontSize: '13px' } }, String(data));
+              },
+
+              // Response display wrapper
+              Response: ({ data }) => {
+                if (!data) return null;
+                return React.createElement('div', null,
+                  React.createElement('div', {
+                    style: { fontSize: '13px', fontWeight: 600, marginBottom: '4px', color: '#4a5568' }
+                  }, 'Response:'),
+                  React.createElement(window.APIExplorer.DataDisplay, { data })
+                );
+              },
+
+              // Common fetch wrapper with error handling
+              useFetch: (url, options) => {
+                const [data, setData] = React.useState(null);
+                const [loading, setLoading] = React.useState(false);
+                const [error, setError] = React.useState(null);
+
+                const execute = React.useCallback(() => {
+                  setLoading(true);
+                  setError(null);
+                  fetch(url, options)
+                    .then(response => response.json())
+                    .then(result => {
+                      setData(result);
+                      setLoading(false);
+                    })
+                    .catch(err => {
+                      setError(err.message);
+                      setLoading(false);
+                    });
+                }, [url, JSON.stringify(options)]);
+
+                return { data, loading, error, execute };
+              }
+            };
+
             // Pre-transpiled user code
             ${transpiledCode}
 
