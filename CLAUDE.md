@@ -57,6 +57,10 @@ app.jsx             - JSX module: Main App component, waits for dependencies, re
 2. **Code Persistence**: All endpoint code and state saved to `localStorage` with debounced writes (key: `apiExplorer`)
 
 3. **Live Preview**: Uses `<iframe>` with `srcdoc` to sandbox and execute user code safely
+   - **Performance Optimization**: User JSX code is pre-transpiled in the parent window using Babel before injection into iframe
+   - iframe receives **plain JavaScript** (not JSX), eliminating the need to load Babel Standalone (~3MB) in every iframe
+   - This provides instant preview loading while maintaining the JSX editing experience for users
+   - Users write JSX in CodeMirror → Parent window transpiles → iframe executes pre-transpiled JS
 
 ### AI Integration
 
@@ -133,6 +137,29 @@ CodeMirror 5 is used for the code editor:
 - Loaded via CDN in `index.html`
 - Initialized in `CodeEditor` component with JSX mode
 - Theme switches between default/dracula based on system dark mode
+
+### Preview Performance Architecture
+
+**Critical optimization**: The iframe preview system uses a two-stage transpilation approach:
+
+1. **Main App (Parent Window)**:
+   - Loads Babel Standalone once at startup
+   - User writes JSX in CodeMirror editor
+   - When rendering preview, parent window transpiles JSX → JavaScript using `window.Babel.transform()`
+
+2. **Preview iframe**:
+   - Does NOT load Babel Standalone (saves ~3MB + initialization time)
+   - Only loads React runtime via import maps (cached after first load)
+   - Receives pre-transpiled plain JavaScript
+   - Executes immediately without transpilation overhead
+
+**Why this matters**:
+- Original approach: iframe loaded 3MB Babel + initialized + transpiled on every preview render = slow
+- Optimized approach: Parent transpiles once, iframe executes pre-compiled code = fast
+- User experience unchanged: still writes JSX, gets instant feedback
+- Simulates a "Vite dev server" experience entirely in the browser
+
+**Implementation**: See `Preview` component in `components.jsx`, specifically the `renderPreview()` function at lines 545-735
 
 ## Endpoint Management
 

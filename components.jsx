@@ -395,51 +395,80 @@ function Header() {
 }
 
 // Endpoint Item Component
-function EndpointItem({ endpoint, isSelected, onSelect, isExpanded, onToggleExpand, isModified }) {
+function EndpointItem({ endpoint, isSelected, onSelect, isExpanded, onToggleExpand, isModified, showDetails = false }) {
+  // Get method-based color class
+  const getMethodClass = (method) => {
+    if (!method) return 'method-get';
+    return `method-${method.toLowerCase()}`;
+  };
+
+  // Get consistent icon for this endpoint - with fallback
+  const iconIndex = Icons?.getEndpointIcon ? Icons.getEndpointIcon(endpoint.id) : 0;
+  const EndpointIcon = Icons?.shapes?.[iconIndex] || (() => (
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <circle cx="12" cy="12" r="10"/>
+    </svg>
+  ));
+
   return (
     <div className="challenge-item">
       <div
         className={`challenge-header ${isSelected ? 'selected' : ''}`}
         onClick={() => onSelect(endpoint.id)}
       >
-        <input
-          type="checkbox"
-          className="challenge-checkbox"
-          checked={endpoint.completed}
-          readOnly
-          onClick={(e) => e.stopPropagation()}
-        />
-        <div className="challenge-title">
-          {endpoint.title}
-          {isModified && (
-            <span
-              className="modified-indicator"
-              title="Code has been modified"
-              style={{
-                display: 'inline-block',
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                backgroundColor: '#3182ce',
-                marginLeft: '8px',
-                verticalAlign: 'middle'
-              }}
-            />
+        <div className={`endpoint-icon ${getMethodClass(endpoint.method)}`}>
+          <EndpointIcon />
+        </div>
+        <div className="challenge-title-container">
+          <div className="challenge-title">
+            {endpoint.title}
+            {isModified && (
+              <span
+                className="modified-indicator"
+                title="Code has been modified"
+                style={{
+                  display: 'inline-block',
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: '#3182ce',
+                  marginLeft: '8px',
+                  verticalAlign: 'middle'
+                }}
+              />
+            )}
+          </div>
+          {showDetails && (
+            <div className="endpoint-details">
+              {endpoint.method && (
+                <span className={`method-badge ${getMethodClass(endpoint.method)}`}>
+                  {endpoint.method}
+                </span>
+              )}
+              <span className="endpoint-path">{endpoint.path || endpoint.url || ''}</span>
+            </div>
+          )}
+          {showDetails && endpoint.description && (
+            <div className="endpoint-description-inline">{endpoint.description}</div>
           )}
         </div>
-        <div
-          className={`challenge-expand ${isExpanded ? 'open' : ''}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleExpand(endpoint.id);
-          }}
-        >
-          <Icons.ChevronRight />
+        {!showDetails && (
+          <div
+            className={`challenge-expand ${isExpanded ? 'open' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleExpand(endpoint.id);
+            }}
+          >
+            <Icons.ChevronRight />
+          </div>
+        )}
+      </div>
+      {!showDetails && (
+        <div className={`challenge-content ${isExpanded ? 'open' : ''}`}>
+          <div className="challenge-description">{endpoint.description}</div>
         </div>
-      </div>
-      <div className={`challenge-content ${isExpanded ? 'open' : ''}`}>
-        <div className="challenge-description">{endpoint.description}</div>
-      </div>
+      )}
     </div>
   );
 }
@@ -486,51 +515,24 @@ function Preview() {
   const code = getEndpointCode(currentEndpointId);
   const iframeRef = useRef(null);
   const [hasChanges, setHasChanges] = useState(false);
-  const [lastRenderedCode, setLastRenderedCode] = useState(code);
-  const isDrawerOpen = useRef(false);
+  const [lastRenderedCode, setLastRenderedCode] = useState("");
 
-  // Get drawer open state from parent component
+  // Initial render on mount
   useEffect(() => {
-    const drawer = document.querySelector('.preview-drawer');
-    if (drawer) {
-      const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (mutation.attributeName === 'class') {
-            isDrawerOpen.current = drawer.classList.contains('open');
-            // If drawer just opened and there are changes, render preview
-            if (isDrawerOpen.current && hasChanges) {
-              renderPreview();
-            }
-          }
-        });
-      });
-
-      observer.observe(drawer, { attributes: true });
-      isDrawerOpen.current = drawer.classList.contains('open');
-
-      return () => observer.disconnect();
-    }
-  }, [hasChanges]);
+    renderPreview();
+  }, []);
 
   // Reset lastRenderedCode when endpoint changes
   useEffect(() => {
     setLastRenderedCode("");
     setHasChanges(true);
-
-    // Only render immediately if drawer is open
-    if (isDrawerOpen.current) {
-      renderPreview();
-    }
+    renderPreview();
   }, [currentEndpointId]);
 
   useEffect(() => {
     if (code !== lastRenderedCode) {
       setHasChanges(true);
-
-      // Only auto-update if drawer is open
-      if (isDrawerOpen.current) {
-        renderPreview();
-      }
+      renderPreview();
     }
   }, [code, lastRenderedCode]);
 
@@ -544,12 +546,58 @@ function Preview() {
       code.includes("return") &&
       code.includes("<");
 
+    // Pre-transpile the code using parent window's Babel
+    let transpiledCode = '';
+    let renderCode = '';
+
+    try {
+      // Transpile user's JSX code to plain JavaScript
+      const transformed = window.Babel.transform(code, {
+        presets: ['react'],
+        filename: 'preview.jsx'
+      });
+      transpiledCode = transformed.code;
+
+      // Generate the render code based on component type
+      if (isReactComponent) {
+        // Extract component name and render it
+        const match = code.match(/function\s+(\w+)/);
+        if (match) {
+          const componentName = match[1];
+          renderCode = `
+            const ComponentName = ${componentName};
+            ReactDOM.render(React.createElement(ComponentName), document.getElementById('root'));
+          `;
+        }
+      } else {
+        // For non-React endpoints, show function definition
+        const match = code.match(/function\s+(\w+)/);
+        if (match) {
+          const funcName = match[1];
+          renderCode = `
+            window['${funcName}'] = ${funcName};
+            document.getElementById('root').innerHTML = '<h3>Function: ${funcName}</h3>' +
+              '<p>Try calling this function in the browser console!</p>' +
+              '<div class="success">✓ Function defined successfully</div>';
+            console.log("✓ Function ${funcName} is available in the console.");
+          `;
+        }
+      }
+    } catch (error) {
+      // If transpilation fails, show error in iframe
+      transpiledCode = `
+        document.getElementById('root').innerHTML = '<div class="error">Transpilation Error: ' + ${JSON.stringify(error.message)} + '</div>';
+      `;
+      renderCode = '';
+    }
+
     const script = "script";
 
     const html = `
       <!DOCTYPE html>
       <html>
         <head>
+          <meta charset="utf-8">
           <${script} type="importmap">
             {
               "imports": {
@@ -564,8 +612,6 @@ function Preview() {
             }
           </${script}>
           <${script} async src="https://ga.jspm.io/npm:es-module-shims@1.10.0/dist/es-module-shims.js"></${script}>
-          <${script} src="https://unpkg.com/@babel/standalone/babel.min.js"></${script}>
-          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
           <style>
             :root {
               --blue-500: #3182ce;
@@ -583,12 +629,13 @@ function Preview() {
             }
 
             body {
-              font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
               padding: 24px;
               line-height: 1.5;
               color: var(--gray-900);
               font-size: 16px;
               margin: 0;
+              background-color: #ffffff;
             }
 
             .dark-mode {
@@ -657,39 +704,15 @@ function Preview() {
         </head>
         <body>
           <div id="root"></div>
-          <${script} type="text/babel" data-presets="react" data-type="module">
+          <${script} type="module">
             import React from 'react';
             import ReactDOM from 'react-dom';
 
-            ${code}
-            ${
-              isReactComponent
-                ? `
-              // Extract the component name from the code
-              const match = ${JSON.stringify(
-                code
-              )}.match(/function\\s+(\\w+)/);
-              if (match) {
-                const ComponentName = eval(match[1]);
-                ReactDOM.render(React.createElement(ComponentName), document.getElementById('root'));
-              }
-            `
-                : `
-              // For non-React endpoints, show the function result
-              const match = ${JSON.stringify(
-                code
-              )}.match(/function\\s+(\\w+)/);
-              if (match) {
-                const funcName = match[1];
-                const func = eval('(' + ${JSON.stringify(code)} + ')');
-                document.getElementById('root').innerHTML = '<h3>Function: ' + funcName + '</h3>' +
-                  '<p>Try calling this function in the browser console!</p>' +
-                  '<div class="success">✓ Function defined successfully</div>';
-                window[funcName] = func;
-                console.log("✓ Function " + funcName + " is available in the console.");
-              }
-            `
-            }
+            // Pre-transpiled user code
+            ${transpiledCode}
+
+            // Render code
+            ${renderCode}
           </${script}>
         </body>
       </html>`;
@@ -789,18 +812,73 @@ function CodeEditor({ code, onChange }) {
   return <div style={{ flex: 1 }} ref={editorRef}></div>;
 }
 
+// Action FAB Menu Component
+function ActionFABMenu() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { currentEndpointId, getEndpointCode, resetEndpointCode } = useEndpoints();
+  const toast = useToast();
+  const currentCode = getEndpointCode(currentEndpointId);
+
+  const handleSubmit = () => {
+    const result = window.runTests(currentEndpointId, currentCode);
+    if (result.success) {
+      toast.addToast(result.message || 'Code validated successfully!', 'success');
+    } else {
+      toast.addToast(result.error || 'Code validation failed', 'error');
+    }
+    setIsMenuOpen(false);
+  };
+
+  const handleReset = () => {
+    if (window.confirm("Reset code to default state? This cannot be undone.")) {
+      resetEndpointCode(currentEndpointId);
+      toast.addToast("Code reset to default state", "success");
+    }
+    setIsMenuOpen(false);
+  };
+
+  return (
+    <div className="action-fab-menu">
+      {isMenuOpen && (
+        <div className="action-fab-items">
+          <button
+            className="fab-button fab-run"
+            onClick={handleSubmit}
+            title="Validate Code"
+          >
+            <Icons.Run />
+          </button>
+          <LoadSpecButton />
+          <ProcessTodoButton />
+          <button
+            className="fab-button fab-reset"
+            onClick={handleReset}
+            title="Reset to Default"
+          >
+            <Icons.Reset />
+          </button>
+        </div>
+      )}
+      <button
+        className="fab-button fab-main"
+        onClick={() => setIsMenuOpen(!isMenuOpen)}
+        title="Actions"
+      >
+        {isMenuOpen ? '×' : '☰'}
+      </button>
+    </div>
+  );
+}
+
 // Main IDE Component
 function IDEPage() {
   const {
     currentEndpointId,
     getEndpointCode,
     updateEndpointCode,
-    resetEndpointCode,
-    markEndpointCompleted,
-    endpoints
+    selectEndpoint
   } = useEndpoints();
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const { isConfigured } = useAI();
+  const [showEndpointsList, setShowEndpointsList] = useState(false);
   const toast = useToast();
 
   // Get current code based on selected endpoint
@@ -810,15 +888,9 @@ function IDEPage() {
     updateEndpointCode(currentEndpointId, newCode);
   }, [currentEndpointId, updateEndpointCode]);
 
-  const handleSubmit = () => {
-    const result = window.runTests(currentEndpointId, currentCode);
-
-    if (result.success) {
-      markEndpointCompleted(currentEndpointId);
-      toast.addToast(result.message || 'Code validated successfully!', 'success');
-    } else {
-      toast.addToast(result.error || 'Code validation failed', 'error');
-    }
+  const handleEndpointSelect = (id) => {
+    selectEndpoint(id);
+    setShowEndpointsList(false);
   };
 
   return (
@@ -830,58 +902,52 @@ function IDEPage() {
       }}
     >
       <Header />
-      <div className="app-container">
-        <Sidebar />
-        <div className="main-content">
-          <div className="editor-container">
-            <CodeEditor code={currentCode} onChange={handleCodeChange} />
-          </div>
-        </div>
-      </div>
-
-      {/* Fixed positioned elements outside the normal flow */}
-      <div className="sidebar-right">
-        <div className="fab-container">
-          {/* Preview and Run buttons moved to the top */}
-          <button
-            className="fab-button fab-preview"
-            onClick={() => setIsPreviewOpen(!isPreviewOpen)}
-            title={isPreviewOpen ? "Hide Preview" : "Show Preview"}
-          >
-            {isPreviewOpen ? <Icons.HidePreview /> : <Icons.Preview />}
-          </button>
-          <button
-            className="fab-button fab-run"
-            onClick={handleSubmit}
-            title="Validate Code"
-          >
-            <Icons.Run />
-          </button>
-
-          <LoadSpecButton />
-
-          <ProcessTodoButton />
-
-          <button
-            className="fab-button fab-reset"
-            onClick={() => {
-              if (window.confirm("Reset code to default state? This cannot be undone.")) {
-                resetEndpointCode(currentEndpointId);
-                toast.addToast("Code reset to default state", "success");
-              }
-            }}
-            title="Reset to Default"
-          >
-            <Icons.Reset />
-          </button>
-        </div>
-      </div>
-
-      <div
-        className={`preview-drawer ${isPreviewOpen ? "open" : ""}`}
-      >
+      <div className="mobile-main-container">
         <Preview />
       </div>
+
+      {/* Endpoints overlay */}
+      {showEndpointsList && (
+        <div className="endpoints-overlay" onClick={() => setShowEndpointsList(false)}>
+          <div className="endpoints-panel" onClick={e => e.stopPropagation()}>
+            <div className="sidebar-header">
+              <span>Endpoints</span>
+              <button
+                className="close-button"
+                onClick={() => setShowEndpointsList(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="challenges-list">
+              {useEndpoints().endpoints.map((endpoint) => (
+                <EndpointItem
+                  key={endpoint.id}
+                  endpoint={endpoint}
+                  isSelected={endpoint.id === currentEndpointId}
+                  onSelect={handleEndpointSelect}
+                  isExpanded={false}
+                  onToggleExpand={() => {}}
+                  isModified={useEndpoints().isEndpointModified(endpoint.id)}
+                  showDetails={true}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom-left FAB for endpoints */}
+      <button
+        className="fab-button fab-endpoints"
+        onClick={() => setShowEndpointsList(!showEndpointsList)}
+        title="Endpoints"
+      >
+        <Icons.List />
+      </button>
+
+      {/* Bottom-right FAB menu for actions */}
+      <ActionFABMenu />
     </div>
   );
 }
@@ -900,5 +966,6 @@ window.AppComponents = {
   Sidebar,
   Preview,
   CodeEditor,
+  ActionFABMenu,
   IDEPage
 };
