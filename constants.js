@@ -131,6 +131,97 @@ window.AppConstants = {
 }`,
       completed: false,
     },
+    {
+      id: "4",
+      title: "Photos (Paginated)",
+      description: "Fetch photos with infinite scroll pagination",
+      method: "GET",
+      path: "/photos",
+      parameters: [
+        { name: "_start", in: "query", type: "integer", default: 0 },
+        { name: "_limit", in: "query", type: "integer", default: 10 }
+      ],
+      starterCode: `function get_photos() {
+  const { Layout, Params, Input, PaginatedResponse, Toolbar, Response, ErrorDisplay } = window.APIExplorer;
+
+  const [allResults, setAllResults] = React.useState([]);
+  const [responseData, setResponseData] = React.useState(null);
+  const startRef = React.useRef(0);
+  const [limit] = React.useState(10);
+  const [loading, setLoading] = React.useState(false);
+  const [hasMore, setHasMore] = React.useState(true);
+  const [error, setError] = React.useState(null);
+
+  const fetchPage = React.useCallback((currentStart) => {
+    const queryParams = "?" + "_start=" + currentStart + "&_limit=" + limit;
+    const url = \`https://jsonplaceholder.typicode.com/photos\` + queryParams;
+
+    console.log('Fetching:', url);
+
+    return fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(\`HTTP error! status: \${response.status}\`);
+        }
+        return response.json();
+      })
+      .then(result => {
+        console.log('Response:', result);
+        // Handle both array responses and object responses with 'results' key
+        const newData = Array.isArray(result) ? result : (result.results || []);
+        const isLastPage = newData.length < limit;
+
+        setAllResults(prev => [...prev, ...newData]);
+        setResponseData(result);
+        startRef.current = Number(currentStart) + Number(limit);
+        setHasMore(!isLastPage);
+        setError(null);
+
+        return result;
+      });
+  }, [limit]);
+
+  React.useEffect(() => {
+    setLoading(true);
+    setAllResults([]);
+    startRef.current = 0;
+    setHasMore(true);
+    setError(null);
+    fetchPage(0)
+      .then(() => setLoading(false))
+      .catch(err => {
+        console.error('Error:', err);
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [fetchPage]);
+
+  const handleLoadMore = React.useCallback(() => {
+    return fetchPage(startRef.current).catch(err => {
+      console.error('Load more error:', err);
+      setError(err.message);
+    });
+  }, [fetchPage]);
+
+  // Check if response is an object with keys other than 'results'
+  const hasToolbarData = responseData && typeof responseData === 'object' &&
+    !Array.isArray(responseData) && Object.keys(responseData).some(key => key !== 'results');
+
+  return (
+    <Layout title="Photos (Paginated)" loading={loading}>
+      <ErrorDisplay error={error} />
+      {hasToolbarData && <Toolbar data={responseData} exclude={['results']} />}
+      {!error && <PaginatedResponse
+        data={allResults}
+        onLoadMore={handleLoadMore}
+        loading={loading}
+        hasMore={hasMore}
+      />}
+    </Layout>
+  );
+}`,
+      completed: false,
+    },
   ],
 
   AI_PROVIDERS: {
@@ -344,28 +435,159 @@ function generateStarterCode(endpoint, baseUrl, bearerToken) {
       const pathParams = allParams.filter(p => p.in === 'path');
       const queryParams = allParams.filter(p => p.in === 'query');
 
-      const stateInit = allParams.map(p =>
-        `  const [${p.name}, set${p.name.charAt(0).toUpperCase() + p.name.slice(1)}] = React.useState(${JSON.stringify(p.default)});`
-      ).join('\n');
+      // Check if pagination pattern is present (skip/limit, offset/limit, _start/_limit, etc.)
+      const skipNames = ['skip', 'offset', '_start', 'start'];
+      const limitNames = ['limit', '_limit', 'count', 'per_page', 'pageSize'];
 
-      const stateVars = allParams.map(p => p.name).join(', ');
+      const skipParam = queryParams.find(p => skipNames.includes(p.name));
+      const limitParam = queryParams.find(p => limitNames.includes(p.name));
+      const isPaginated = skipParam && limitParam;
 
-      let urlConstruction = `\`${fullUrl}\``;
-      pathParams.forEach(param => {
-        urlConstruction = urlConstruction.replace(`:${param.name}`, `\${${param.name}}`);
+      if (isPaginated) {
+        // Generate paginated version with infinite scroll
+        const nonPaginationParams = allParams.filter(p => p.name !== skipParam.name && p.name !== limitParam.name);
+
+        const stateInit = nonPaginationParams.map(p =>
+          `  const [${p.name}, set${p.name.charAt(0).toUpperCase() + p.name.slice(1)}] = React.useState(${JSON.stringify(p.default)});`
+        ).join('\n');
+
+        const nonPaginationStateVars = nonPaginationParams.map(p => p.name).join(', ');
+
+        let urlBase = `\`${fullUrl}\``;
+        pathParams.forEach(param => {
+          urlBase = urlBase.replace(`:${param.name}`, `\${${param.name}}`);
+        });
+
+        const nonPaginationQueryParams = queryParams.filter(p => p.name !== skipParam.name && p.name !== limitParam.name);
+
+        const fetchOptions = generateFetchOptions(null, false);
+
+        const paramInputs = nonPaginationParams.length > 0
+          ? nonPaginationParams.map(p =>
+              `        <Input label="${p.name}" value={${p.name}} onChange={set${p.name.charAt(0).toUpperCase() + p.name.slice(1)}} type="${p.type === 'integer' ? 'number' : 'text'}" />`
+            ).join('\n')
+          : '';
+
+        const hasParamsSection = paramInputs.length > 0;
+
+        const skipVarName = skipParam.name.replace(/^_/, '');
+        const limitVarName = limitParam.name.replace(/^_/, '');
+        const skipRefName = skipVarName + 'Ref';
+
+        // Build query params array including both non-pagination and pagination params
+        const allQueryParamsForUrl = [
+          ...nonPaginationQueryParams.map(p => `"${p.name}=" + ${p.name}`),
+          `"${skipParam.name}=" + current${skipVarName.charAt(0).toUpperCase() + skipVarName.slice(1)}`,
+          `"${limitParam.name}=" + ${limitVarName}`
+        ];
+        const queryParamsConstruction = '"?" + ' + allQueryParamsForUrl.join(' + "&" + ');
+
+        return `function ${funcName}() {
+  const { Layout, Params, Input, PaginatedResponse, Toolbar, Response, ErrorDisplay } = window.APIExplorer;
+${stateInit}
+  const [allResults, setAllResults] = React.useState([]);
+  const [responseData, setResponseData] = React.useState(null);
+  const ${skipRefName} = React.useRef(${JSON.stringify(skipParam.default)});
+  const [${limitVarName}] = React.useState(${JSON.stringify(limitParam.default)});
+  const [loading, setLoading] = React.useState(false);
+  const [hasMore, setHasMore] = React.useState(true);
+  const [error, setError] = React.useState(null);
+
+  const fetchPage = React.useCallback((current${skipVarName.charAt(0).toUpperCase() + skipVarName.slice(1)}) => {
+    const queryParams = ${queryParamsConstruction};
+    const url = ${urlBase} + queryParams;
+
+    console.log('Fetching:', url);
+
+    return fetch(url${fetchOptions})
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(\`HTTP error! status: \${response.status}\`);
+        }
+        return response.json();
+      })
+      .then(result => {
+        console.log('Response:', result);
+        // Handle both array responses and object responses with 'results' key
+        const newData = Array.isArray(result) ? result : (result.results || []);
+        const isLastPage = newData.length < ${limitVarName};
+
+        setAllResults(prev => [...prev, ...newData]);
+        setResponseData(result);
+        ${skipRefName}.current = Number(current${skipVarName.charAt(0).toUpperCase() + skipVarName.slice(1)}) + Number(${limitVarName});
+        setHasMore(!isLastPage);
+        setError(null);
+
+        return result;
       });
+  }, [${nonPaginationStateVars ? nonPaginationStateVars + ', ' : ''}${limitVarName}]);
 
-      if (queryParams.length > 0) {
-        urlConstruction += ' + "?" + ' + queryParams.map(p => `"${p.name}=" + ${p.name}`).join(' + "&" + ');
-      }
+  React.useEffect(() => {
+    setLoading(true);
+    setAllResults([]);
+    ${skipRefName}.current = ${JSON.stringify(skipParam.default)};
+    setHasMore(true);
+    setError(null);
+    fetchPage(${JSON.stringify(skipParam.default)})
+      .then(() => setLoading(false))
+      .catch(err => {
+        console.error('Error:', err);
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [${nonPaginationStateVars ? nonPaginationStateVars + ', ' : ''}fetchPage]);
 
-      const fetchOptions = generateFetchOptions(null, false);
+  const handleLoadMore = React.useCallback(() => {
+    return fetchPage(${skipRefName}.current).catch(err => {
+      console.error('Load more error:', err);
+      setError(err.message);
+    });
+  }, [fetchPage]);
 
-      const paramInputs = allParams.map(p =>
-        `        <Input label="${p.name}" value={${p.name}} onChange={set${p.name.charAt(0).toUpperCase() + p.name.slice(1)}} type="${p.type === 'integer' ? 'number' : 'text'}" />`
-      ).join('\n');
+  // Check if response is an object with keys other than 'results'
+  const hasToolbarData = responseData && typeof responseData === 'object' &&
+    !Array.isArray(responseData) && Object.keys(responseData).some(key => key !== 'results');
 
-      return `function ${funcName}() {
+  return (
+    <Layout title="${endpoint.title}" loading={loading}>
+${hasParamsSection ? `      <Params>
+${paramInputs}
+      </Params>` : ''}
+      <ErrorDisplay error={error} />
+      {hasToolbarData && <Toolbar data={responseData} exclude={['results']} />}
+      {!error && <PaginatedResponse
+        data={allResults}
+        onLoadMore={handleLoadMore}
+        loading={loading}
+        hasMore={hasMore}
+      />}
+    </Layout>
+  );
+}`;
+      } else {
+        // Regular non-paginated version
+        const stateInit = allParams.map(p =>
+          `  const [${p.name}, set${p.name.charAt(0).toUpperCase() + p.name.slice(1)}] = React.useState(${JSON.stringify(p.default)});`
+        ).join('\n');
+
+        const stateVars = allParams.map(p => p.name).join(', ');
+
+        let urlConstruction = `\`${fullUrl}\``;
+        pathParams.forEach(param => {
+          urlConstruction = urlConstruction.replace(`:${param.name}`, `\${${param.name}}`);
+        });
+
+        if (queryParams.length > 0) {
+          urlConstruction += ' + "?" + ' + queryParams.map(p => `"${p.name}=" + ${p.name}`).join(' + "&" + ');
+        }
+
+        const fetchOptions = generateFetchOptions(null, false);
+
+        const paramInputs = allParams.map(p =>
+          `        <Input label="${p.name}" value={${p.name}} onChange={set${p.name.charAt(0).toUpperCase() + p.name.slice(1)}} type="${p.type === 'integer' ? 'number' : 'text'}" />`
+        ).join('\n');
+
+        return `function ${funcName}() {
 ${IMPORTS}
 ${stateInit}
   const [data, setData] = React.useState(null);
@@ -394,6 +616,7 @@ ${paramInputs}
     </Layout>
   );
 }`;
+      }
     } else {
       // Simple GET without parameters
       const fetchOptions = generateFetchOptions(null, false);

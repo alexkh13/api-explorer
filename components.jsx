@@ -407,11 +407,10 @@ function Header({ endpoint }) {
   return (
     <div className="h-12 flex-shrink-0 bg-[var(--bg-primary)] border-b border-[var(--border-default)] flex items-center px-5 shadow-sm relative z-10">
       <div className="flex items-center gap-3 font-semibold text-lg text-[var(--text-primary)]">
-        <Icons.Code />
-        <span>API<span className="text-[var(--accent-primary)]">Explorer</span></span>
+        
+        
         {endpoint && (
           <>
-            <span className="text-[var(--text-muted)] text-base">|</span>
             <div className="flex items-center gap-2 text-sm font-normal">
               {endpoint.method && (
                 <span className={`font-semibold px-2 py-0.5 rounded text-xs uppercase border ${getMethodClass(endpoint.method)}`}>
@@ -932,6 +931,112 @@ function Preview() {
                 return React.createElement(window.APIExplorer.DataDisplay, { data });
               },
 
+              // Paginated response with infinite scroll support
+              PaginatedResponse: ({ data, onLoadMore, loading, hasMore }) => {
+                const sentinelRef = React.useRef(null);
+                const onLoadMoreRef = React.useRef(onLoadMore);
+                const isLoadingMoreRef = React.useRef(false);
+                const [isLoadingMore, setIsLoadingMore] = React.useState(false);
+
+                // Always keep the ref up to date
+                React.useEffect(() => {
+                  onLoadMoreRef.current = onLoadMore;
+                }, [onLoadMore]);
+
+                // Sync the loading state with ref
+                React.useEffect(() => {
+                  isLoadingMoreRef.current = isLoadingMore;
+                }, [isLoadingMore]);
+
+                React.useEffect(() => {
+                  const sentinel = sentinelRef.current;
+                  if (!sentinel || !hasMore || loading) {
+                    console.log('[PaginatedResponse] Observer not created:', { hasSentinel: !!sentinel, hasMore, loading });
+                    return;
+                  }
+
+                  console.log('[PaginatedResponse] Creating IntersectionObserver');
+
+                  const observer = new IntersectionObserver(
+                    (entries) => {
+                      const entry = entries[0];
+                      console.log('[PaginatedResponse] Intersection:', {
+                        isIntersecting: entry.isIntersecting,
+                        isLoadingMore: isLoadingMoreRef.current
+                      });
+                      // Use ref to check loading state, not the captured closure value
+                      if (entry.isIntersecting && !isLoadingMoreRef.current) {
+                        console.log('[PaginatedResponse] Triggering load more');
+                        isLoadingMoreRef.current = true;
+                        setIsLoadingMore(true);
+                        // Use the ref to get the latest callback
+                        onLoadMoreRef.current().finally(() => {
+                          console.log('[PaginatedResponse] Load more completed');
+                          isLoadingMoreRef.current = false;
+                          setIsLoadingMore(false);
+                        });
+                      }
+                    },
+                    {
+                      root: null, // viewport
+                      rootMargin: '100px', // trigger 100px before reaching sentinel
+                      threshold: 0
+                    }
+                  );
+
+                  observer.observe(sentinel);
+                  return () => {
+                    console.log('[PaginatedResponse] Disconnecting observer');
+                    observer.disconnect();
+                  };
+                }, [hasMore, loading]);
+
+                if (!data) return null;
+
+                return React.createElement(React.Fragment, null,
+                  React.createElement(window.APIExplorer.DataDisplay, { data }),
+                  hasMore && React.createElement('div', {
+                    ref: sentinelRef,
+                    className: 'h-px w-full',
+                    style: { visibility: 'hidden' }
+                  }),
+                  (loading || isLoadingMore) && React.createElement('div', {
+                    className: 'flex items-center justify-center gap-2 py-4 text-sm text-gray-600 dark:text-gray-400'
+                  },
+                    React.createElement('div', {
+                      className: 'animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full'
+                    }),
+                    React.createElement('span', null, 'Loading more...')
+                  )
+                );
+              },
+
+              // Toolbar for displaying additional response metadata
+              Toolbar: ({ data, exclude = [] }) => {
+                if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+
+                const displayKeys = Object.keys(data).filter(key => !exclude.includes(key));
+                if (displayKeys.length === 0) return null;
+
+                return React.createElement('div', {
+                  className: 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4'
+                },
+                  React.createElement('div', { className: 'flex flex-wrap gap-4 text-sm' },
+                    displayKeys.map(key => React.createElement('div', {
+                      key,
+                      className: 'flex items-center gap-2'
+                    },
+                      React.createElement('span', {
+                        className: 'font-semibold text-blue-700 dark:text-blue-300'
+                      }, key + ':'),
+                      React.createElement('span', {
+                        className: 'text-gray-700 dark:text-gray-300'
+                      }, String(data[key]))
+                    ))
+                  )
+                );
+              },
+
               // Error display component
               ErrorDisplay: ({ error }) => {
                 if (!error) return null;
@@ -1072,8 +1177,156 @@ function CodeEditor({ code, onChange }) {
   return <div className="flex-1 overflow-auto" ref={editorRef}></div>;
 }
 
+// AI Prompt Input Panel Component
+function PromptInputPanel({ isOpen, onClose }) {
+  const [prompt, setPrompt] = useState('');
+  const { generateCompletions, isConfigured, isProcessing } = useAI();
+  const { currentEndpointId, getEndpointCode, updateEndpointCode, getCurrentEndpoint } = useEndpoints();
+  const toast = useToast();
+  const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
+  const textareaRef = useRef(null);
+
+  // Focus textarea when panel opens
+  useEffect(() => {
+    if (isOpen && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [isOpen]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!prompt.trim()) {
+      toast.addToast('Please enter a prompt', 'warning');
+      return;
+    }
+
+    if (!isConfigured) {
+      toast.addToast('Please configure your AI API key first', 'error');
+      setShowApiKeyDialog(true);
+      return;
+    }
+
+    const code = getEndpointCode(currentEndpointId);
+    const currentEndpoint = getCurrentEndpoint();
+
+    // Optimize prompt with context
+    const optimizedPrompt = `
+You are modifying code for an API endpoint in a browser-based API Explorer.
+
+CURRENT ENDPOINT:
+- Title: ${currentEndpoint?.title || 'Unknown'}
+- Method: ${currentEndpoint?.method || 'N/A'}
+- Path: ${currentEndpoint?.path || 'N/A'}
+- Description: ${currentEndpoint?.description || 'N/A'}
+
+USER REQUEST:
+${prompt}
+
+IMPORTANT RULES:
+1. Return ONLY the complete, modified function code - no explanations, no markdown
+2. Maintain the function name and signature
+3. Keep all existing React hooks and state management patterns
+4. Use window.APIExplorer utilities (Layout, Response, Input, Params, etc.)
+5. Handle loading states and errors properly
+6. Use .then()/.catch() for promises (NO async/await in component functions)
+7. Test your output - it must be valid JSX that Babel can transpile
+
+CURRENT CODE:
+${code}
+`.trim();
+
+    toast.addToast('Generating code...', 'info');
+
+    const success = await generateCompletions(optimizedPrompt, code, (newCode) => {
+      updateEndpointCode(currentEndpointId, newCode);
+      toast.addToast('Code updated successfully!', 'success');
+      setPrompt('');
+      onClose();
+    });
+
+    if (!success) {
+      toast.addToast('Failed to generate code. Check console for details.', 'error');
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    // Submit on Ctrl+Enter or Cmd+Enter
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      handleSubmit(e);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <div className="fixed bottom-0 left-0 right-0 bg-[var(--bg-primary)] border-t-2 border-[var(--accent-primary)] shadow-[0_-4px_20px_rgba(0,0,0,0.15)] z-[99] animate-slide-up">
+        <div className="max-w-4xl mx-auto p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2">
+                  <Icons.AI />
+                  <span>AI Code Assistant</span>
+                </h3>
+                <button
+                  onClick={onClose}
+                  className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                  title="Close (Esc)"
+                >
+                  ×
+                </button>
+              </div>
+              <form onSubmit={handleSubmit}>
+                <textarea
+                  ref={textareaRef}
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Describe how you want to modify the code... (Ctrl+Enter to submit)"
+                  className="w-full p-3 border border-[var(--border-default)] rounded-md font-[var(--font-sans)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-[var(--accent-primary)]/20 resize-none"
+                  rows="3"
+                  disabled={isProcessing}
+                />
+                <div className="flex justify-between items-center mt-2">
+                  <div className="text-xs text-[var(--text-secondary)]">
+                    Tip: Press Ctrl+Enter to submit
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="px-4 py-2 bg-[var(--bg-muted)] text-[var(--text-primary)] border-none rounded-md cursor-pointer font-medium text-sm transition-all hover:bg-[var(--bg-secondary)] shadow-sm"
+                      disabled={isProcessing}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-[var(--accent-primary)] text-white border-none rounded-md cursor-pointer font-medium text-sm transition-all hover:bg-[var(--accent-primary-hover)] shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isProcessing || !prompt.trim()}
+                    >
+                      {isProcessing ? 'Generating...' : 'Generate'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <APIKeyDialog
+        isOpen={showApiKeyDialog}
+        onClose={() => setShowApiKeyDialog(false)}
+      />
+    </>
+  );
+}
+
 // Action FAB Menu Component
-function ActionFABMenu() {
+function ActionFABMenu({ showEndpointsList, onToggleEndpointsList, showCodeEditor, onToggleView, onPromptOpen }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { currentEndpointId, resetEndpointCode } = useEndpoints();
   const toast = useToast();
@@ -1086,10 +1339,46 @@ function ActionFABMenu() {
     setIsMenuOpen(false);
   };
 
+  const handleToggleEndpoints = () => {
+    onToggleEndpointsList();
+    setIsMenuOpen(false);
+  };
+
+  const handleToggleView = () => {
+    onToggleView();
+    setIsMenuOpen(false);
+  };
+
+  const handlePromptOpen = () => {
+    onPromptOpen();
+    setIsMenuOpen(false);
+  };
+
   return (
     <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end gap-3">
       {isMenuOpen && (
         <div className="flex flex-col items-end gap-3 animate-slide-up">
+          <button
+            className="w-14 h-14 rounded-full flex items-center justify-center bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-2 border-blue-300 dark:border-blue-600 shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95 p-0"
+            onClick={handleToggleEndpoints}
+            title="Toggle Endpoints List"
+          >
+            <Icons.List />
+          </button>
+          <button
+            className="w-14 h-14 rounded-full flex items-center justify-center bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-2 border-purple-300 dark:border-purple-600 shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95 p-0"
+            onClick={handleToggleView}
+            title={showCodeEditor ? "Show Preview" : "Show Code Editor"}
+          >
+            {showCodeEditor ? <Icons.Preview /> : <Icons.Edit />}
+          </button>
+          <button
+            className="w-14 h-14 rounded-full flex items-center justify-center bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 border-2 border-green-300 dark:border-green-600 shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95 p-0"
+            onClick={handlePromptOpen}
+            title="AI Code Assistant"
+          >
+            <Icons.AI />
+          </button>
           <LoadSpecButton />
           <ProcessTodoButton />
           <button
@@ -1125,6 +1414,7 @@ function IDEPage() {
   } = useEndpoints();
   const [showEndpointsList, setShowEndpointsList] = useState(false);
   const [showCodeEditor, setShowCodeEditor] = useState(false);
+  const [showPromptPanel, setShowPromptPanel] = useState(false);
   const toast = useToast();
 
   // Get current code based on selected endpoint
@@ -1144,10 +1434,33 @@ function IDEPage() {
     setShowCodeEditor(!showCodeEditor);
   };
 
+  const toggleEndpointsList = () => {
+    setShowEndpointsList(!showEndpointsList);
+  };
+
+  const openPromptPanel = () => {
+    setShowPromptPanel(true);
+  };
+
+  const closePromptPanel = () => {
+    setShowPromptPanel(false);
+  };
+
+  // Close prompt panel on Escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && showPromptPanel) {
+        closePromptPanel();
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [showPromptPanel]);
+
   return (
-    <>
+    <div className="flex flex-col h-screen overflow-hidden">
       <Header endpoint={currentEndpoint} />
-      <div className="flex-1 flex bg-[var(--bg-primary)] overflow-hidden">
+      <div className="flex-1 flex bg-[var(--bg-primary)] overflow-auto">
         {showCodeEditor ? (
           <CodeEditor code={currentCode} onChange={handleCodeChange} />
         ) : (
@@ -1186,27 +1499,18 @@ function IDEPage() {
         </div>
       )}
 
-      {/* Bottom-left FAB for endpoints */}
-      <button
-        className="fixed bottom-6 left-6 w-14 h-14 rounded-full bg-[var(--accent-primary)] text-white border-none shadow-lg z-[100] flex items-center justify-center cursor-pointer transition-all hover:scale-110 hover:shadow-xl p-0"
-        onClick={() => setShowEndpointsList(!showEndpointsList)}
-        title="Endpoints"
-      >
-        <Icons.List />
-      </button>
-
-      {/* View toggle FAB (between endpoints and actions) */}
-      <button
-        className="fixed bottom-6 left-[100px] w-14 h-14 rounded-full bg-purple-600 text-white border-2 border-purple-500 shadow-lg z-[100] flex items-center justify-center cursor-pointer transition-all hover:scale-110 hover:bg-purple-500 hover:shadow-xl p-0"
-        onClick={toggleView}
-        title={showCodeEditor ? "Show Preview" : "Show Code Editor"}
-      >
-        {showCodeEditor ? <Icons.Preview /> : <Icons.Edit />}
-      </button>
+      {/* AI Prompt Panel */}
+      <PromptInputPanel isOpen={showPromptPanel} onClose={closePromptPanel} />
 
       {/* Bottom-right FAB menu for actions */}
-      <ActionFABMenu />
-    </>
+      <ActionFABMenu
+        showEndpointsList={showEndpointsList}
+        onToggleEndpointsList={toggleEndpointsList}
+        showCodeEditor={showCodeEditor}
+        onToggleView={toggleView}
+        onPromptOpen={openPromptPanel}
+      />
+    </div>
   );
 }
 
@@ -1219,6 +1523,7 @@ window.AppComponents = {
   ToastProvider,
   ProcessTodoButton,
   LoadSpecButton,
+  PromptInputPanel,
   Header,
   EndpointItem,
   Sidebar,
