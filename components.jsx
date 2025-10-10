@@ -1336,22 +1336,18 @@ function ActionFABMenu({ showEndpointsList, onToggleEndpointsList, showCodeEdito
       resetEndpointCode(currentEndpointId);
       toast.addToast("Code reset to default state", "success");
     }
-    setIsMenuOpen(false);
   };
 
   const handleToggleEndpoints = () => {
     onToggleEndpointsList();
-    setIsMenuOpen(false);
   };
 
   const handleToggleView = () => {
     onToggleView();
-    setIsMenuOpen(false);
   };
 
   const handlePromptOpen = () => {
     onPromptOpen();
-    setIsMenuOpen(false);
   };
 
   return (
