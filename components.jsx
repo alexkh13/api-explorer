@@ -306,68 +306,6 @@ function ToastProvider({ children }) {
   );
 }
 
-// Process TODO comments in code
-function ProcessTodoButton() {
-  const { generateCompletions, isConfigured } = useAI();
-  const { currentEndpointId, getEndpointCode, updateEndpointCode } = useEndpoints();
-  const toast = useToast();
-  const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
-
-  const handleClick = () => {
-    const code = getEndpointCode(currentEndpointId);
-
-    // Check if API is configured
-    if (!isConfigured) {
-      toast.addToast('Please configure your AI API key first', 'error');
-      setShowApiKeyDialog(true);
-      return;
-    }
-
-    // Extract TODO comments from the code
-    const todoRegex = /\/\/\s*TODO:(.+?)($|\n)/g;
-    const todos = [];
-    let match;
-
-    while ((match = todoRegex.exec(code)) !== null) {
-      todos.push(match[1].trim());
-    }
-
-    if (todos.length === 0) {
-      toast.addToast('No TODO comments found in your code!', 'warning');
-      return;
-    }
-
-    // Create a prompt from the TODO comments
-    const prompt = `Please implement the following TODOs in the code:\n${todos.join('\n')}`;
-
-    // Show toast notification
-    toast.addToast(`Processing ${todos.length} TODOs...`, 'info');
-
-    // Use the AI to generate completions based on the TODOs
-    generateCompletions(prompt, code, (newCode) => {
-      updateEndpointCode(currentEndpointId, newCode);
-      toast.addToast('TODOs implemented successfully!', 'success');
-    });
-  };
-
-  return (
-    <>
-      <button
-        className="w-14 h-14 rounded-full flex items-center justify-center bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-2 border-purple-300 dark:border-purple-600 shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95 p-0"
-        onClick={handleClick}
-        title="Process TODO comments in code"
-      >
-        <Icons.AI />
-      </button>
-
-      <APIKeyDialog
-        isOpen={showApiKeyDialog}
-        onClose={() => setShowApiKeyDialog(false)}
-      />
-    </>
-  );
-}
-
 // Load Spec Button
 function LoadSpecButton() {
   const [showDialog, setShowDialog] = useState(false);
@@ -1177,83 +1115,77 @@ function CodeEditor({ code, onChange }) {
   return <div className="flex-1 overflow-auto" ref={editorRef}></div>;
 }
 
-// AI Prompt Input Panel Component
-function PromptInputPanel({ isOpen, onClose }) {
-  const [prompt, setPrompt] = useState('');
+// Minimal AI Assistant Component
+function MinimalAIAssistant({ isOpen, onClose }) {
   const { generateCompletions, isConfigured, isProcessing } = useAI();
   const { currentEndpointId, getEndpointCode, updateEndpointCode, getCurrentEndpoint } = useEndpoints();
   const toast = useToast();
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
-  const textareaRef = useRef(null);
 
-  // Focus textarea when panel opens
-  useEffect(() => {
-    if (isOpen && textareaRef.current) {
-      textareaRef.current.focus();
-    }
-  }, [isOpen]);
+  // Get current code to determine action type
+  const code = getEndpointCode(currentEndpointId);
+  const hasTodos = code.includes('TODO:') || code.includes('TODO ');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Determine action based on code state
+  const action = hasTodos
+    ? { id: 'implement', label: 'Implement TODOs', icon: '⚡' }
+    : { id: 'plan', label: 'Plan next feature', icon: '📋' };
 
-    if (!prompt.trim()) {
-      toast.addToast('Please enter a prompt', 'warning');
-      return;
-    }
-
+  const handleActionClick = async () => {
     if (!isConfigured) {
       toast.addToast('Please configure your AI API key first', 'error');
       setShowApiKeyDialog(true);
       return;
     }
 
-    const code = getEndpointCode(currentEndpointId);
     const currentEndpoint = getCurrentEndpoint();
 
-    // Optimize prompt with context
-    const optimizedPrompt = `
-You are modifying code for an API endpoint in a browser-based API Explorer.
+    let optimizedPrompt;
 
-CURRENT ENDPOINT:
-- Title: ${currentEndpoint?.title || 'Unknown'}
-- Method: ${currentEndpoint?.method || 'N/A'}
-- Path: ${currentEndpoint?.path || 'N/A'}
-- Description: ${currentEndpoint?.description || 'N/A'}
+    if (action.id === 'plan') {
+      // PLAN mode: Analyze code and add TODOs for the next most valuable feature
+      optimizedPrompt = `
+Add TODO comments to plan ONE improvement. Return the COMPLETE code with TODOs inserted.
 
-USER REQUEST:
-${prompt}
+RULES:
+1. Copy ALL the existing code exactly as it is
+2. Insert TODO comments at locations where changes will be made
+3. Pick ONE task: error handling, loading states, OR input validation
+4. All TODOs must be for the SAME task
+5. Return ONLY the code - no explanations, no markdown
 
-IMPORTANT RULES:
-1. Return ONLY the complete, modified function code - no explanations, no markdown
-2. Maintain the function name and signature
-3. Keep all existing React hooks and state management patterns
-4. Use window.APIExplorer utilities (Layout, Response, Input, Params, etc.)
-5. Handle loading states and errors properly
-6. Use .then()/.catch() for promises (NO async/await in component functions)
-7. Test your output - it must be valid JSX that Babel can transpile
-
-CURRENT CODE:
+CODE TO MODIFY:
 ${code}
 `.trim();
+    } else {
+      // IMPLEMENT mode: Implement all the TODOs that were planned
+      optimizedPrompt = `
+Implement ALL TODO comments found in the code. Return the COMPLETE implemented code.
 
-    toast.addToast('Generating code...', 'info');
+RULES:
+1. Implement EVERY TODO comment
+2. Remove TODO comments after implementing
+3. Use window.APIExplorer utilities (Layout, Response, ErrorDisplay, etc.)
+4. Use .then()/.catch() for promises (NO async/await)
+5. Return ONLY the code - no explanations, no markdown
+
+CODE WITH TODOs:
+${code}
+`.trim();
+    }
+
+    toast.addToast(action.id === 'plan' ? 'Planning next feature...' : 'Implementing TODOs...', 'info');
 
     const success = await generateCompletions(optimizedPrompt, code, (newCode) => {
       updateEndpointCode(currentEndpointId, newCode);
-      toast.addToast('Code updated successfully!', 'success');
-      setPrompt('');
-      onClose();
+      const successMsg = action.id === 'plan'
+        ? 'TODOs added! Click "Implement" to execute the plan.'
+        : 'TODOs implemented successfully!';
+      toast.addToast(successMsg, 'success');
     });
 
     if (!success) {
-      toast.addToast('Failed to generate code. Check console for details.', 'error');
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    // Submit on Ctrl+Enter or Cmd+Enter
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      handleSubmit(e);
+      toast.addToast('Failed to ' + (action.id === 'plan' ? 'plan' : 'implement') + '. Check console for details.', 'error');
     }
   };
 
@@ -1261,59 +1193,29 @@ ${code}
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 bg-[var(--bg-primary)] border-t-2 border-[var(--accent-primary)] shadow-[0_-4px_20px_rgba(0,0,0,0.15)] z-[99] animate-slide-up">
-        <div className="max-w-4xl mx-auto p-4">
-          <div className="flex items-start gap-3">
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                  <Icons.AI />
-                  <span>AI Code Assistant</span>
-                </h3>
-                <button
-                  onClick={onClose}
-                  className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-                  title="Close (Esc)"
-                >
-                  ×
-                </button>
-              </div>
-              <form onSubmit={handleSubmit}>
-                <textarea
-                  ref={textareaRef}
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Describe how you want to modify the code... (Ctrl+Enter to submit)"
-                  className="w-full p-3 border border-[var(--border-default)] rounded-md font-[var(--font-sans)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-[var(--accent-primary)]/20 resize-none"
-                  rows="3"
-                  disabled={isProcessing}
-                />
-                <div className="flex justify-between items-center mt-2">
-                  <div className="text-xs text-[var(--text-secondary)]">
-                    Tip: Press Ctrl+Enter to submit
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={onClose}
-                      className="px-4 py-2 bg-[var(--bg-muted)] text-[var(--text-primary)] border-none rounded-md cursor-pointer font-medium text-sm transition-all hover:bg-[var(--bg-secondary)] shadow-sm"
-                      disabled={isProcessing}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-[var(--accent-primary)] text-white border-none rounded-md cursor-pointer font-medium text-sm transition-all hover:bg-[var(--accent-primary-hover)] shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={isProcessing || !prompt.trim()}
-                    >
-                      {isProcessing ? 'Generating...' : 'Generate'}
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </div>
-          </div>
+      <div className="fixed bottom-0 left-0 right-0 bg-[var(--bg-primary)] border-t border-[var(--border-default)] shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-[99] animate-slide-up">
+        <div className="flex items-center justify-center h-14 px-3 gap-2">
+          {/* Single action button */}
+          <button
+            onClick={handleActionClick}
+            disabled={isProcessing}
+            className="px-4 py-2 bg-[var(--accent-primary)] text-white border-none rounded-md text-sm font-medium hover:bg-[var(--accent-primary-hover)] transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-md"
+          >
+            {isProcessing ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>{action.id === 'plan' ? 'Planning...' : 'Implementing...'}</span>
+              </>
+            ) : (
+              <>
+                <span>{action.icon}</span>
+                <span>{action.label}</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 
@@ -1326,7 +1228,7 @@ ${code}
 }
 
 // Action FAB Menu Component
-function ActionFABMenu({ showEndpointsList, onToggleEndpointsList, showCodeEditor, onToggleView, onPromptOpen }) {
+function ActionFABMenu({ showEndpointsList, onToggleEndpointsList, showCodeEditor, onToggleView, onPromptOpen, showPromptPanel }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { currentEndpointId, resetEndpointCode } = useEndpoints();
   const toast = useToast();
@@ -1350,8 +1252,11 @@ function ActionFABMenu({ showEndpointsList, onToggleEndpointsList, showCodeEdito
     onPromptOpen();
   };
 
+  // Adjust bottom position based on AI panel visibility
+  const bottomClass = showPromptPanel ? 'bottom-[70px]' : 'bottom-6';
+
   return (
-    <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end gap-3">
+    <div className={`absolute right-6 z-[100] flex flex-col items-end gap-3 transition-all duration-300 ${bottomClass}`}>
       {isMenuOpen && (
         <div className="flex flex-col items-end gap-3 animate-slide-up">
           <button
@@ -1376,7 +1281,6 @@ function ActionFABMenu({ showEndpointsList, onToggleEndpointsList, showCodeEdito
             <Icons.AI />
           </button>
           <LoadSpecButton />
-          <ProcessTodoButton />
           <button
             className="w-14 h-14 rounded-full flex items-center justify-center bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-2 border-red-300 dark:border-red-600 shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95 p-0"
             onClick={handleReset}
@@ -1434,8 +1338,8 @@ function IDEPage() {
     setShowEndpointsList(!showEndpointsList);
   };
 
-  const openPromptPanel = () => {
-    setShowPromptPanel(true);
+  const togglePromptPanel = () => {
+    setShowPromptPanel(!showPromptPanel);
   };
 
   const closePromptPanel = () => {
@@ -1454,7 +1358,7 @@ function IDEPage() {
   }, [showPromptPanel]);
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col h-screen overflow-hidden relative">
       <Header endpoint={currentEndpoint} />
       <div className="flex-1 flex bg-[var(--bg-primary)] overflow-auto">
         {showCodeEditor ? (
@@ -1495,8 +1399,8 @@ function IDEPage() {
         </div>
       )}
 
-      {/* AI Prompt Panel */}
-      <PromptInputPanel isOpen={showPromptPanel} onClose={closePromptPanel} />
+      {/* Minimal AI Assistant */}
+      <MinimalAIAssistant isOpen={showPromptPanel} onClose={closePromptPanel} />
 
       {/* Bottom-right FAB menu for actions */}
       <ActionFABMenu
@@ -1504,7 +1408,8 @@ function IDEPage() {
         onToggleEndpointsList={toggleEndpointsList}
         showCodeEditor={showCodeEditor}
         onToggleView={toggleView}
-        onPromptOpen={openPromptPanel}
+        onPromptOpen={togglePromptPanel}
+        showPromptPanel={showPromptPanel}
       />
     </div>
   );
@@ -1517,9 +1422,8 @@ window.AppComponents = {
   LoadSpecDialog,
   Toast,
   ToastProvider,
-  ProcessTodoButton,
   LoadSpecButton,
-  PromptInputPanel,
+  MinimalAIAssistant,
   Header,
   EndpointItem,
   Sidebar,
