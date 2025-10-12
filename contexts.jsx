@@ -1,5 +1,7 @@
-// Context providers - requires Babel transpilation
+// Context providers - ES6 module
 import React, { useState, useCallback, useEffect, useMemo, createContext, useContext } from "react";
+
+// Import from window (these are plain JS, not transpiled by service worker)
 const { debounce } = window.AppUtils;
 const { initialEndpointsData, AI_PROVIDERS } = window.AppConstants;
 
@@ -369,8 +371,8 @@ const ToastContext = createContext({
 
 const useToast = () => useContext(ToastContext);
 
-// Export to window for global access
-window.AppContexts = {
+// ES6 Exports
+export {
   ThemeContext,
   ThemeProvider,
   useTheme,

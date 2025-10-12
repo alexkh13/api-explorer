@@ -35,6 +35,44 @@
   <body>
     <div id="root"></div>
 
+    <!-- Service Worker Registration for JSX Transpilation -->
+    <script>
+      // Register service worker BEFORE loading any JSX modules
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('✓ JSX Transpiler Service Worker registered');
+
+            // Check if service worker is already controlling this page
+            if (navigator.serviceWorker.controller) {
+              console.log('✓ Service Worker already controlling, loading app...');
+              // Service worker is active and controlling - safe to import
+              import('./app.jsx').catch(err => {
+                console.error('✗ Failed to load app:', err);
+              });
+            } else {
+              // Service worker registered but not controlling yet
+              console.log('⟳ Service Worker not controlling yet, waiting for activation...');
+
+              // Wait for the service worker to control the page
+              navigator.serviceWorker.addEventListener('controllerchange', () => {
+                console.log('✓ Service Worker now controlling, reloading page...');
+                window.location.reload();
+              });
+            }
+          })
+          .catch(err => {
+            console.error('✗ Service Worker registration failed:', err);
+          });
+      } else {
+        console.warn('⚠ Service Workers not supported in this browser');
+        // Fallback: try to load app anyway
+        import('./app.jsx').catch(err => {
+          console.error('✗ Failed to load app:', err);
+        });
+      }
+    </script>
+
     <!-- Import maps for React -->
     <script type="importmap">
       {
@@ -64,13 +102,8 @@
     <script src="./utils.js"></script>
     <script src="./constants.js"></script>
 
-    <!-- JSX modules (need Babel transpilation) -->
-    <!-- Note: These are loaded as modules with React imported via ESM -->
-    <script type="text/babel" data-presets="react" data-type="module" src="./icons.jsx"></script>
-    <script type="text/babel" data-presets="react" data-type="module" src="./contexts.jsx"></script>
-    <script type="text/babel" data-presets="react" data-type="module" src="./components.jsx"></script>
-
-    <!-- Main App Component - loads last and waits for dependencies -->
-    <script type="text/babel" data-presets="react" data-type="module" src="./app.jsx"></script>
+    <!-- Main App Entry Point - ES6 Module -->
+    <!-- Loaded dynamically after service worker is ready (see registration script above) -->
+    <!-- Service worker intercepts all .jsx imports and transpiles them automatically -->
   </body>
 </html>

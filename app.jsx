@@ -1,49 +1,28 @@
-// Main App Component - requires Babel transpilation
+// Main App Component - ES6 module
 import React from "react";
 import ReactDOM from "react-dom";
 
-// Wait for all dependencies to be loaded on window
-function waitForDependencies() {
-  return new Promise((resolve) => {
-    const checkDependencies = () => {
-      if (
-        window.AppContexts &&
-        window.AppComponents &&
-        window.Icons &&
-        window.AppConstants &&
-        window.AppUtils
-      ) {
-        resolve();
-      } else {
-        setTimeout(checkDependencies, 10);
-      }
-    };
-    checkDependencies();
-  });
+// ES6 imports from other modules (transpiled by service worker)
+import { ThemeProvider, EndpointProvider, AIProvider } from "./contexts.jsx";
+import { IDEPage, ToastProvider } from "./components.jsx";
+
+// Import from window (plain JS, not transpiled)
+const { initialEndpointsData } = window.AppConstants;
+
+// Root App Component wrapping all providers
+function App() {
+  return (
+    <ThemeProvider>
+      <EndpointProvider initialEndpoints={initialEndpointsData}>
+        <AIProvider>
+          <ToastProvider>
+            <IDEPage />
+          </ToastProvider>
+        </AIProvider>
+      </EndpointProvider>
+    </ThemeProvider>
+  );
 }
 
-// Initialize app after dependencies are ready
-waitForDependencies().then(() => {
-  // Get everything from global scope
-  const { ThemeProvider, EndpointProvider, AIProvider } = window.AppContexts;
-  const { ToastProvider, IDEPage } = window.AppComponents;
-  const { initialEndpointsData } = window.AppConstants;
-
-  // Root App Component wrapping all providers
-  function App() {
-    return (
-      <ThemeProvider>
-        <EndpointProvider initialEndpoints={initialEndpointsData}>
-          <AIProvider>
-            <ToastProvider>
-              <IDEPage />
-            </ToastProvider>
-          </AIProvider>
-        </EndpointProvider>
-      </ThemeProvider>
-    );
-  }
-
-  // Render the application
-  ReactDOM.render(<App />, document.getElementById("root"));
-});
+// Render the application
+ReactDOM.render(<App />, document.getElementById("root"));

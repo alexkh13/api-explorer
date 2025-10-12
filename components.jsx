@@ -1,8 +1,10 @@
-// UI Components - requires Babel transpilation
+// UI Components - ES6 module
 import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import ReactDOM from "react-dom";
-const { Icons } = window;
-const { useTheme, useEndpoints, useAI, useToast } = window.AppContexts;
+
+// ES6 imports from other modules (transpiled by service worker)
+import * as Icons from "./icons.jsx";
+import { useTheme, useEndpoints, useAI, useToast, ToastContext } from "./contexts.jsx";
 
 // Generic Dialog Component
 function Dialog({ isOpen, onClose, children }) {
@@ -290,7 +292,7 @@ function ToastProvider({ children }) {
   }), [addToast, removeToast]);
 
   return (
-    <window.AppContexts.ToastContext.Provider value={value}>
+    <ToastContext.Provider value={value}>
       {children}
       <div className="fixed bottom-6 left-6 flex flex-col gap-2 z-[1000]">
         {toasts.map(toast => (
@@ -302,7 +304,7 @@ function ToastProvider({ children }) {
           />
         ))}
       </div>
-    </window.AppContexts.ToastContext.Provider>
+    </ToastContext.Provider>
   );
 }
 
@@ -1415,8 +1417,8 @@ function IDEPage() {
   );
 }
 
-// Export to window for global access
-window.AppComponents = {
+// ES6 Exports
+export {
   Dialog,
   APIKeyDialog,
   LoadSpecDialog,
