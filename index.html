@@ -39,7 +39,7 @@
     <script>
       // Register service worker BEFORE loading any JSX modules
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js')
+        navigator.serviceWorker.register('./sw.js')
           .then(registration => {
             console.log('✓ JSX Transpiler Service Worker registered');
 
