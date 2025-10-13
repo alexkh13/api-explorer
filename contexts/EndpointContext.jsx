@@ -3,7 +3,14 @@ import { debounce } from "../utils.js";
 import { initialEndpointsData } from "../data/initial-endpoints.js";
 import { generateStarterCode } from "../services/code-generator/index.js";
 
-// Endpoint Context
+/**
+ * Endpoint Context - Manages API endpoint state and code
+ * Provides centralized state management for:
+ * - Endpoint metadata (title, method, path, etc.)
+ * - Generated and user-modified code
+ * - Current selected endpoint
+ * - Persistence to localStorage
+ */
 export const EndpointContext = createContext({
   endpoints: [],
   currentEndpointId: '',
@@ -20,6 +27,15 @@ export const EndpointContext = createContext({
   loadEndpointsFromSpec: () => {}
 });
 
+/**
+ * Endpoint Provider Component
+ * Manages endpoint state with localStorage persistence and dynamic code generation
+ *
+ * @param {Object} props - Component props
+ * @param {React.ReactNode} props.children - Child components
+ * @param {Array} props.initialEndpoints - Initial endpoints to load if no saved state exists
+ * @returns {JSX.Element} Provider component wrapping children
+ */
 export function EndpointProvider({ children, initialEndpoints }) {
   const [state, setState] = useState(() => {
     const savedState = JSON.parse(
@@ -149,4 +165,14 @@ export function EndpointProvider({ children, initialEndpoints }) {
   );
 }
 
+/**
+ * Custom hook to access endpoint context
+ * Provides access to endpoint state and management functions
+ *
+ * @returns {Object} Endpoint context value with state and methods
+ * @throws {Error} If used outside of EndpointProvider
+ *
+ * @example
+ * const { currentEndpointId, getEndpointCode, updateEndpointCode } = useEndpoints();
+ */
 export const useEndpoints = () => useContext(EndpointContext);

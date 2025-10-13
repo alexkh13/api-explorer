@@ -2,7 +2,11 @@ import React, { useState, useCallback, useMemo, createContext, useContext } from
 import { useEndpoints } from "./EndpointContext.jsx";
 import { AI_PROVIDERS } from "../config/ai-providers.js";
 
-// AI Provider Context
+/**
+ * AI Context - Manages AI provider configuration and code generation
+ * Handles interaction with AI APIs (OpenAI, Anthropic) for code assistance
+ * Includes validation for browser-compatible code and syntax checking
+ */
 export const AIContext = createContext({
   provider: 'OPENAI',
   apiKey: '',
@@ -12,6 +16,15 @@ export const AIContext = createContext({
   generateCompletions: async () => {},
 });
 
+/**
+ * AI Provider Component
+ * Manages AI configuration and provides code generation capabilities
+ * Validates generated code for browser compatibility and syntax errors
+ *
+ * @param {Object} props - Component props
+ * @param {React.ReactNode} props.children - Child components
+ * @returns {JSX.Element} Provider component wrapping children
+ */
 export function AIProvider({ children }) {
   const [config, setConfig] = useState(() => {
     const provider = localStorage.getItem('ai_provider') || 'OPENAI';
@@ -183,4 +196,14 @@ export function AIProvider({ children }) {
   );
 }
 
+/**
+ * Custom hook to access AI context
+ * Provides access to AI configuration and code generation functions
+ *
+ * @returns {Object} AI context value with configuration and methods
+ * @throws {Error} If used outside of AIProvider
+ *
+ * @example
+ * const { generateCompletions, isConfigured, setApiConfig } = useAI();
+ */
 export const useAI = () => useContext(AIContext);
