@@ -2,9 +2,9 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-// ES6 imports from other modules (transpiled by service worker)
-import { ThemeProvider, EndpointProvider, AIProvider } from "./contexts.jsx";
-import { IDEPage, ToastProvider } from "./components.jsx";
+// ES6 imports from modularized directories
+import { ThemeProvider, EndpointProvider, AIProvider } from "./contexts/index.jsx";
+import { IDEPage, ToastProvider } from "./components/index.jsx";
 
 // Import from window (plain JS, not transpiled)
 const { initialEndpointsData } = window.AppConstants;
