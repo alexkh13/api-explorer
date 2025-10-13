@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo, createContext, useContext } from "react";
 import { debounce } from "../utils.js";
-import { initialEndpointsData, generateStarterCode } from "../constants.js";
+import { initialEndpointsData } from "../data/initial-endpoints.js";
+import { generateStarterCode } from "../services/code-generator/index.js";
 
 // Endpoint Context
 export const EndpointContext = createContext({

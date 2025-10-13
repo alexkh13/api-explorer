@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useEndpoints } from "../contexts/EndpointContext.jsx";
 import { useToast } from "../contexts/ToastContext.jsx";
 import { Dialog } from "./Dialog.jsx";
-import { parseOpenAPISpec } from "../constants.js";
+import { parseOpenAPISpec } from "../services/openapi-parser.js";
 
 // Load OpenAPI Spec Dialog Component
 export function LoadSpecDialog({ isOpen, onClose }) {

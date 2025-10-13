@@ -5,7 +5,7 @@ import ReactDOM from "react-dom";
 // ES6 imports from modularized directories
 import { ThemeProvider, EndpointProvider, AIProvider } from "./contexts/index.jsx";
 import { IDEPage, ToastProvider } from "./components/index.jsx";
-import { initialEndpointsData } from "./constants.js";
+import { initialEndpointsData } from "./data/initial-endpoints.js";
 
 // Root App Component wrapping all providers
 function App() {
