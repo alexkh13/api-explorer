@@ -1,8 +1,7 @@
-// Plain JS module - no JSX, no imports
+// Plain JS module - no JSX
 // This file exports constants and configuration data
 
-window.AppConstants = {
-  initialEndpointsData: [
+export const initialEndpointsData = [
     {
       id: "1",
       title: "Users List",
@@ -222,9 +221,9 @@ window.AppConstants = {
 }`,
       completed: false,
     },
-  ],
+];
 
-  AI_PROVIDERS: {
+export const AI_PROVIDERS = {
     OPENAI: {
       name: 'OpenAI',
       endpoint: 'https://api.openai.com/v1/chat/completions',
@@ -323,12 +322,11 @@ AVAILABLE COMPONENTS:
       }),
       extractResponse: (data) => data.content[0].text
     }
-  }
 };
 
 // Parse OpenAPI v3 spec and convert to endpoints
 // Returns an object with endpoints (metadata only) and baseUrl for dynamic code generation
-window.parseOpenAPISpec = function(spec, bearerToken) {
+export function parseOpenAPISpec(spec, bearerToken) {
   const endpoints = [];
 
   if (!spec || !spec.paths) {
@@ -392,13 +390,13 @@ window.parseOpenAPISpec = function(spec, bearerToken) {
   });
 
   return { endpoints, baseUrl };
-};
+}
 
 // Import shared utilities from APIExplorer global
 const IMPORTS = `const { Layout, Params, Input, Textarea, Response } = window.APIExplorer;`;
 
 // Generate starter code for an endpoint
-function generateStarterCode(endpoint, baseUrl, bearerToken) {
+export function generateStarterCode(endpoint, baseUrl, bearerToken) {
   const fullUrl = baseUrl + endpoint.path;
   const funcName = `${endpoint.method.toLowerCase()}${endpoint.path.replace(/[^a-zA-Z0-9]/g, '_')}`;
 
@@ -744,6 +742,3 @@ ${IMPORTS}
     }
   }
 }
-
-// Export generateStarterCode to window for dynamic code generation
-window.generateStarterCode = generateStarterCode;

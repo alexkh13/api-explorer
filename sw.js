@@ -1,6 +1,6 @@
 // sw.js - JSX Transpiler Service Worker
 
-const CACHE_NAME = 'jsx-transpiler-v2-full-migration';
+const CACHE_NAME = 'jsx-transpiler-v4-es6-complete';
 const BABEL_URL = 'https://unpkg.com/@babel/standalone@7.23.5/babel.min.js';
 
 let babelLoaded = false;

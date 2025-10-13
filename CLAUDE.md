@@ -12,38 +12,38 @@ This is a browser-based **API Explorer** application that runs entirely in the b
 
 This application uses a unique architecture designed to work without any build tools:
 
-- **Babel Standalone**: JSX files are transpiled at runtime in the browser
+- **Service Worker**: Intercepts .jsx file requests and transpiles them on-the-fly using Babel Standalone
 - **Import Maps**: React and ReactDOM are loaded via CDN using ES module import maps
-- **Global Window Object**: Components and utilities attach to `window` to share between modules
-- **ESM Imports**: All JSX files use ES module imports for React
+- **ES6 Modules**: All files use standard ES6 import/export syntax
+- **No Window Globals**: Components and utilities communicate via ES6 imports (no `window` object usage except for external libraries like Babel)
 
-### Critical Loading Pattern
+### Module Loading Pattern
 
-**IMPORTANT**: The file loading order in `index.html` is critical and must be maintained:
+The application uses a **service worker** to enable JSX transpilation for ES6 modules:
 
-1. **Plain JS files** (`utils.js`, `constants.js`) - Load first, no Babel needed
-2. **JSX files** (`icons.jsx`, `contexts.jsx`, `components.jsx`) - Load with `type="text/babel" data-type="module"`
-3. **Main app** (`app.jsx`) - Loads last, waits for all dependencies
+1. **Service Worker Registration**: `sw.js` intercepts all `.jsx` file requests
+2. **On-the-Fly Transpilation**: Service worker uses Babel Standalone to transpile JSX → JS
+3. **ES6 Module Graph**: All modules load via standard `import` statements
+4. **Entry Point**: `app.jsx` is loaded dynamically after service worker is ready
 
-### Nested Import Limitation
-
-**Critical caveat**: Due to Babel Standalone limitations:
-- Files imported inside already imported files can **only be plain JS**, not JSX
-- Relative JSX imports will **not work** because Babel won't automatically transpile them
-- Solution: All JSX files must be loaded as `<script>` tags in `index.html` with proper Babel attributes
-- Components communicate via `window` object, not direct imports
+**Benefits**:
+- Standard ES6 module imports work seamlessly
+- No need for `window` global pollution
+- Proper dependency graph and tree-shaking ready
+- JSX files can import other JSX files naturally
 
 ### File Structure and Responsibilities
 
 ```
-index.html          - Main HTML, loads all scripts in correct order
-styles.css          - All CSS styles with CSS variables for theming
-constants.js        - Plain JS: endpoint data, OpenAPI parser, AI_PROVIDERS config
-utils.js            - Plain JS: utility functions (debounce)
-icons.jsx           - JSX module: SVG icon components, attaches to window.Icons
-contexts.jsx        - JSX module: React contexts (Theme, Endpoint, AI, Toast), attaches to window.AppContexts
-components.jsx      - JSX module: All UI components, attaches to window.AppComponents
-app.jsx             - JSX module: Main App component, waits for dependencies, renders to DOM
+index.html          - Main HTML, registers service worker, loads app.jsx entry point
+theme.css           - All CSS styles with CSS variables for theming
+sw.js               - Service worker for JSX transpilation
+constants.js        - ES6 module: endpoint data, OpenAPI parser, AI_PROVIDERS config (exports via export)
+utils.js            - ES6 module: utility functions like debounce (exports via export)
+icons/index.jsx     - ES6 module: SVG icon components (named exports)
+contexts.js         - ES6 module: React contexts (Theme, Endpoint, AI, Toast) with custom hooks
+components.js       - ES6 module: All UI components (Dialog, Header, Sidebar, Preview, etc.)
+app.js              - ES6 module: Main App component entry point, renders to DOM
 ```
 
 ### Data Flow
@@ -72,7 +72,7 @@ The app supports multiple AI providers (OpenAI, Anthropic) for code generation:
 ### OpenAPI Spec Loading
 
 The app can load OpenAPI v3 specifications from remote URLs:
-- **Parser**: `window.parseOpenAPISpec(spec, bearerToken)` in `constants.js`
+- **Parser**: `parseOpenAPISpec(spec, bearerToken)` exported from `constants.js`
 - **Code Generation**: `generateStarterCode(endpoint, baseUrl, bearerToken)` creates React components for each endpoint
 - **Bearer Token Support**: Optional authentication token included as `Authorization: Bearer [token]` header in generated code
 - **Automatic UI Generation**:
@@ -103,33 +103,36 @@ Then open `http://localhost:8000`
 
 **When modifying JSX files:**
 - Always include `import React from "react"` at the top
-- Export components/utilities to `window` object for cross-file access
-- Never try to import JSX from another JSX file - use `window` instead
+- Use standard ES6 `export` statements (named or default)
+- Import from other modules using standard ES6 `import` syntax
 - **IMPORTANT**: Never use `async function` for React components - they return Promises which React cannot render
 - Use regular `function` with React hooks (useState, useEffect) and Promise chains (.then/.catch)
 
-**When adding new JSX files:**
-- Add to `index.html` as `<script type="text/babel" data-type="module" src="./yourfile.jsx"></script>`
-- Place **before** `app.jsx` in loading order
-- Export to `window` namespace
+**When adding new modules:**
+- Create the file with appropriate extension (`.js` for plain JS, `.jsx` for JSX)
+- Export using standard ES6 syntax: `export function foo() {}` or `export const bar = ...`
+- Import where needed: `import { foo, bar } from "./module.js"`
+- Service worker will automatically transpile `.jsx` files
 
 **When modifying contexts:**
-- All contexts are in `contexts.jsx`
-- Custom hooks (useTheme, useEndpoints, useAI, useToast) exported via `window.AppContexts`
+- All contexts are in `contexts.js`
+- Import contexts and hooks: `import { useTheme, useEndpoints, useAI, useToast } from "./contexts.js"`
 
 **When adding new components:**
-- Add to `components.jsx`
-- Export via `window.AppComponents`
+- Add to `components.js` or create a new component file in `components/` directory
+- Export using ES6 syntax
+- Import where needed: `import { ComponentName } from "./components.js"`
 
 ### Key Constraints
 
 This is a **pure browser environment**:
 - No Node.js APIs (`fs`, `path`, `process.env`, etc.)
 - No npm packages except those via CDN/import maps
-- No build tools, no bundlers, no transpilation except Babel Standalone
+- No build tools, no bundlers, no pre-transpilation (service worker handles JSX at runtime)
 - No server-side code or file system operations
-- All imports must resolve via import maps or be available on window
+- All imports must resolve via import maps or be relative paths to local modules
 - **No async functions for React components** - use regular functions with hooks and Promise chains
+- External libraries (Babel) are accessed via `window.Babel`, but app code uses ES6 modules
 
 ### CodeMirror Integration
 

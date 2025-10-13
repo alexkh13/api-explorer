@@ -1,8 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo, createContext, useContext } from "react";
-
-// Import from window (these are plain JS, not transpiled by service worker)
-const { debounce } = window.AppUtils;
-const { initialEndpointsData } = window.AppConstants;
+import { debounce } from "../utils.js";
+import { initialEndpointsData, generateStarterCode } from "../constants.js";
 
 // Endpoint Context
 export const EndpointContext = createContext({
@@ -81,8 +79,8 @@ export function EndpointProvider({ children, initialEndpoints }) {
       if (!endpoint) return '';
 
       // If endpoint is from spec, generate code dynamically
-      if (endpoint.isFromSpec && window.generateStarterCode) {
-        return window.generateStarterCode(endpoint, state.baseUrl, state.bearerToken);
+      if (endpoint.isFromSpec && generateStarterCode) {
+        return generateStarterCode(endpoint, state.baseUrl, state.bearerToken);
       }
 
       // Otherwise, use starterCode from endpoint (for demo endpoints)

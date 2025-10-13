@@ -98,12 +98,9 @@
     <!-- Babel Standalone -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- Plain JS modules (no Babel needed) -->
-    <script src="./utils.js"></script>
-    <script src="./constants.js"></script>
-
     <!-- Main App Entry Point - ES6 Module -->
     <!-- Loaded dynamically after service worker is ready (see registration script above) -->
     <!-- Service worker intercepts all .jsx imports and transpiles them automatically -->
+    <!-- All dependencies are loaded via ES6 imports in the modules themselves -->
   </body>
 </html>

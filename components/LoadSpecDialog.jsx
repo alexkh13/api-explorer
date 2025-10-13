@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useEndpoints } from "../contexts/EndpointContext.jsx";
 import { useToast } from "../contexts/ToastContext.jsx";
 import { Dialog } from "./Dialog.jsx";
+import { parseOpenAPISpec } from "../constants.js";
 
 // Load OpenAPI Spec Dialog Component
 export function LoadSpecDialog({ isOpen, onClose }) {
@@ -29,7 +30,7 @@ export function LoadSpecDialog({ isOpen, onClose }) {
       }
 
       const spec = await response.json();
-      const { endpoints, baseUrl } = window.parseOpenAPISpec(spec, bearerToken.trim() || null);
+      const { endpoints, baseUrl } = parseOpenAPISpec(spec, bearerToken.trim() || null);
 
       loadEndpointsFromSpec(endpoints, baseUrl, bearerToken.trim() || null);
       toast.addToast(`Loaded ${endpoints.length} endpoints from spec`, 'success');

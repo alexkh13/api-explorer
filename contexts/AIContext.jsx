@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useMemo, createContext, useContext } from "react";
 import { useEndpoints } from "./EndpointContext.jsx";
-
-const { AI_PROVIDERS } = window.AppConstants;
+import { AI_PROVIDERS } from "../constants.js";
 
 // AI Provider Context
 export const AIContext = createContext({

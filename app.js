@@ -1,11 +1,11 @@
-// Main App Component - ES6 module
+// Main App Component - requires Babel transpilation
 import React from "react";
 import ReactDOM from "react-dom";
-
-// ES6 imports from modularized directories
-import { ThemeProvider, EndpointProvider, AIProvider } from "./contexts/index.jsx";
-import { IDEPage, ToastProvider } from "./components/index.jsx";
+import { ThemeProvider, EndpointProvider, AIProvider } from "./contexts.js";
+import { ToastProvider, IDEPage } from "./components.js";
 import { initialEndpointsData } from "./constants.js";
+
+console.log('[app.js] Starting app with ES6 modules...');
 
 // Root App Component wrapping all providers
 function App() {
@@ -23,4 +23,5 @@ function App() {
 }
 
 // Render the application
+console.log('[app.js] Rendering app...');
 ReactDOM.render(<App />, document.getElementById("root"));
