@@ -1,38 +1,17 @@
 // Plain JS module - no JSX
 // This file exports constants and configuration data
 
-export const initialEndpointsData = [
+// Base URL for sample JSONPlaceholder API endpoints
+const JSONPLACEHOLDER_BASE_URL = 'https://jsonplaceholder.typicode.com';
+
+// Metadata-only endpoint definitions (no hardcoded starterCode)
+const initialEndpointsMetadata = [
     {
       id: "1",
       title: "Users List",
       description: "Fetch a list of all users",
       method: "GET",
       path: "/users",
-      starterCode: `function fetchUsers() {
-  const { Layout, Response } = window.APIExplorer;
-  const [data, setData] = React.useState(null);
-  const [loading, setLoading] = React.useState(false);
-
-  React.useEffect(() => {
-    setLoading(true);
-    fetch('https://jsonplaceholder.typicode.com/users')
-      .then(response => response.json())
-      .then(result => {
-        setData(result);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        setLoading(false);
-      });
-  }, []);
-
-  return (
-    <Layout title="Users List" loading={loading}>
-      <Response data={data} />
-    </Layout>
-  );
-}`,
       completed: false,
     },
     {
@@ -44,35 +23,6 @@ export const initialEndpointsData = [
       parameters: [
         { name: "id", in: "path", type: "integer", default: 1 }
       ],
-      starterCode: `function fetchPost() {
-  const { Layout, Params, Input, Response } = window.APIExplorer;
-  const [id, setId] = React.useState(1);
-  const [data, setData] = React.useState(null);
-  const [loading, setLoading] = React.useState(false);
-
-  React.useEffect(() => {
-    setLoading(true);
-    fetch(\`https://jsonplaceholder.typicode.com/posts/\${id}\`)
-      .then(response => response.json())
-      .then(result => {
-        setData(result);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        setLoading(false);
-      });
-  }, [id]);
-
-  return (
-    <Layout title="Post Details" loading={loading}>
-      <Params>
-        <Input label="id" value={id} onChange={setId} type="number" />
-      </Params>
-      <Response data={data} />
-    </Layout>
-  );
-}`,
       completed: false,
     },
     {
@@ -89,45 +39,6 @@ export const initialEndpointsData = [
           userId: { type: "integer", default: 1 }
         }
       },
-      starterCode: `function createPost() {
-  const { Layout, Input, Textarea, Response } = window.APIExplorer;
-  const [formData, setFormData] = React.useState({title: '', body: '', userId: 1});
-  const [result, setResult] = React.useState(null);
-  const [loading, setLoading] = React.useState(false);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    fetch('https://jsonplaceholder.typicode.com/posts', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(formData)
-    })
-      .then(response => response.json())
-      .then(data => {
-        setResult(data);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        setLoading(false);
-      });
-  };
-
-  return (
-    <Layout title="Create New Post" loading={loading}>
-      <form onSubmit={handleSubmit} style={{ marginBottom: '6px' }}>
-        <Input label="title" value={formData.title} onChange={(val) => setFormData({...formData, title: val})} type="text" />
-        <Textarea label="body" value={formData.body} onChange={(val) => setFormData({...formData, body: val})} />
-        <Input label="userId" value={formData.userId} onChange={(val) => setFormData({...formData, userId: val})} type="number" />
-        <button type="submit" disabled={loading} style={{ marginTop: '2px', padding: '6px 12px', fontSize: '13px', fontWeight: 600 }}>
-          {loading ? 'Creating...' : 'Create Post'}
-        </button>
-      </form>
-      <Response data={result} />
-    </Layout>
-  );
-}`,
       completed: false,
     },
     {
@@ -140,85 +51,6 @@ export const initialEndpointsData = [
         { name: "_start", in: "query", type: "integer", default: 0 },
         { name: "_limit", in: "query", type: "integer", default: 10 }
       ],
-      starterCode: `function get_photos() {
-  const { Layout, Params, Input, PaginatedResponse, Toolbar, Response, ErrorDisplay } = window.APIExplorer;
-
-  const [allResults, setAllResults] = React.useState([]);
-  const [responseData, setResponseData] = React.useState(null);
-  const startRef = React.useRef(0);
-  const [limit] = React.useState(10);
-  const [loading, setLoading] = React.useState(false);
-  const [hasMore, setHasMore] = React.useState(true);
-  const [error, setError] = React.useState(null);
-
-  const fetchPage = React.useCallback((currentStart) => {
-    const queryParams = "?" + "_start=" + currentStart + "&_limit=" + limit;
-    const url = \`https://jsonplaceholder.typicode.com/photos\` + queryParams;
-
-    console.log('Fetching:', url);
-
-    return fetch(url)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(\`HTTP error! status: \${response.status}\`);
-        }
-        return response.json();
-      })
-      .then(result => {
-        console.log('Response:', result);
-        // Handle both array responses and object responses with 'results' key
-        const newData = Array.isArray(result) ? result : (result.results || []);
-        const isLastPage = newData.length < limit;
-
-        setAllResults(prev => [...prev, ...newData]);
-        setResponseData(result);
-        startRef.current = Number(currentStart) + Number(limit);
-        setHasMore(!isLastPage);
-        setError(null);
-
-        return result;
-      });
-  }, [limit]);
-
-  React.useEffect(() => {
-    setLoading(true);
-    setAllResults([]);
-    startRef.current = 0;
-    setHasMore(true);
-    setError(null);
-    fetchPage(0)
-      .then(() => setLoading(false))
-      .catch(err => {
-        console.error('Error:', err);
-        setError(err.message);
-        setLoading(false);
-      });
-  }, [fetchPage]);
-
-  const handleLoadMore = React.useCallback(() => {
-    return fetchPage(startRef.current).catch(err => {
-      console.error('Load more error:', err);
-      setError(err.message);
-    });
-  }, [fetchPage]);
-
-  // Check if response is an object with keys other than 'results'
-  const hasToolbarData = responseData && typeof responseData === 'object' &&
-    !Array.isArray(responseData) && Object.keys(responseData).some(key => key !== 'results');
-
-  return (
-    <Layout title="Photos (Paginated)" loading={loading}>
-      <ErrorDisplay error={error} />
-      {hasToolbarData && <Toolbar data={responseData} exclude={['results']} />}
-      {!error && <PaginatedResponse
-        data={allResults}
-        onLoadMore={handleLoadMore}
-        loading={loading}
-        hasMore={hasMore}
-      />}
-    </Layout>
-  );
-}`,
       completed: false,
     },
 ];
@@ -395,8 +227,8 @@ export function parseOpenAPISpec(spec, bearerToken) {
 // Import shared utilities from APIExplorer global
 const IMPORTS = `const { Layout, Params, Input, Textarea, Response } = window.APIExplorer;`;
 
-// Generate starter code for an endpoint
-export function generateStarterCode(endpoint, baseUrl, bearerToken) {
+// Generate starter code for an endpoint dynamically
+export function generateStarterCode(endpoint, baseUrl, bearerToken = null) {
   const fullUrl = baseUrl + endpoint.path;
   const funcName = `${endpoint.method.toLowerCase()}${endpoint.path.replace(/[^a-zA-Z0-9]/g, '_')}`;
 
@@ -742,3 +574,10 @@ ${IMPORTS}
     }
   }
 }
+
+// Generate initialEndpointsData by dynamically creating starterCode for each endpoint
+// This ensures consistency between initial endpoints and spec-loaded endpoints
+export const initialEndpointsData = initialEndpointsMetadata.map(endpoint => ({
+  ...endpoint,
+  starterCode: generateStarterCode(endpoint, JSONPLACEHOLDER_BASE_URL)
+}));
