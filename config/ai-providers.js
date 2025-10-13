@@ -1,6 +1,8 @@
 // AI Provider Configuration
 // Exported configuration for different AI providers (OpenAI, Anthropic, etc.)
 
+import { getSystemPrompt } from './ai-prompts.js';
+
 export const AI_PROVIDERS = {
     OPENAI: {
       name: 'OpenAI',
@@ -17,27 +19,7 @@ export const AI_PROVIDERS = {
         messages: [
           {
             role: 'system',
-            content: `You are a helpful AI assistant that helps write and improve code for a browser-based React application.
-
-IMPORTANT ENVIRONMENT CONSTRAINTS:
-- This is a pure browser environment using ES modules (no Node.js, no build steps)
-- Code uses React 18 with Babel standalone for JSX transpilation
-- All imports must use ES module syntax (import React from 'react')
-- No npm packages are available except those explicitly imported via CDN/import maps
-- Available libraries: React, ReactDOM, CodeMirror
-- No server-side code, database access, or file system operations
-- All code must run entirely in the browser
-
-AVAILABLE COMPONENTS:
-- Header: Main application header with logo and action buttons
-- Sidebar: Shows list of API endpoints
-- EndpointItem: Individual endpoint in the sidebar with accordion expansion
-- CodeEditor: CodeMirror-based editor component
-- Preview: Live preview of code execution
-- AIAssistant: AI code generation assistant (this component)
-- APIKeyDialog: Dialog for API configuration
-
-Respond with only the code changes requested. No explanations, just the code.`
+            content: getSystemPrompt('OPENAI')
           },
           {
             role: 'user',
@@ -68,25 +50,7 @@ Respond with only the code changes requested. No explanations, just the code.`
         messages: [
           {
             role: 'system',
-            content: `You are a helpful AI assistant that helps write and improve code for a browser-based React application.
-
-IMPORTANT ENVIRONMENT CONSTRAINTS:
-- This is a pure browser environment using ES modules (no Node.js, no build steps)
-- Code uses React 18 with Babel standalone for JSX transpilation
-- All imports must use ES module syntax (import React from 'react')
-- No npm packages are available except those explicitly imported via CDN/import maps
-- Available libraries: React, ReactDOM, CodeMirror
-- No server-side code, database access, or file system operations
-- All code must run entirely in the browser
-
-AVAILABLE COMPONENTS:
-- Header: Main application header with logo and action buttons
-- Sidebar: Shows list of API endpoints
-- EndpointItem: Individual endpoint in the sidebar with accordion expansion
-- CodeEditor: CodeMirror-based editor component
-- Preview: Live preview of code execution
-- AIAssistant: AI code generation assistant (this component)
-- APIKeyDialog: Dialog for API configuration`
+            content: getSystemPrompt('ANTHROPIC')
           },
           {
             role: 'user',

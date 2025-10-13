@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect, useMemo, createContext, useCon
 import { debounce } from "../utils.js";
 import { initialEndpointsData } from "../data/initial-endpoints.js";
 import { generateStarterCode } from "../services/code-generator/index.js";
+import { getLocalStorage, setLocalStorage } from "../utils/storage.js";
 
 /**
  * Endpoint Context - Manages API endpoint state and code
@@ -38,9 +39,7 @@ export const EndpointContext = createContext({
  */
 export function EndpointProvider({ children, initialEndpoints }) {
   const [state, setState] = useState(() => {
-    const savedState = JSON.parse(
-      localStorage.getItem("apiExplorer") || "{}"
-    );
+    const savedState = getLocalStorage("apiExplorer", {});
 
     // Use saved endpoints if available, otherwise use initial
     const endpointsToUse = savedState.endpoints || initialEndpoints;
@@ -67,10 +66,7 @@ export function EndpointProvider({ children, initialEndpoints }) {
         ...newState,
         modifiedEndpoints: Array.from(newState.modifiedEndpoints)
       };
-      localStorage.setItem(
-        "apiExplorer",
-        JSON.stringify(stateToSave)
-      );
+      setLocalStorage("apiExplorer", stateToSave);
     }, 1000),
     []
   );

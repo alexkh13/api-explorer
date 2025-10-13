@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo, createContext, useContext } from "react";
 import { useEndpoints } from "./EndpointContext.jsx";
 import { AI_PROVIDERS } from "../config/ai-providers.js";
+import { getLocalStorageString, setLocalStorageString } from "../utils/storage.js";
 
 /**
  * AI Context - Manages AI provider configuration and code generation
@@ -27,9 +28,9 @@ export const AIContext = createContext({
  */
 export function AIProvider({ children }) {
   const [config, setConfig] = useState(() => {
-    const provider = localStorage.getItem('ai_provider') || 'OPENAI';
-    const apiKey = localStorage.getItem(AI_PROVIDERS[provider]?.apiKeyName || '');
-    const model = localStorage.getItem(`${provider}_MODEL`) || AI_PROVIDERS[provider]?.defaultModel;
+    const provider = getLocalStorageString('ai_provider', 'OPENAI');
+    const apiKey = getLocalStorageString(AI_PROVIDERS[provider]?.apiKeyName || '');
+    const model = getLocalStorageString(`${provider}_MODEL`, AI_PROVIDERS[provider]?.defaultModel);
 
     return {
       provider,
@@ -43,10 +44,10 @@ export function AIProvider({ children }) {
   const { getCurrentEndpoint } = useEndpoints();
 
   const setApiConfig = useCallback((newConfig) => {
-    // Store in localStorage
-    localStorage.setItem('ai_provider', newConfig.provider);
-    localStorage.setItem(AI_PROVIDERS[newConfig.provider].apiKeyName, newConfig.apiKey);
-    localStorage.setItem(`${newConfig.provider}_MODEL`, newConfig.model);
+    // Store in localStorage using utility functions
+    setLocalStorageString('ai_provider', newConfig.provider);
+    setLocalStorageString(AI_PROVIDERS[newConfig.provider].apiKeyName, newConfig.apiKey);
+    setLocalStorageString(`${newConfig.provider}_MODEL`, newConfig.model);
 
     setConfig(prev => ({
       ...prev,
