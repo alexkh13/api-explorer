@@ -3,6 +3,25 @@
 
 import { getSystemPrompt } from './ai-prompts.js';
 
+/**
+ * AI Provider Configuration Object
+ * Contains configuration for all supported AI providers
+ *
+ * @typedef {Object} AIProvider
+ * @property {string} name - Display name of the provider
+ * @property {string} endpoint - API endpoint URL
+ * @property {string} apiKeyName - localStorage key for API key
+ * @property {string} defaultModel - Default model ID
+ * @property {Array<{id: string, name: string}>} models - Available models
+ * @property {Function} formatRequest - Format request payload (prompt, code, model) => requestBody
+ * @property {Function} customHeaders - Generate custom headers (apiKey) => headers
+ * @property {Function} extractResponse - Extract text from API response (data) => string
+ */
+
+/**
+ * Supported AI providers with their configurations
+ * @type {Object.<string, AIProvider>}
+ */
 export const AI_PROVIDERS = {
     OPENAI: {
       name: 'OpenAI',

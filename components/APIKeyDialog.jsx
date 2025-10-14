@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAI } from "../contexts/AIContext.jsx";
 import { Dialog } from "./Dialog.jsx";
+import { DialogHeader, DialogFooter, FormField } from "./dialog-parts/index.jsx";
 
 // API Key Dialog Component
 export function APIKeyDialog({ isOpen, onClose }) {
@@ -31,31 +32,19 @@ export function APIKeyDialog({ isOpen, onClose }) {
       return;
     }
 
-    // Update context
     setApiConfig(formState);
     onClose();
   };
 
-  const renderModelOptions = () => {
-    const providerConfig = providers[formState.provider];
-    if (!providerConfig?.models) return null;
-
-    return providerConfig.models.map(model => (
-      <option key={model.id} value={model.id}>{model.name}</option>
-    ));
-  };
-
   return (
     <Dialog isOpen={isOpen} onClose={onClose}>
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold mb-2 text-[var(--text-primary)]">Configure AI Assistant</h2>
-        <p className="text-[var(--text-secondary)] text-sm leading-relaxed">
-          To enable AI-powered code edits, please provide an API key for one of the supported services.
-          Your key will be stored securely in your browser's local storage.
-        </p>
-      </div>
+      <DialogHeader
+        title="Configure AI Assistant"
+        description="To enable AI-powered code edits, please provide an API key for one of the supported services. Your key will be stored securely in your browser's local storage."
+      />
 
       <form className="mt-6" onSubmit={handleSubmit}>
+        {/* Provider Selection - Custom radio group */}
         <div className="mb-4">
           <label className="block mb-2 font-medium text-sm text-[var(--text-primary)]">Select AI Provider</label>
           {Object.keys(providers).map(key => (
@@ -79,47 +68,31 @@ export function APIKeyDialog({ isOpen, onClose }) {
           ))}
         </div>
 
-        <div className="mb-4">
-          <label className="block mb-2 font-medium text-sm text-[var(--text-primary)]">API Key</label>
-          <input
-            type="password"
-            className="w-full p-3 border border-[var(--border-default)] rounded-md font-[var(--font-sans)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-[var(--accent-primary)]/20"
-            value={formState.apiKey}
-            onChange={e => {
-              setFormState(prev => ({ ...prev, apiKey: e.target.value }));
-              setError('');
-            }}
-            placeholder={`Enter your ${providers[formState.provider].name} API key`}
-          />
-          {error && <div className="text-red-500 text-sm mt-1">{error}</div>}
-        </div>
+        <FormField
+          label="API Key"
+          type="password"
+          value={formState.apiKey}
+          onChange={e => {
+            setFormState(prev => ({ ...prev, apiKey: e.target.value }));
+            setError('');
+          }}
+          placeholder={`Enter your ${providers[formState.provider].name} API key`}
+          error={error}
+          required
+        />
 
-        <div className="mb-6">
-          <label className="block mb-2 font-medium text-sm text-[var(--text-primary)]">Model</label>
-          <select
-            className="w-full p-3 border border-[var(--border-default)] rounded-md font-[var(--font-sans)] bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-primary)] focus:ring-2 focus:ring-[var(--accent-primary)]/20"
-            value={formState.model}
-            onChange={e => setFormState(prev => ({ ...prev, model: e.target.value }))}
-          >
-            {renderModelOptions()}
-          </select>
-        </div>
+        <FormField
+          label="Model"
+          as="select"
+          value={formState.model}
+          onChange={e => setFormState(prev => ({ ...prev, model: e.target.value }))}
+        >
+          {providers[formState.provider]?.models?.map(model => (
+            <option key={model.id} value={model.id}>{model.name}</option>
+          ))}
+        </FormField>
 
-        <div className="flex justify-end gap-3">
-          <button
-            type="button"
-            className="px-4 py-2 bg-[var(--bg-muted)] text-[var(--text-primary)] border-none rounded-md cursor-pointer font-medium text-sm transition-all hover:bg-[var(--bg-secondary)] shadow-sm"
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-[var(--accent-primary)] text-white border-none rounded-md cursor-pointer font-medium text-sm transition-all hover:bg-[var(--accent-primary-hover)] shadow-sm"
-          >
-            Save
-          </button>
-        </div>
+        <DialogFooter onCancel={onClose} submitLabel="Save" />
       </form>
     </Dialog>
   );

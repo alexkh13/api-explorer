@@ -35,15 +35,59 @@ The application uses a **service worker** to enable JSX transpilation for ES6 mo
 ### File Structure and Responsibilities
 
 ```
-index.html          - Main HTML, registers service worker, loads app.jsx entry point
-theme.css           - All CSS styles with CSS variables for theming
-sw.js               - Service worker for JSX transpilation
-constants.js        - ES6 module: endpoint data, OpenAPI parser, AI_PROVIDERS config (exports via export)
-utils.js            - ES6 module: utility functions like debounce (exports via export)
-icons/index.jsx     - ES6 module: SVG icon components (named exports)
-contexts.js         - ES6 module: React contexts (Theme, Endpoint, AI, Toast) with custom hooks
-components.js       - ES6 module: All UI components (Dialog, Header, Sidebar, Preview, etc.)
-app.js              - ES6 module: Main App component entry point, renders to DOM
+index.html                      - Main HTML, registers service worker, loads app.jsx entry point
+theme.css                       - All CSS styles with CSS variables for theming
+sw.js                           - Service worker for JSX transpilation
+app.jsx                         - Main App component entry point, renders to DOM
+
+components/                     - React UI components (modular structure)
+  ├── index.jsx                 - Component exports
+  ├── Dialog.jsx                - Modal dialog component
+  ├── Header.jsx                - App header with actions
+  ├── Sidebar.jsx               - Endpoint list sidebar
+  ├── Preview.jsx               - Code preview iframe container
+  └── ...                       - Other UI components
+
+contexts/                       - React Context providers (modular structure)
+  ├── index.jsx                 - Context exports
+  ├── ThemeContext.jsx          - Dark/light mode context
+  ├── EndpointContext.jsx       - Endpoint state management
+  ├── AIContext.jsx             - AI provider configuration
+  └── ToastContext.jsx          - Toast notifications
+
+services/                       - Business logic and service layer
+  ├── README.md                 - Service architecture documentation
+  ├── code-generator/           - API endpoint code generation
+  │   ├── index.js              - Main generator entry
+  │   ├── get-generator.js      - GET request code generation
+  │   ├── mutation-generator.js - POST/PUT/PATCH/DELETE generation
+  │   └── pagination-generator.js - Paginated GET with infinite scroll
+  ├── preview/                  - Preview iframe component builders
+  │   ├── index.js              - Preview component exports
+  │   ├── ui-components.js      - Basic UI components (Layout, Input, etc.)
+  │   └── data-components.js    - Data display components
+  ├── preview-template.js       - HTML template generation for iframe
+  ├── transpilation-service.js  - JSX transpilation and error handling
+  └── openapi-parser.js         - OpenAPI v3 specification parser
+
+utils/                          - Shared utility functions
+  ├── README.md                 - Utilities documentation
+  ├── code-generation-helpers.js - Reusable code generation patterns
+  ├── code-templates.js         - Code generation templates and constants
+  ├── react-element-helpers.js  - React.createElement factory functions
+  ├── storage.js                - localStorage abstraction layer
+  ├── http-methods.js           - HTTP method definitions
+  └── utils.js                  - General utilities (debounce, etc.)
+
+data/                           - Static data and configuration
+  ├── initial-endpoints.js      - Demo endpoint definitions
+
+config/                         - App configuration
+  ├── ai-providers.js           - AI provider configurations
+  └── ai-prompts.js             - AI system prompts
+
+icons/                          - SVG icon components
+  └── index.jsx                 - Icon exports
 ```
 
 ### Data Flow
@@ -162,7 +206,10 @@ CodeMirror 5 is used for the code editor:
 - User experience unchanged: still writes JSX, gets instant feedback
 - Simulates a "Vite dev server" experience entirely in the browser
 
-**Implementation**: See `Preview` component in `components.jsx`, specifically the `renderPreview()` function at lines 545-735
+**Implementation**:
+- `Preview` component (`components/Preview.jsx`) - Coordinates iframe rendering
+- `transpilation-service.js` - Handles JSX transpilation and error display
+- `preview-template.js` - Generates HTML template with APIExplorer utilities
 
 ## Endpoint Management
 
@@ -183,9 +230,16 @@ Users can load endpoints from an OpenAPI v3 JSON specification:
 
 ### Code Generation
 
-The `generateStarterCode()` function in `constants.js` automatically creates:
+The code generation system (`services/code-generator/`) automatically creates:
 - State management with React hooks
 - Fetch calls with proper headers (including bearer token if provided)
 - Loading states and error handling
 - Input forms for parameters and request bodies
 - Response display with JSON formatting
+- Special handling for paginated endpoints with infinite scroll
+
+**Architecture**:
+- Modular generators for different HTTP methods (GET, POST, PUT, PATCH, DELETE)
+- Shared utilities in `utils/code-generation-helpers.js` for DRY code
+- Template constants in `utils/code-templates.js`
+- Main entry: `generateStarterCode()` from `services/code-generator/index.js`

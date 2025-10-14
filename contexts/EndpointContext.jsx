@@ -1,8 +1,7 @@
-import React, { useState, useCallback, useEffect, useMemo, createContext, useContext } from "react";
-import { debounce } from "../utils.js";
+import React, { useCallback, useMemo, createContext, useContext } from "react";
 import { initialEndpointsData } from "../data/initial-endpoints.js";
 import { generateStarterCode } from "../services/code-generator/index.js";
-import { getLocalStorage, setLocalStorage } from "../utils/storage.js";
+import { useLocalStorageState } from "../hooks/index.js";
 
 /**
  * Endpoint Context - Manages API endpoint state and code
@@ -38,43 +37,29 @@ export const EndpointContext = createContext({
  * @returns {JSX.Element} Provider component wrapping children
  */
 export function EndpointProvider({ children, initialEndpoints }) {
-  const [state, setState] = useState(() => {
-    const savedState = getLocalStorage("apiExplorer", {});
-
-    // Use saved endpoints if available, otherwise use initial
-    const endpointsToUse = savedState.endpoints || initialEndpoints;
-
-    // Only load saved codes for modified endpoints
-    const savedCodes = savedState.endpointCodes || {};
-    const savedModified = savedState.modifiedEndpoints || [];
-
-    return {
-      currentEndpointId: savedState.currentEndpointId || endpointsToUse[0].id,
-      endpoints: endpointsToUse,
-      endpointCodes: savedCodes,
-      modifiedEndpoints: new Set(savedModified),
-      baseUrl: savedState.baseUrl || '',
-      bearerToken: savedState.bearerToken || null
-    };
-  });
-
-  // Debounced save to localStorage
-  const saveToLocalStorage = useCallback(
-    debounce((newState) => {
-      // Convert Set to Array for JSON serialization
-      const stateToSave = {
-        ...newState,
-        modifiedEndpoints: Array.from(newState.modifiedEndpoints)
-      };
-      setLocalStorage("apiExplorer", stateToSave);
-    }, 1000),
-    []
+  // Use localStorage sync hook with custom serialization for Set
+  const [state, setState] = useLocalStorageState(
+    "apiExplorer",
+    () => ({
+      currentEndpointId: initialEndpoints[0].id,
+      endpoints: initialEndpoints,
+      endpointCodes: {},
+      modifiedEndpoints: new Set(),
+      baseUrl: '',
+      bearerToken: null
+    }),
+    {
+      serialize: (state) => ({
+        ...state,
+        modifiedEndpoints: Array.from(state.modifiedEndpoints)
+      }),
+      deserialize: (savedState) => ({
+        ...savedState,
+        modifiedEndpoints: new Set(savedState.modifiedEndpoints || []),
+        endpoints: savedState.endpoints || initialEndpoints
+      })
+    }
   );
-
-  // Save state to localStorage
-  useEffect(() => {
-    saveToLocalStorage(state);
-  }, [state, saveToLocalStorage]);
 
   // Context value with state and methods
   const value = useMemo(() => ({

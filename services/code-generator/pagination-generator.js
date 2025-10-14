@@ -1,7 +1,8 @@
 // Pagination Code Generator
 // Generates code for paginated GET requests with infinite scroll
 
-import { generateFetchOptions, capitalize } from '../../utils/code-templates.js';
+import { generateFetchOptions } from '../../utils/code-templates.js';
+import { generateStateDeclarations, generateParamInputs, capitalize } from '../../utils/code-generation-helpers.js';
 
 /**
  * Generate code for a paginated GET request with infinite scroll
@@ -17,10 +18,7 @@ import { generateFetchOptions, capitalize } from '../../utils/code-templates.js'
  * @returns {string} Generated JSX code
  */
 export function generatePaginatedCode(funcName, fullUrl, skipParam, limitParam, pathParams, queryParams, nonPaginationParams, endpoint, bearerToken = null) {
-  const stateInit = nonPaginationParams.map(p =>
-    `  const [${p.name}, set${capitalize(p.name)}] = React.useState(${JSON.stringify(p.default)});`
-  ).join('\n');
-
+  const stateInit = generateStateDeclarations(nonPaginationParams);
   const nonPaginationStateVars = nonPaginationParams.map(p => p.name).join(', ');
 
   let urlBase = `\`${fullUrl}\``;
@@ -29,15 +27,8 @@ export function generatePaginatedCode(funcName, fullUrl, skipParam, limitParam, 
   });
 
   const nonPaginationQueryParams = queryParams.filter(p => p.name !== skipParam.name && p.name !== limitParam.name);
-
   const fetchOptions = generateFetchOptions(null, false, bearerToken);
-
-  const paramInputs = nonPaginationParams.length > 0
-    ? nonPaginationParams.map(p =>
-        `        <Input label="${p.name}" value={${p.name}} onChange={set${capitalize(p.name)}} type="${p.type === 'integer' ? 'number' : 'text'}" />`
-      ).join('\n')
-    : '';
-
+  const paramInputs = nonPaginationParams.length > 0 ? generateParamInputs(nonPaginationParams) : '';
   const hasParamsSection = paramInputs.length > 0;
 
   const skipVarName = skipParam.name.replace(/^_/, '');

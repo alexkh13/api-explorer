@@ -3,10 +3,52 @@
 
 import { generateStarterCode } from '../services/code-generator/index.js';
 
-// Base URL for sample JSONPlaceholder API endpoints
+/**
+ * @typedef {Object} EndpointParameter
+ * @property {string} name - Parameter name
+ * @property {string} in - Parameter location ('path', 'query', 'header', 'body')
+ * @property {string} type - Parameter type ('string', 'integer', 'boolean')
+ * @property {*} default - Default value for the parameter
+ */
+
+/**
+ * @typedef {Object} RequestBodyProperty
+ * @property {string} type - Property type ('string', 'integer', 'boolean', 'object', 'array')
+ * @property {*} default - Default value for the property
+ */
+
+/**
+ * @typedef {Object} RequestBody
+ * @property {string} type - Request body type (usually 'object')
+ * @property {Object.<string, RequestBodyProperty>} properties - Request body properties
+ */
+
+/**
+ * @typedef {Object} Endpoint
+ * @property {string} id - Unique endpoint identifier
+ * @property {string} title - Human-readable endpoint title
+ * @property {string} description - Endpoint description
+ * @property {string} method - HTTP method ('GET', 'POST', 'PUT', 'PATCH', 'DELETE')
+ * @property {string} path - API path (may include :params)
+ * @property {boolean} completed - Whether user has completed this endpoint
+ * @property {EndpointParameter[]} [parameters] - Endpoint parameters (path, query, etc.)
+ * @property {RequestBody} [requestBody] - Request body schema for POST/PUT/PATCH
+ * @property {string} [starterCode] - Generated JSX starter code
+ * @property {boolean} [isFromSpec] - Whether loaded from OpenAPI spec
+ */
+
+/**
+ * Base URL for sample JSONPlaceholder API endpoints
+ * @type {string}
+ * @constant
+ */
 const JSONPLACEHOLDER_BASE_URL = 'https://jsonplaceholder.typicode.com';
 
-// Metadata-only endpoint definitions (no hardcoded starterCode)
+/**
+ * Metadata-only endpoint definitions (no hardcoded starterCode)
+ * Starter code is generated dynamically using code-generator service
+ * @type {Endpoint[]}
+ */
 const initialEndpointsMetadata = [
     {
       id: "1",
@@ -57,8 +99,18 @@ const initialEndpointsMetadata = [
     },
 ];
 
-// Generate initialEndpointsData by dynamically creating starterCode for each endpoint
-// This ensures consistency between initial endpoints and spec-loaded endpoints
+/**
+ * Initial endpoints data with dynamically generated starter code
+ * Creates fully-formed endpoint objects by generating JSX code for each endpoint
+ * This ensures consistency between initial demo endpoints and spec-loaded endpoints
+ *
+ * @type {Endpoint[]}
+ * @constant
+ *
+ * @example
+ * import { initialEndpointsData } from './data/initial-endpoints.js';
+ * const firstEndpoint = initialEndpointsData[0]; // { id, title, description, method, path, starterCode, ... }
+ */
 export const initialEndpointsData = initialEndpointsMetadata.map(endpoint => ({
   ...endpoint,
   starterCode: generateStarterCode(endpoint, JSONPLACEHOLDER_BASE_URL)

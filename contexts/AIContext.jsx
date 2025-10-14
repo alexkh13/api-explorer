@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo, createContext, useContext } from
 import { useEndpoints } from "./EndpointContext.jsx";
 import { AI_PROVIDERS } from "../config/ai-providers.js";
 import { getLocalStorageString, setLocalStorageString } from "../utils/storage.js";
+import { validateGeneratedCode } from "../services/code-validation.js";
 
 /**
  * AI Context - Manages AI provider configuration and code generation
@@ -104,67 +105,26 @@ export function AIProvider({ children }) {
       const data = await response.json();
       const result = provider.extractResponse(data);
 
-      // Strip code blocks and unnecessary formatting from result
-      let codeResult = result;
-      if (result.includes('```')) {
-        const codeBlockMatch = result.match(/```(?:jsx?|tsx?|javascript)?\n([\s\S]+?)```/);
-        if (codeBlockMatch && codeBlockMatch[1]) {
-          codeResult = codeBlockMatch[1];
-        }
-      }
+      // Validate generated code
+      const validation = validateGeneratedCode(result);
 
-      // Check for browser-incompatible patterns
-      const incompatiblePatterns = [
-        { pattern: /import\s+.+\s+from\s+['"](?!react|react-dom)([^/][^'"]*)['"];?/g, message: 'Unsupported import from non-CDN source' },
-        { pattern: /require\s*\(/g, message: 'require() is not supported in browser environment' },
-        { pattern: /fs\.|path\.|process\.env|__dirname|__filename/g, message: 'Node.js APIs are not available in browser' },
-        { pattern: /module\.exports|exports\./g, message: 'CommonJS module system not supported' }
-      ];
-
-      let isValidCode = true;
-      let validationMessage = '';
-
-      for (const { pattern, message } of incompatiblePatterns) {
-        if (pattern.test(codeResult)) {
-          isValidCode = false;
-          validationMessage = message;
-          break;
-        }
-      }
-
-      if (!isValidCode) {
+      if (!validation.isValid) {
         setConfig(prev => ({
           ...prev,
-          status: `Error: ${validationMessage}. The AI generated code that isn't compatible with the browser environment. Try a different prompt.`
+          status: `Error: ${validation.error} Try a different prompt.`
         }));
-
         return false;
-      } else {
-        // Try to parse the code with Babel to ensure it's valid
-        try {
-          // Only perform this check for complete function/component definitions
-          if (codeResult.includes('function') || codeResult.includes('class') || codeResult.includes('=>')) {
-            window.Babel.transform(codeResult, { presets: ['react'] });
-          }
-
-          // Update the code through callback
-          onSuccess(codeResult);
-
-          setConfig(prev => ({
-            ...prev,
-            status: 'Code updated successfully'
-          }));
-
-          return true;
-        } catch (syntaxError) {
-          setConfig(prev => ({
-            ...prev,
-            status: `Syntax error in generated code: ${syntaxError.message}. Try a different prompt.`
-          }));
-
-          return false;
-        }
       }
+
+      // Update the code through callback
+      onSuccess(validation.code);
+
+      setConfig(prev => ({
+        ...prev,
+        status: 'Code updated successfully'
+      }));
+
+      return true;
     } catch (error) {
       console.error('Error generating completions:', error);
 

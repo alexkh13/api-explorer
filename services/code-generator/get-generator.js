@@ -1,8 +1,19 @@
 // GET Request Code Generator
 // Generates code for GET requests with and without parameters
 
-import { IMPORTS, generateFetchOptions, capitalize, detectPaginationPattern } from '../../utils/code-templates.js';
+import { IMPORTS, generateFetchOptions, detectPaginationPattern } from '../../utils/code-templates.js';
 import { generatePaginatedCode } from './pagination-generator.js';
+import {
+  generateStateDeclarations,
+  generateStateVarList,
+  generateParamInputs,
+  buildStandardState,
+  buildUrlConstruction,
+  buildFetchChain,
+  buildUseEffect,
+  wrapWithLayout,
+  buildFunctionWrapper
+} from '../../utils/code-generation-helpers.js';
 
 /**
  * Generate code for GET request with parameters (non-paginated)
@@ -16,56 +27,24 @@ import { generatePaginatedCode } from './pagination-generator.js';
  * @returns {string} Generated JSX code
  */
 function generateParameterizedGet(funcName, fullUrl, allParams, pathParams, queryParams, endpoint, bearerToken = null) {
-  const stateInit = allParams.map(p =>
-    `  const [${p.name}, set${capitalize(p.name)}] = React.useState(${JSON.stringify(p.default)});`
-  ).join('\n');
+  const stateInit = generateStateDeclarations(allParams);
+  const stateVars = generateStateVarList(allParams);
+  const urlConstruction = buildUrlConstruction(fullUrl, pathParams, queryParams);
+  const fetchOptions = generateFetchOptions(null, false, bearerToken);
+  const paramInputs = generateParamInputs(allParams);
 
-  const stateVars = allParams.map(p => p.name).join(', ');
+  const states = `${stateInit}
+${buildStandardState()}`;
 
-  let urlConstruction = `\`${fullUrl}\``;
-  pathParams.forEach(param => {
-    urlConstruction = urlConstruction.replace(`:${param.name}`, `\${${param.name}}`);
+  const { fetchStart } = buildFetchChain(urlConstruction, fetchOptions, 'result');
+  const useEffectCode = buildUseEffect(fetchStart, stateVars);
+
+  const jsx = wrapWithLayout(endpoint.title, '      <Response data={data} />', {
+    includeParams: true,
+    paramContent: paramInputs
   });
 
-  if (queryParams.length > 0) {
-    urlConstruction += ' + "?" + ' + queryParams.map(p => `"${p.name}=" + ${p.name}`).join(' + "&" + ');
-  }
-
-  const fetchOptions = generateFetchOptions(null, false, bearerToken);
-
-  const paramInputs = allParams.map(p =>
-    `        <Input label="${p.name}" value={${p.name}} onChange={set${capitalize(p.name)}} type="${p.type === 'integer' ? 'number' : 'text'}" />`
-  ).join('\n');
-
-  return `function ${funcName}() {
-${IMPORTS}
-${stateInit}
-  const [data, setData] = React.useState(null);
-  const [loading, setLoading] = React.useState(false);
-
-  React.useEffect(() => {
-    setLoading(true);
-    fetch(${urlConstruction}${fetchOptions})
-      .then(response => response.json())
-      .then(result => {
-        setData(result);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        setLoading(false);
-      });
-  }, [${stateVars}]);
-
-  return (
-    <Layout title="${endpoint.title}" loading={loading}>
-      <Params>
-${paramInputs}
-      </Params>
-      <Response data={data} />
-    </Layout>
-  );
-}`;
+  return buildFunctionWrapper(funcName, IMPORTS, states, useEffectCode, jsx);
 }
 
 /**
@@ -78,32 +57,12 @@ ${paramInputs}
  */
 function generateSimpleGet(funcName, fullUrl, endpoint, bearerToken = null) {
   const fetchOptions = generateFetchOptions(null, false, bearerToken);
+  const states = buildStandardState();
+  const { fetchStart } = buildFetchChain(`'${fullUrl}'`, fetchOptions, 'result');
+  const useEffectCode = buildUseEffect(fetchStart, '');
+  const jsx = wrapWithLayout(endpoint.title, '      <Response data={data} />');
 
-  return `function ${funcName}() {
-${IMPORTS}
-  const [data, setData] = React.useState(null);
-  const [loading, setLoading] = React.useState(false);
-
-  React.useEffect(() => {
-    setLoading(true);
-    fetch('${fullUrl}'${fetchOptions})
-      .then(response => response.json())
-      .then(result => {
-        setData(result);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        setLoading(false);
-      });
-  }, []);
-
-  return (
-    <Layout title="${endpoint.title}" loading={loading}>
-      <Response data={data} />
-    </Layout>
-  );
-}`;
+  return buildFunctionWrapper(funcName, IMPORTS, states, useEffectCode, jsx);
 }
 
 /**
