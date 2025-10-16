@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="/">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    /* Base element styling for user-generated code */
+    button {
+      margin: 0 4px;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    h1 { font-size: 1.875rem; }
+    h2 { font-size: 1.5rem; }
+    h3 { font-size: 1.25rem; }
+    h4 { font-size: 1.125rem; }
+
+    pre, code {
+      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    }
+
+    pre {
+      background: #f3f4f6;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      overflow: auto;
+      font-size: 0.875rem;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      pre {
+        background: rgba(255, 255, 255, 0.05);
+      }
+    }
+  </style>
+
+  <!-- Babel Standalone for runtime JSX transpilation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Import maps for React and module resolution -->
+  <script type="importmap">
+    {
+      "imports": {
+        "react": "https://ga.jspm.io/npm:react@18.3.1/index.js",
+        "react-dom": "https://ga.jspm.io/npm:react-dom@18.3.1/index.js",
+        "react-dom/client": "https://ga.jspm.io/npm:react-dom@18.3.1/client.js"
+      },
+      "scopes": {
+        "https://ga.jspm.io/": {
+          "scheduler": "https://ga.jspm.io/npm:scheduler@0.23.2/index.js"
+        }
+      }
+    }
+  </script>
+  <script async src="https://ga.jspm.io/npm:es-module-shims@1.10.0/dist/es-module-shims.js"></script>
+</head>
+<body class="font-sans p-4 leading-relaxed text-gray-900 dark:text-gray-100 dark:bg-gray-900 bg-white">
+  <div id="root"></div>
+
+  <script>
+    // Wait for Babel to be loaded
+    function waitForBabel() {
+      return new Promise((resolve) => {
+        if (window.Babel) {
+          resolve();
+        } else {
+          const checkInterval = setInterval(() => {
+            if (window.Babel) {
+              clearInterval(checkInterval);
+              resolve();
+            }
+          }, 100);
+        }
+      });
+    }
+
+    // Listen for code from parent window
+    window.addEventListener('message', async (event) => {
+      // Verify origin for security
+      if (event.origin !== window.location.origin) {
+        return;
+      }
+
+      const { type, code } = event.data;
+
+      if (type === 'render') {
+        console.log('[Preview] Received code to render:', code?.substring(0, 100) + '...');
+        try {
+          // Clear previous content and scripts
+          const root = document.getElementById('root');
+          root.innerHTML = '';
+
+          // Remove any previous user scripts
+          const oldScripts = document.querySelectorAll('script[data-user-code]');
+          oldScripts.forEach(script => script.remove());
+
+          // Wait for Babel to be ready
+          await waitForBabel();
+
+          console.log('[Preview] Transpiling code...');
+          console.log('[Preview] Original code:', code.substring(0, 300));
+
+          // Transpile only JSX, preserve ES6 imports/exports
+          const transpiled = window.Babel.transform(code, {
+            presets: [
+              ['react', { runtime: 'classic' }]
+            ],
+            filename: 'preview.jsx',
+            sourceType: 'module'
+          });
+          console.log('[Preview] Transpiled successfully, executing...');
+          console.log('[Preview] Transpiled code:', transpiled.code.substring(0, 500));
+
+          // Global error handlers
+          window.addEventListener('error', (e) => {
+            console.error('[Preview] Runtime error:', e.error || e.message, e);
+          });
+
+          window.addEventListener('unhandledrejection', (e) => {
+            console.error('[Preview] Unhandled promise rejection:', e.reason);
+          });
+
+          // Add React error detection
+          setTimeout(() => {
+            const root = document.getElementById('root');
+            console.log('[Preview] After 2s, root innerHTML:', root?.innerHTML?.substring(0, 200) || '(empty)');
+            if (root && root.innerHTML.trim() === '') {
+              console.warn('[Preview] Root is still empty after 2 seconds - possible silent React error');
+            }
+          }, 2000);
+
+          // Create and execute transpiled script as module
+          // Note: Can't wrap imports in try-catch, they must be top-level
+          const scriptEl = document.createElement('script');
+          scriptEl.type = 'module';
+          scriptEl.setAttribute('data-user-code', 'true');
+          scriptEl.textContent = transpiled.code;
+
+          scriptEl.onerror = (e) => {
+            console.error('[Preview] Script load error:', e);
+          };
+
+          document.body.appendChild(scriptEl);
+          console.log('[Preview] Script element added to DOM');
+        } catch (error) {
+          // Display error in preview
+          const root = document.getElementById('root');
+          root.innerHTML = `
+            <div style="max-width: 800px; margin: 2rem auto; padding: 1.5rem; background: #fee; border: 1px solid #fcc; border-radius: 0.5rem;">
+              <h3 style="color: #c00; margin-bottom: 0.5rem; font-weight: 600;">Transpilation Error</h3>
+              <pre style="background: white; padding: 1rem; border-radius: 0.25rem; overflow: auto; font-size: 0.875rem;">${error.message}</pre>
+            </div>
+          `;
+          console.error('Preview error:', error);
+        }
+      }
+    });
+
+    // Wait for import maps to be ready
+    function waitForImportMaps() {
+      return new Promise((resolve) => {
+        if (window.importShim) {
+          resolve();
+        } else {
+          setTimeout(() => waitForImportMaps().then(resolve), 100);
+        }
+      });
+    }
+
+    // Signal to parent that iframe is ready (after Babel loads)
+    Promise.all([waitForBabel(), waitForImportMaps()]).then(() => {
+      console.log('[Preview] Babel and import maps loaded, signaling ready to parent');
+      window.parent.postMessage({ type: 'ready' }, window.location.origin);
+    });
+  </script>
+</body>
+</html>

@@ -36,6 +36,7 @@ The application uses a **service worker** to enable JSX transpilation for ES6 mo
 
 ```
 index.html                      - Main HTML, registers service worker, loads app.jsx entry point
+preview.html                    - Preview iframe HTML, receives code via postMessage
 theme.css                       - All CSS styles with CSS variables for theming
 sw.js                           - Service worker for JSX transpilation
 app.jsx                         - Main App component entry point, renders to DOM
@@ -62,12 +63,11 @@ services/                       - Business logic and service layer
   │   ├── get-generator.js      - GET request code generation
   │   ├── mutation-generator.js - POST/PUT/PATCH/DELETE generation
   │   └── pagination-generator.js - Paginated GET with infinite scroll
-  ├── preview/                  - Preview iframe component builders
-  │   ├── index.js              - Preview component exports
-  │   ├── ui-components.js      - Basic UI components (Layout, Input, etc.)
-  │   └── data-components.js    - Data display components
-  ├── preview-template.js       - HTML template generation for iframe
-  ├── transpilation-service.js  - JSX transpilation and error handling
+  ├── preview/                  - Preview iframe utilities
+  │   ├── api-explorer-utils.jsx - Shared utility components (Layout, Response, Input, etc.)
+  │   ├── ui-components.js      - UI component code generators (legacy)
+  │   └── data-components.js    - Data component code generators (legacy)
+  ├── preview-template.js       - HTML template generation for iframe with runtime transpilation
   └── openapi-parser.js         - OpenAPI v3 specification parser
 
 utils/                          - Shared utility functions
@@ -100,11 +100,13 @@ icons/                          - SVG icon components
 
 2. **Code Persistence**: All endpoint code and state saved to `localStorage` with debounced writes (key: `apiExplorer`)
 
-3. **Live Preview**: Uses `<iframe>` with `srcdoc` to sandbox and execute user code safely
-   - **Performance Optimization**: User JSX code is pre-transpiled in the parent window using Babel before injection into iframe
-   - iframe receives **plain JavaScript** (not JSX), eliminating the need to load Babel Standalone (~3MB) in every iframe
-   - This provides instant preview loading while maintaining the JSX editing experience for users
-   - Users write JSX in CodeMirror → Parent window transpiles → iframe executes pre-transpiled JS
+3. **Live Preview**: Uses `<iframe>` loading `/preview.html` to sandbox and execute user code safely
+   - **Runtime Transpilation**: Babel Standalone transpiles JSX directly in the iframe using `type="text/babel"` script tags
+   - **ES6 Module Support**: Generated code uses standard ES6 imports for utilities and React
+   - **Service Worker Integration**: All `.jsx` imports in iframe are transpiled by the service worker
+   - **PostMessage Communication**: Parent sends code to iframe via postMessage for security and proper origin handling
+   - **Same-Origin Access**: iframe loads actual HTML file (not srcdoc) so service worker can intercept module requests
+   - Users write JSX in CodeMirror → Raw JSX sent via postMessage → Babel transpiles → Service worker handles imports
 
 ### AI Integration
 
@@ -185,31 +187,49 @@ CodeMirror 5 is used for the code editor:
 - Initialized in `CodeEditor` component with JSX mode
 - Theme switches between default/dracula based on system dark mode
 
-### Preview Performance Architecture
+### Preview Runtime Architecture
 
-**Critical optimization**: The iframe preview system uses a two-stage transpilation approach:
+**ES6 Module System with Runtime Transpilation**:
 
-1. **Main App (Parent Window)**:
-   - Loads Babel Standalone once at startup
-   - User writes JSX in CodeMirror editor
-   - When rendering preview, parent window transpiles JSX → JavaScript using `window.Babel.transform()`
+The iframe preview system leverages Babel Standalone with ES6 imports for a true module-based development experience:
 
-2. **Preview iframe**:
-   - Does NOT load Babel Standalone (saves ~3MB + initialization time)
-   - Only loads React runtime via import maps (cached after first load)
-   - Receives pre-transpiled plain JavaScript
-   - Executes immediately without transpilation overhead
+1. **Preview iframe**:
+   - Loads Babel Standalone (~3MB, but cached across page loads)
+   - Uses `<script type="text/babel" data-type="module">` for automatic JSX transpilation
+   - Supports standard ES6 `import` statements in user code
+   - Imports resolve via service worker (`.jsx` files) or import maps (React, ReactDOM)
 
-**Why this matters**:
-- Original approach: iframe loaded 3MB Babel + initialized + transpiled on every preview render = slow
-- Optimized approach: Parent transpiles once, iframe executes pre-compiled code = fast
-- User experience unchanged: still writes JSX, gets instant feedback
-- Simulates a "Vite dev server" experience entirely in the browser
+2. **Generated Code Structure**:
+   ```jsx
+   import React, { useState, useEffect } from 'react';
+   import ReactDOM from 'react-dom';
+   import { Layout, Response, Input } from '/services/preview/api-explorer-utils.jsx';
+
+   function MyComponent() {
+     return <Layout><Response data={data} /></Layout>;
+   }
+
+   ReactDOM.render(<MyComponent />, document.getElementById('root'));
+   ```
+
+3. **Module Resolution**:
+   - React/ReactDOM: Loaded from CDN via import maps
+   - `api-explorer-utils.jsx`: Loaded from `/services/preview/api-explorer-utils.jsx`
+   - Service worker intercepts `.jsx` requests and transpiles them on-the-fly
+   - iframe has `sandbox="allow-scripts allow-same-origin"` to access parent origin resources
+
+**Benefits**:
+- True ES6 module support in generated code
+- Standard import/export syntax everywhere
+- Service worker handles all `.jsx` transpilation consistently
+- Easy to extend with new utility modules
+- Simulates modern development workflow entirely in browser
 
 **Implementation**:
-- `Preview` component (`components/Preview.jsx`) - Coordinates iframe rendering
-- `transpilation-service.js` - Handles JSX transpilation and error display
-- `preview-template.js` - Generates HTML template with APIExplorer utilities
+- `preview.html` - Static HTML file loaded by iframe with Babel + import maps
+- `Preview` component (`components/Preview.jsx`) - Sends raw JSX to iframe via postMessage
+- `api-explorer-utils.jsx` - Exportable utility components for generated code
+- Service worker (`sw.js`) - Transpiles all `.jsx` imports in iframe
 
 ## Endpoint Management
 

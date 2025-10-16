@@ -2,7 +2,12 @@
 // Shared utilities and templates for code generation
 
 // Import statement for APIExplorer utilities (used in generated code)
-export const IMPORTS = `const { Layout, Params, Input, Textarea, Response } = window.APIExplorer;`;
+// Note: Absolute paths from root are required for iframe srcdoc imports
+// React 18 uses createRoot from react-dom/client instead of ReactDOM.render
+// Import both default React (for JSX) and named hooks
+export const IMPORTS = `import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createRoot } from 'react-dom/client';
+import { Layout, Params, Input, Textarea, Response, PaginatedResponse, ErrorDisplay } from '/services/preview/api-explorer-utils.jsx';`;
 
 /**
  * Generate fetch options with optional authentication header
@@ -46,13 +51,22 @@ export function capitalize(str) {
 }
 
 /**
- * Generate a safe function name from method and path
+ * Generate a safe PascalCase function name from method and path
+ * React components must start with uppercase letter
  * @param {string} method - HTTP method
  * @param {string} path - API path
- * @returns {string} Generated function name
+ * @returns {string} Generated function name in PascalCase
  */
 export function generateFunctionName(method, path) {
-  return `${method.toLowerCase()}${path.replace(/[^a-zA-Z0-9]/g, '_')}`;
+  // Convert to PascalCase: GetUsers, PostUsers, etc.
+  const methodPart = capitalize(method.toLowerCase());
+  const pathPart = path
+    .replace(/[^a-zA-Z0-9]/g, '_')
+    .split('_')
+    .filter(Boolean)
+    .map(part => capitalize(part))
+    .join('');
+  return `${methodPart}${pathPart}`;
 }
 
 /**

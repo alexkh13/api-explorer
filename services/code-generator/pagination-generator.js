@@ -1,7 +1,7 @@
 // Pagination Code Generator
 // Generates code for paginated GET requests with infinite scroll
 
-import { generateFetchOptions } from '../../utils/code-templates.js';
+import { IMPORTS, generateFetchOptions } from '../../utils/code-templates.js';
 import { generateStateDeclarations, generateParamInputs, capitalize } from '../../utils/code-generation-helpers.js';
 
 /**
@@ -43,18 +43,19 @@ export function generatePaginatedCode(funcName, fullUrl, skipParam, limitParam, 
   ];
   const queryParamsConstruction = '"?" + ' + allQueryParamsForUrl.join(' + "&" + ');
 
-  return `function ${funcName}() {
-  const { Layout, Params, Input, PaginatedResponse, Toolbar, Response, ErrorDisplay } = window.APIExplorer;
-${stateInit}
-  const [allResults, setAllResults] = React.useState([]);
-  const [responseData, setResponseData] = React.useState(null);
-  const ${skipRefName} = React.useRef(${JSON.stringify(skipParam.default)});
-  const [${limitVarName}] = React.useState(${JSON.stringify(limitParam.default)});
-  const [loading, setLoading] = React.useState(false);
-  const [hasMore, setHasMore] = React.useState(true);
-  const [error, setError] = React.useState(null);
+  return `${IMPORTS}
 
-  const fetchPage = React.useCallback((current${capitalize(skipVarName)}) => {
+function ${funcName}() {
+${stateInit}
+  const [allResults, setAllResults] = useState([]);
+  const [responseData, setResponseData] = useState(null);
+  const ${skipRefName} = useRef(${JSON.stringify(skipParam.default)});
+  const [${limitVarName}] = useState(${JSON.stringify(limitParam.default)});
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchPage = useCallback((current${capitalize(skipVarName)}) => {
     const queryParams = ${queryParamsConstruction};
     const url = ${urlBase} + queryParams;
 
@@ -83,7 +84,7 @@ ${stateInit}
       });
   }, [${nonPaginationStateVars ? nonPaginationStateVars + ', ' : ''}${limitVarName}]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setLoading(true);
     setAllResults([]);
     ${skipRefName}.current = ${JSON.stringify(skipParam.default)};
@@ -98,7 +99,7 @@ ${stateInit}
       });
   }, [${nonPaginationStateVars ? nonPaginationStateVars + ', ' : ''}fetchPage]);
 
-  const handleLoadMore = React.useCallback(() => {
+  const handleLoadMore = useCallback(() => {
     return fetchPage(${skipRefName}.current).catch(err => {
       console.error('Load more error:', err);
       setError(err.message);
@@ -124,5 +125,14 @@ ${paramInputs}
       />}
     </Layout>
   );
-}`;
+}
+
+console.log('[User Code] Function defined:', '${funcName}');
+console.log('[User Code] Creating root...');
+const rootElement = document.getElementById('root');
+console.log('[User Code] Root element:', rootElement);
+const root = createRoot(rootElement);
+console.log('[User Code] Rendering component...');
+root.render(<${funcName} />);
+console.log('[User Code] Render called');`;
 }

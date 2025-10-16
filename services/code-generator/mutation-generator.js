@@ -23,9 +23,9 @@ function generateMutationWithBody(funcName, fullUrl, endpoint, bearerToken = nul
   const fetchOptions = generateFetchOptions(endpoint.method, true, bearerToken);
   const formFields = propNames.map(name => generateFormField(name, props[name])).join('\n');
 
-  const states = `  const [formData, setFormData] = React.useState(${initialState});
-  const [result, setResult] = React.useState(null);
-  const [loading, setLoading] = React.useState(false);`;
+  const states = `  const [formData, setFormData] = useState(${initialState});
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);`;
 
   const logic = `  const handleSubmit = (e) => {
     e.preventDefault();
@@ -66,8 +66,8 @@ ${formFields}
 function generateMutationWithoutBody(funcName, fullUrl, endpoint, bearerToken = null) {
   const fetchOptions = generateFetchOptions(endpoint.method, false, bearerToken);
 
-  const states = `  const [result, setResult] = React.useState(null);
-  const [loading, setLoading] = React.useState(false);`;
+  const states = `  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);`;
 
   const logic = `  const handleClick = () => {
     setLoading(true);

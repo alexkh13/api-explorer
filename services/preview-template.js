@@ -1,68 +1,14 @@
 // Preview Template Generator
-// Generates HTML templates for iframe preview with APIExplorer utilities
-
-import {
-  getLayoutComponent,
-  getParamsComponent,
-  getInputComponent,
-  getTextareaComponent,
-  getErrorDisplayComponent,
-  getToolbarComponent
-} from './preview/ui-components.js';
-
-import {
-  getNestedDataCellComponent,
-  getDataDisplayComponent,
-  getResponseComponent,
-  getPaginatedResponseComponent
-} from './preview/data-components.js';
-
-/**
- * Get the APIExplorer utilities code as a string
- * These utilities are injected into the preview iframe for user code to access
- * @returns {string} JavaScript code defining window.APIExplorer object
- */
-export function getAPIExplorerUtilities() {
-  return `
-    // Shared API Explorer utilities
-    window.APIExplorer = {${getLayoutComponent()}${getParamsComponent()}${getInputComponent()}${getTextareaComponent()}${getNestedDataCellComponent()}${getDataDisplayComponent()}${getResponseComponent()}${getPaginatedResponseComponent()}${getToolbarComponent()}${getErrorDisplayComponent()}
-
-      // Common fetch wrapper with error handling
-      useFetch: (url, options) => {
-        const [data, setData] = React.useState(null);
-        const [loading, setLoading] = React.useState(false);
-        const [error, setError] = React.useState(null);
-
-        const execute = React.useCallback(() => {
-          setLoading(true);
-          setError(null);
-          fetch(url, options)
-            .then(response => response.json())
-            .then(result => {
-              setData(result);
-              setLoading(false);
-            })
-            .catch(err => {
-              setError(err.message);
-              setLoading(false);
-            });
-        }, [url, JSON.stringify(options)]);
-
-        return { data, loading, error, execute };
-      }
-    };
-  `.trim();
-}
+// Generates HTML templates for iframe preview with runtime JSX transpilation
 
 /**
  * Generate complete HTML template for preview iframe
- * @param {string} transpiledCode - Pre-transpiled user code
- * @param {string} renderCode - Code to render the component
+ * User code is transpiled at runtime by Babel Standalone
+ * @param {string} userCode - Raw JSX code from user (not transpiled)
  * @returns {string} Complete HTML document as string
  */
-export function generatePreviewHTML(transpiledCode, renderCode) {
+export function generatePreviewHTML(userCode) {
   const script = "script";
-  const apiExplorerUtilities = getAPIExplorerUtilities();
 
   return `
     <!DOCTYPE html>
@@ -70,6 +16,7 @@ export function generatePreviewHTML(transpiledCode, renderCode) {
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <base href="/">
 
         <!-- Tailwind CSS -->
         <${script} src="https://cdn.tailwindcss.com"></${script}>
@@ -109,6 +56,10 @@ export function generatePreviewHTML(transpiledCode, renderCode) {
           }
         </style>
 
+        <!-- Babel Standalone for runtime JSX transpilation -->
+        <${script} src="https://unpkg.com/@babel/standalone/babel.min.js"></${script}>
+
+        <!-- Import maps for React and module resolution -->
         <${script} type="importmap">
           {
             "imports": {
@@ -126,17 +77,10 @@ export function generatePreviewHTML(transpiledCode, renderCode) {
       </head>
       <body class="font-sans p-4 leading-relaxed text-gray-900 dark:text-gray-100 dark:bg-gray-900 bg-white">
         <div id="root"></div>
-        <${script} type="module">
-          import React from 'react';
-          import ReactDOM from 'react-dom';
 
-          ${apiExplorerUtilities}
-
-          // Pre-transpiled user code
-          ${transpiledCode}
-
-          // Render code
-          ${renderCode}
+        <!-- User code - transpiled automatically by Babel -->
+        <${script} type="text/babel" data-type="module">
+${userCode}
         </${script}>
       </body>
     </html>`.trim();

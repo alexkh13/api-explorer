@@ -19,7 +19,7 @@ export function capitalize(str) {
  */
 export function generateStateDeclarations(params) {
   return params.map(p =>
-    `  const [${p.name}, set${capitalize(p.name)}] = React.useState(${JSON.stringify(p.default)});`
+    `  const [${p.name}, set${capitalize(p.name)}] = useState(${JSON.stringify(p.default)});`
   ).join('\n');
 }
 
@@ -76,8 +76,8 @@ export function buildFetchChain(url, fetchOptions, dataVar = 'result') {
  */
 export function buildStandardState({ includeData = true, includeLoading = true, dataDefault = 'null' } = {}) {
   const states = [];
-  if (includeData) states.push(`  const [data, setData] = React.useState(${dataDefault});`);
-  if (includeLoading) states.push(`  const [loading, setLoading] = React.useState(false);`);
+  if (includeData) states.push(`  const [data, setData] = useState(${dataDefault});`);
+  if (includeLoading) states.push(`  const [loading, setLoading] = useState(false);`);
   return states.join('\n');
 }
 
@@ -126,17 +126,18 @@ ${paramsSection}${paramsSection ? '\n' : ''}${content}
 }
 
 /**
- * Generate complete function wrapper
+ * Generate complete function wrapper with React 18 createRoot render call
  * @param {string} funcName - Function name
  * @param {string} imports - Import statements
  * @param {string} states - State declarations
  * @param {string} logic - Main function logic
  * @param {string} jsx - Return JSX
- * @returns {string} Complete function code
+ * @returns {string} Complete function code with render
  */
 export function buildFunctionWrapper(funcName, imports, states, logic, jsx) {
-  return `function ${funcName}() {
-${imports}
+  return `${imports}
+
+function ${funcName}() {
 ${states}
 
 ${logic}
@@ -144,7 +145,16 @@ ${logic}
   return (
 ${jsx}
   );
-}`;
+}
+
+console.log('[User Code] Function defined:', '${funcName}');
+console.log('[User Code] Creating root...');
+const rootElement = document.getElementById('root');
+console.log('[User Code] Root element:', rootElement);
+const root = createRoot(rootElement);
+console.log('[User Code] Rendering component...');
+root.render(<${funcName} />);
+console.log('[User Code] Render called');`;
 }
 
 /**
@@ -154,7 +164,7 @@ ${jsx}
  * @returns {string} useEffect hook code
  */
 export function buildUseEffect(fetchCode, dependencies = '') {
-  return `  React.useEffect(() => {
+  return `  useEffect(() => {
 ${fetchCode}
   }, [${dependencies}]);`;
 }
