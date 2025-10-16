@@ -66,6 +66,10 @@
   <div id="root"></div>
 
   <script>
+    // Detect base path for GitHub Pages deployment
+    const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+    console.log('[Preview] Base path:', basePath);
+
     // Wait for Babel to be loaded
     function waitForBabel() {
       return new Promise((resolve) => {
@@ -108,8 +112,14 @@
           console.log('[Preview] Transpiling code...');
           console.log('[Preview] Original code:', code.substring(0, 300));
 
+          // Transform relative import paths to absolute paths with base path
+          const codeWithAbsolutePaths = code.replace(
+            /from\s+['"]\.\/services\//g,
+            `from '${basePath}services/`
+          );
+
           // Transpile only JSX, preserve ES6 imports/exports
-          const transpiled = window.Babel.transform(code, {
+          const transpiled = window.Babel.transform(codeWithAbsolutePaths, {
             presets: [
               ['react', { runtime: 'classic' }]
             ],
