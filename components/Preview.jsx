@@ -28,7 +28,7 @@ export function Preview() {
   useEffect(() => {
     const iframe = iframeRef.current;
     if (iframe && !iframe.src) {
-      iframe.src = '/preview.html';
+      iframe.src = 'preview.html';
     }
   }, []);
 

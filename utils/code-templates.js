@@ -2,11 +2,11 @@
 // Shared utilities and templates for code generation
 
 // Import statement for APIExplorer utilities (used in generated code)
-// Note: Absolute paths from root are required for iframe srcdoc imports
+// Note: Relative paths work in both local dev and GitHub Pages deployments
 // Import both default React (for JSX) and named hooks
 // createRoot is handled by preview runtime, not in generated code
 export const IMPORTS = `import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Layout, Params, Input, Textarea, Response, PaginatedResponse, ErrorDisplay } from '/services/preview/api-explorer-utils.jsx';`;
+import { Layout, Params, Input, Textarea, Response, PaginatedResponse, ErrorDisplay } from './services/preview/api-explorer-utils.jsx';`;
 
 /**
  * Generate fetch options with optional authentication header
