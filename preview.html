@@ -106,6 +106,9 @@
           const oldScripts = document.querySelectorAll('script[data-user-code]');
           oldScripts.forEach(script => script.remove());
 
+          // Clear previous globals
+          delete window.__PreviewComponent;
+
           // Wait for Babel to be ready
           await waitForBabel();
 
@@ -117,6 +120,7 @@
             /from\s+['"]\.\/services\//g,
             `from '${basePath}services/`
           );
+          console.log('[Preview] Transformed imports:', codeWithAbsolutePaths.substring(0, 300));
 
           // Transpile only JSX, preserve ES6 imports/exports
           const transpiled = window.Babel.transform(codeWithAbsolutePaths, {
@@ -149,8 +153,12 @@
           const functionName = defaultExportMatch[1] || defaultExportMatch[2];
           console.log('[Preview] Found default export:', functionName);
 
-          // Append global assignment to transpiled code
-          const codeWithGlobal = `${transpiled.code}\nwindow.__PreviewComponent = ${functionName};`;
+          // Append global assignment with logging
+          const codeWithGlobal = `${transpiled.code}
+
+console.log('[User Module] Setting window.__PreviewComponent to:', '${functionName}');
+window.__PreviewComponent = ${functionName};
+console.log('[User Module] Component exported successfully');`;
 
           // Add module script to DOM (allows proper import resolution)
           const scriptEl = document.createElement('script');
@@ -166,10 +174,12 @@
           console.log('[Preview] Script element added to DOM');
 
           // Wait for component to be exported to global, then render
+          // Increased timeout to allow for module imports to complete (especially on GitHub Pages)
           setTimeout(async () => {
             try {
               if (!window.__PreviewComponent) {
-                throw new Error('No component exported (window.__PreviewComponent not found)');
+                console.error('[Preview] window.__PreviewComponent not found. Import may have failed.');
+                throw new Error('No component exported (window.__PreviewComponent not found). Check console for import errors.');
               }
 
               console.log('[Preview] Component found, importing React...');
@@ -192,7 +202,7 @@
                 </div>
               `;
             }
-          }, 100);
+          }, 500); // Increased from 100ms to give imports time to load
         } catch (error) {
           // Display error in preview
           const root = document.getElementById('root');
