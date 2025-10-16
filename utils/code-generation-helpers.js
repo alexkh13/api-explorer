@@ -126,13 +126,14 @@ ${paramsSection}${paramsSection ? '\n' : ''}${content}
 }
 
 /**
- * Generate complete function wrapper with React 18 createRoot render call
+ * Generate complete function wrapper with default export
+ * Rendering is handled by preview runtime, not in generated code
  * @param {string} funcName - Function name
  * @param {string} imports - Import statements
  * @param {string} states - State declarations
  * @param {string} logic - Main function logic
  * @param {string} jsx - Return JSX
- * @returns {string} Complete function code with render
+ * @returns {string} Complete function code with default export
  */
 export function buildFunctionWrapper(funcName, imports, states, logic, jsx) {
   return `${imports}
@@ -147,14 +148,7 @@ ${jsx}
   );
 }
 
-console.log('[User Code] Function defined:', '${funcName}');
-console.log('[User Code] Creating root...');
-const rootElement = document.getElementById('root');
-console.log('[User Code] Root element:', rootElement);
-const root = createRoot(rootElement);
-console.log('[User Code] Rendering component...');
-root.render(<${funcName} />);
-console.log('[User Code] Render called');`;
+export default ${funcName};`;
 }
 
 /**

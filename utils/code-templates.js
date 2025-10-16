@@ -3,10 +3,9 @@
 
 // Import statement for APIExplorer utilities (used in generated code)
 // Note: Absolute paths from root are required for iframe srcdoc imports
-// React 18 uses createRoot from react-dom/client instead of ReactDOM.render
 // Import both default React (for JSX) and named hooks
+// createRoot is handled by preview runtime, not in generated code
 export const IMPORTS = `import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { createRoot } from 'react-dom/client';
 import { Layout, Params, Input, Textarea, Response, PaginatedResponse, ErrorDisplay } from '/services/preview/api-explorer-utils.jsx';`;
 
 /**

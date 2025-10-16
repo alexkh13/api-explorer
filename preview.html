@@ -129,21 +129,25 @@
             console.error('[Preview] Unhandled promise rejection:', e.reason);
           });
 
-          // Add React error detection
-          setTimeout(() => {
-            const root = document.getElementById('root');
-            console.log('[Preview] After 2s, root innerHTML:', root?.innerHTML?.substring(0, 200) || '(empty)');
-            if (root && root.innerHTML.trim() === '') {
-              console.warn('[Preview] Root is still empty after 2 seconds - possible silent React error');
-            }
-          }, 2000);
+          // Extract default export function name and append global assignment
+          // Matches: "export default FunctionName" or "export { FunctionName as default }"
+          const defaultExportMatch = transpiled.code.match(/export\s+default\s+(\w+)|export\s*\{\s*(\w+)\s+as\s+default\s*\}/);
 
-          // Create and execute transpiled script as module
-          // Note: Can't wrap imports in try-catch, they must be top-level
+          if (!defaultExportMatch) {
+            throw new Error('No default export found in generated code');
+          }
+
+          const functionName = defaultExportMatch[1] || defaultExportMatch[2];
+          console.log('[Preview] Found default export:', functionName);
+
+          // Append global assignment to transpiled code
+          const codeWithGlobal = `${transpiled.code}\nwindow.__PreviewComponent = ${functionName};`;
+
+          // Add module script to DOM (allows proper import resolution)
           const scriptEl = document.createElement('script');
           scriptEl.type = 'module';
           scriptEl.setAttribute('data-user-code', 'true');
-          scriptEl.textContent = transpiled.code;
+          scriptEl.textContent = codeWithGlobal;
 
           scriptEl.onerror = (e) => {
             console.error('[Preview] Script load error:', e);
@@ -151,6 +155,35 @@
 
           document.body.appendChild(scriptEl);
           console.log('[Preview] Script element added to DOM');
+
+          // Wait for component to be exported to global, then render
+          setTimeout(async () => {
+            try {
+              if (!window.__PreviewComponent) {
+                throw new Error('No component exported (window.__PreviewComponent not found)');
+              }
+
+              console.log('[Preview] Component found, importing React...');
+              const React = await import('react');
+              const { createRoot } = await import('react-dom/client');
+
+              console.log('[Preview] Creating root and rendering component...');
+              const rootElement = document.getElementById('root');
+              const root = createRoot(rootElement);
+              root.render(React.createElement(window.__PreviewComponent));
+
+              console.log('[Preview] Component rendered successfully');
+            } catch (error) {
+              console.error('[Preview] Render error:', error);
+              const root = document.getElementById('root');
+              root.innerHTML = `
+                <div style="max-width: 800px; margin: 2rem auto; padding: 1.5rem; background: #fee; border: 1px solid #fcc; border-radius: 0.5rem;">
+                  <h3 style="color: #c00; margin-bottom: 0.5rem; font-weight: 600;">Runtime Error</h3>
+                  <pre style="background: white; padding: 1rem; border-radius: 0.25rem; overflow: auto; font-size: 0.875rem;">${error.message}\n${error.stack || ''}</pre>
+                </div>
+              `;
+            }
+          }, 100);
         } catch (error) {
           // Display error in preview
           const root = document.getElementById('root');

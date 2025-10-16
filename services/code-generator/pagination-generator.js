@@ -127,12 +127,5 @@ ${paramInputs}
   );
 }
 
-console.log('[User Code] Function defined:', '${funcName}');
-console.log('[User Code] Creating root...');
-const rootElement = document.getElementById('root');
-console.log('[User Code] Root element:', rootElement);
-const root = createRoot(rootElement);
-console.log('[User Code] Rendering component...');
-root.render(<${funcName} />);
-console.log('[User Code] Render called');`;
+export default ${funcName};`;
 }
