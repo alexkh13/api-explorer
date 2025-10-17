@@ -1,6 +1,6 @@
 // sw.js - JSX Transpiler Service Worker
 
-const CACHE_NAME = 'jsx-transpiler-v7-phase3';
+const CACHE_NAME = 'jsx-transpiler-v9-react19-jsdelivr';
 const BABEL_URL = 'https://unpkg.com/@babel/standalone@7.23.5/babel.min.js';
 
 let babelLoaded = false;

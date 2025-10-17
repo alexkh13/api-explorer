@@ -1,6 +1,6 @@
 // Main App Component - ES6 module
 import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 
 // ES6 imports from modularized directories
 import { ThemeProvider, EndpointProvider, AIProvider } from "./contexts/index.jsx";
@@ -22,5 +22,6 @@ function App() {
   );
 }
 
-// Render the application
-ReactDOM.render(<App />, document.getElementById("root"));
+// Render the application using React 19 createRoot API
+const root = createRoot(document.getElementById("root"));
+root.render(<App />);
