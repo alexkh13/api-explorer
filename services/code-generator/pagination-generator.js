@@ -118,7 +118,7 @@ ${paramInputs}
       <ErrorDisplay error={error} />
       {hasToolbarData && <Toolbar data={responseData} exclude={['results']} />}
       {!error && <PaginatedResponse
-        data={allResults}
+        items={allResults}
         onLoadMore={handleLoadMore}
         loading={loading}
         hasMore={hasMore}

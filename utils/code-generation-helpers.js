@@ -174,13 +174,13 @@ export function generateFormField(name, prop) {
   const setter = `(val) => setFormData({...formData, ${name}: val})`;
 
   if (isTextarea) {
-    return `        <Textarea label="${name}" value={formData.${name}} onChange=${setter} />`;
+    return `        <Textarea label="${name}" value={formData.${name}} onChange={${setter}} />`;
   } else if (prop.type === 'boolean') {
     return `        <label style={{ display: 'flex', alignItems: 'center', fontSize: '13px', marginBottom: '4px', cursor: 'pointer' }}>
           <input type="checkbox" checked={formData.${name}} onChange={(e) => setFormData({...formData, ${name}: e.target.checked})} style={{ marginRight: '4px' }} />
           ${name}
         </label>`;
   } else {
-    return `        <Input label="${name}" value={formData.${name}} onChange=${setter} type="${prop.type === 'integer' ? 'number' : 'text'}" />`;
+    return `        <Input label="${name}" value={formData.${name}} onChange={${setter}} type="${prop.type === 'integer' ? 'number' : 'text'}" />`;
   }
 }
