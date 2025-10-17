@@ -247,8 +247,7 @@ export function DataDisplay({ data }) {
 export function Response({ data }) {
   if (!data) return null;
   return (
-    <div className="mt-4">
-      <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Response</h3>
+    <div className="mt-2">
       <DataDisplay data={data} />
     </div>
   );
@@ -276,10 +275,7 @@ export function PaginatedResponse({ items, loading, hasMore, onLoadMore }) {
   }, [hasMore, loading, onLoadMore]);
 
   return (
-    <div className="mt-4">
-      <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">
-        Response ({items.length} items)
-      </h3>
+    <div className="mt-2">
       <div ref={scrollRef} className="max-h-[600px] overflow-y-auto">
         <DataDisplay data={items} />
         {loading && (

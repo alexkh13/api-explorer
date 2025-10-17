@@ -1,7 +1,12 @@
-import React from "react";
+import React, { useState, useRef } from "react";
+import { List } from "../icons/index.jsx";
+import { EndpointAutocomplete } from "./EndpointAutocomplete.jsx";
 
 // Header Component
 export function Header({ endpoint }) {
+  const [isAutocompleteOpen, setIsAutocompleteOpen] = useState(false);
+  const toggleButtonRef = useRef(null);
+
   const getMethodClass = (method) => {
     if (!method) return 'text-gray-600 dark:text-gray-400';
     const methodColors = {
@@ -15,25 +20,42 @@ export function Header({ endpoint }) {
   };
 
   return (
-    <div className="h-12 flex-shrink-0 bg-[var(--bg-primary)] border-b border-[var(--border-default)] flex items-center px-5 shadow-sm relative z-10">
-      <div className="flex items-center gap-3 font-semibold text-lg text-[var(--text-primary)]">
+    <>
+      <div className="h-12 flex-shrink-0 bg-[var(--bg-primary)] border-b border-[var(--border-default)] flex items-center px-5 shadow-sm relative z-10">
+        <div className="flex items-center gap-3 font-semibold text-lg text-[var(--text-primary)] flex-1 overflow-hidden">
+          {endpoint && (
+            <>
+              <div className="flex items-center gap-2 text-sm font-normal overflow-hidden">
+                {endpoint.method && (
+                  <span className={`font-semibold px-2 py-0.5 rounded text-xs uppercase border flex-shrink-0 ${getMethodClass(endpoint.method)}`}>
+                    {endpoint.method}
+                  </span>
+                )}
+                {endpoint.path && (
+                  <span className="text-[var(--text-secondary)] font-mono text-xs overflow-hidden text-ellipsis whitespace-nowrap">{endpoint.path || endpoint.url}</span>
+                )}
+              </div>
+            </>
+          )}
+        </div>
 
-
-        {endpoint && (
-          <>
-            <div className="flex items-center gap-2 text-sm font-normal">
-              {endpoint.method && (
-                <span className={`font-semibold px-2 py-0.5 rounded text-xs uppercase border ${getMethodClass(endpoint.method)}`}>
-                  {endpoint.method}
-                </span>
-              )}
-              {endpoint.path && (
-                <span className="text-[var(--text-secondary)] font-mono text-xs">{endpoint.path || endpoint.url}</span>
-              )}
-            </div>
-          </>
-        )}
+        {/* Hamburger menu button */}
+        <button
+          ref={toggleButtonRef}
+          onClick={() => setIsAutocompleteOpen(!isAutocompleteOpen)}
+          className="p-2 rounded hover:bg-[var(--bg-muted)] transition-colors text-[var(--text-primary)]"
+          aria-label="Toggle endpoint menu"
+        >
+          <List />
+        </button>
       </div>
-    </div>
+
+      {/* Endpoint Autocomplete */}
+      <EndpointAutocomplete
+        isOpen={isAutocompleteOpen}
+        onClose={() => setIsAutocompleteOpen(false)}
+        toggleButtonRef={toggleButtonRef}
+      />
+    </>
   );
 }

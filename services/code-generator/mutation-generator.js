@@ -50,7 +50,7 @@ ${formFields}
       </form>
       <Response data={result} />`;
 
-  const jsx = wrapWithLayout(endpoint.title, formContent);
+  const jsx = wrapWithLayout(formContent);
 
   return buildFunctionWrapper(funcName, IMPORTS, states, logic, jsx);
 }
@@ -88,7 +88,7 @@ function generateMutationWithoutBody(funcName, fullUrl, endpoint, bearerToken = 
       </button>
       <Response data={result} />`;
 
-  const jsx = wrapWithLayout(endpoint.title, content);
+  const jsx = wrapWithLayout(content);
 
   return buildFunctionWrapper(funcName, IMPORTS, states, logic, jsx);
 }

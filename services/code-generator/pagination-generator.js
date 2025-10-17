@@ -111,7 +111,7 @@ ${stateInit}
     !Array.isArray(responseData) && Object.keys(responseData).some(key => key !== 'results');
 
   return (
-    <Layout title="${endpoint.title}" loading={loading}>
+    <Layout loading={loading}>
 ${hasParamsSection ? `      <Params>
 ${paramInputs}
       </Params>` : ''}

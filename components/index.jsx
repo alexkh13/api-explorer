@@ -7,6 +7,7 @@ export { LoadSpecDialog } from "./LoadSpecDialog.jsx";
 export { LoadSpecButton } from "./LoadSpecButton.jsx";
 export { Header } from "./Header.jsx";
 export { EndpointItem } from "./EndpointItem.jsx";
+export { EndpointAutocomplete } from "./EndpointAutocomplete.jsx";
 export { Sidebar } from "./Sidebar.jsx";
 export { Preview } from "./Preview.jsx";
 export { CodeEditor } from "./CodeEditor.jsx";

@@ -106,21 +106,20 @@ export function buildUrlConstruction(baseUrl, pathParams = [], queryParams = [])
 
 /**
  * Wrap component code with Layout
- * @param {string} title - Component title
  * @param {string} content - Inner content
  * @param {Object} options - Additional options
  * @param {boolean} options.includeParams - Include Params section
  * @param {string} options.paramContent - Content inside Params
  * @returns {string} Layout wrapper JSX
  */
-export function wrapWithLayout(title, content, { includeParams = false, paramContent = '' } = {}) {
+export function wrapWithLayout(content, { includeParams = false, paramContent = '' } = {}) {
   const paramsSection = includeParams && paramContent
     ? `      <Params>
 ${paramContent}
       </Params>`
     : '';
 
-  return `    <Layout title="${title}" loading={loading}>
+  return `    <Layout loading={loading}>
 ${paramsSection}${paramsSection ? '\n' : ''}${content}
     </Layout>`;
 }

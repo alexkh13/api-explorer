@@ -4,7 +4,7 @@ import { IconBase, Icon, Path } from "./IconBase.jsx";
 
 // Individual icon exports using IconBase for DRY code
 export const Code = () => (
-  <IconBase size="w-5 h-5 mr-2" strokeWidth={2}>
+  <IconBase size="w-5 h-5" strokeWidth={2}>
     <Path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
   </IconBase>
 );
@@ -82,6 +82,12 @@ export const File = () => (
 export const Edit = () => (
   <IconBase size="w-6 h-6" strokeWidth={2}>
     <Path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+  </IconBase>
+);
+
+export const Send = () => (
+  <IconBase size="w-5 h-5" strokeWidth={2}>
+    <Path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
   </IconBase>
 );
 
