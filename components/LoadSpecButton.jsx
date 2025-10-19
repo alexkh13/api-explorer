@@ -9,7 +9,8 @@ export function LoadSpecButton() {
   return (
     <>
       <button
-        className="w-14 h-14 rounded-full flex items-center justify-center bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-2 border-purple-300 dark:border-purple-600 shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95 p-0"
+        className="w-10 h-10 rounded-full flex items-center justify-center text-teal-400 dark:text-teal-300 shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95 p-0"
+        style={{ background: 'rgba(20, 184, 166, 0.15)' }}
         onClick={() => setShowDialog(true)}
         title="Load OpenAPI Spec"
       >

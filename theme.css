@@ -42,17 +42,17 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-primary: #0f172a;
-    --bg-secondary: #1e293b;
-    --bg-muted: #334155;
-    --bg-accent: #1e293b;
+    --bg-primary: #000000;
+    --bg-secondary: #0a0a0a;
+    --bg-muted: #1a1a1a;
+    --bg-accent: #0f0f0f;
 
     --text-primary: #f1f5f9;
     --text-secondary: #cbd5e1;
     --text-muted: #64748b;
 
-    --border-default: #334155;
-    --border-muted: #1e293b;
+    --border-default: #1a1a1a;
+    --border-muted: #0f0f0f;
 
     --accent-primary: #3b82f6;
     --accent-primary-hover: #60a5fa;
@@ -76,7 +76,7 @@
 
   /* CodeMirror dark theme */
   .CodeMirror {
-    background-color: #282a36 !important;
+    background-color: #0a0a0a !important;
   }
 }
 
@@ -147,6 +147,18 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent-primary);
+}
+
+/* Hide scrollbar for table overflow containers */
+.table-scroll-container {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
+}
+
+.table-scroll-container::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera */
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* Animations */

@@ -23,6 +23,16 @@ export function generatePreviewHTML(userCode) {
 
         <style>
           /* Base element styling for user-generated code */
+          html, body {
+            background-color: #0a0a0a;
+          }
+
+          @media (prefers-color-scheme: light) {
+            html, body {
+              background-color: #ffffff;
+            }
+          }
+
           button {
             margin: 0 4px;
           }
@@ -51,8 +61,20 @@ export function generatePreviewHTML(userCode) {
 
           @media (prefers-color-scheme: dark) {
             pre {
-              background: rgba(255, 255, 255, 0.05);
+              background: rgba(255, 255, 255, 0.03);
             }
+          }
+
+          /* Hide scrollbar for table containers */
+          .table-scroll-container {
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+          }
+
+          .table-scroll-container::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
           }
         </style>
 
@@ -75,7 +97,7 @@ export function generatePreviewHTML(userCode) {
         </${script}>
         <${script} async src="https://ga.jspm.io/npm:es-module-shims@1.10.0/dist/es-module-shims.js"></${script}>
       </head>
-      <body class="font-sans p-4 leading-relaxed text-gray-900 dark:text-gray-100 dark:bg-gray-900 bg-white">
+      <body class="font-sans p-4 leading-relaxed text-gray-900 dark:text-gray-100">
         <div id="root"></div>
 
         <!-- User code - transpiled automatically by Babel -->

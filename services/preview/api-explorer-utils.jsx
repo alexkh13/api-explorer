@@ -27,10 +27,10 @@ export function Layout({ title, children, loading }) {
 export function Params({ children }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg mb-3 border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="bg-gray-50 dark:bg-white/5 rounded-lg mb-3 border border-gray-200 dark:border-white/10 overflow-hidden">
       <div
         onClick={() => setOpen(!open)}
-        className="px-4 py-3 cursor-pointer flex justify-between items-center text-sm font-semibold text-gray-700 dark:text-gray-300 select-none hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        className="px-4 py-3 cursor-pointer flex justify-between items-center text-sm font-semibold text-gray-700 dark:text-gray-300 select-none hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
       >
         <span className="flex items-center gap-2">
           <span>⚙️</span>
@@ -39,7 +39,7 @@ export function Params({ children }) {
         <span className={'text-xs transition-transform ' + (open ? 'rotate-90' : '')}>▶</span>
       </div>
       {open && (
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 space-y-3">
+        <div className="p-4 border-t border-gray-200 dark:border-white/10 bg-white dark:bg-black space-y-3">
           {children}
         </div>
       )}
@@ -60,7 +60,7 @@ export function Input({ label, value, onChange, type = 'text' }) {
         type={type}
         value={value}
         onChange={(e) => onChange(type === 'number' ? parseInt(e.target.value) : e.target.value)}
-        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-white/20 rounded-md bg-white dark:bg-white/5 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
       />
     </div>
   );
@@ -78,7 +78,7 @@ export function Textarea({ label, value, onChange }) {
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 min-h-[80px] font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow resize-y"
+        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-white/20 rounded-md bg-white dark:bg-white/5 text-gray-900 dark:text-gray-100 min-h-[80px] font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow resize-y"
       />
     </div>
   );
@@ -144,12 +144,12 @@ export function NestedDataCell({ value }) {
       <div className="inline-flex items-start gap-1">
         <button
           onClick={() => setExpanded(!expanded)}
-          className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded border border-gray-300 dark:border-gray-600 transition-colors"
+          className="text-xs px-1.5 py-0.5 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 rounded border border-gray-300 dark:border-white/20 transition-colors"
         >
           {expanded ? '−' : '+'}
         </button>
         {expanded && (
-          <pre className="text-xs bg-gray-50 dark:bg-gray-900 p-2 rounded border border-gray-200 dark:border-gray-700 overflow-auto max-w-xs">
+          <pre className="text-xs bg-gray-50 dark:bg-white/5 p-2 rounded border border-gray-200 dark:border-white/20 overflow-auto max-w-xs">
             {JSON.stringify(value, null, 2)}
           </pre>
         )}
@@ -177,7 +177,7 @@ export function DataDisplay({ data }) {
       return (
         <div className="space-y-2">
           {data.map((item, idx) => (
-            <div key={idx} className="p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
+            <div key={idx} className="p-2 bg-gray-50 dark:bg-white/5 rounded border border-gray-200 dark:border-white/20">
               <NestedDataCell value={item} />
             </div>
           ))}
@@ -186,22 +186,23 @@ export function DataDisplay({ data }) {
     }
 
     return (
-      <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-          <thead className="bg-gray-100 dark:bg-gray-800">
+      <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <style>{`.overflow-x-auto::-webkit-scrollbar { display: none; }`}</style>
+        <table className="min-w-full text-sm font-mono">
+          <thead>
             <tr>
               {keys.map(key => (
-                <th key={key} className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">
+                <th key={key} className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                   {key}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
+          <tbody className="bg-white dark:bg-black">
             {data.map((row, idx) => (
-              <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+              <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
                 {keys.map(key => (
-                  <td key={key} className="px-4 py-3 text-gray-900 dark:text-gray-100">
+                  <td key={key} className="px-3 py-2 text-gray-900 dark:text-gray-100 whitespace-nowrap max-w-[300px] overflow-hidden text-ellipsis">
                     <NestedDataCell value={row[key]} />
                   </td>
                 ))}
@@ -215,19 +216,20 @@ export function DataDisplay({ data }) {
 
   if (typeof data === 'object') {
     return (
-      <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
-          <thead className="bg-gray-100 dark:bg-gray-800">
+      <div className="overflow-x-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <style>{`.overflow-x-auto::-webkit-scrollbar { display: none; }`}</style>
+        <table className="min-w-full text-sm font-mono">
+          <thead>
             <tr>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300 w-1/3">Key</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Value</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap w-1/3">Key</th>
+              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">Value</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
+          <tbody className="bg-white dark:bg-black">
             {Object.entries(data).map(([key, value]) => (
-              <tr key={key} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                <td className="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">{key}</td>
-                <td className="px-4 py-3 text-gray-900 dark:text-gray-100">
+              <tr key={key} className="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                <td className="px-3 py-2 font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">{key}</td>
+                <td className="px-3 py-2 text-gray-900 dark:text-gray-100 whitespace-nowrap max-w-[400px] overflow-hidden text-ellipsis">
                   <NestedDataCell value={value} />
                 </td>
               </tr>

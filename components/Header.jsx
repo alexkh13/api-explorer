@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { List } from "../icons/index.jsx";
+import { ChevronDown } from "../icons/index.jsx";
 import { EndpointAutocomplete } from "./EndpointAutocomplete.jsx";
 
 // Header Component
@@ -39,14 +39,14 @@ export function Header({ endpoint }) {
           )}
         </div>
 
-        {/* Hamburger menu button */}
+        {/* Dropdown toggle button */}
         <button
           ref={toggleButtonRef}
           onClick={() => setIsAutocompleteOpen(!isAutocompleteOpen)}
-          className="p-2 rounded hover:bg-[var(--bg-muted)] transition-colors text-[var(--text-primary)]"
+          className={`p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all ${isAutocompleteOpen ? 'rotate-180' : ''}`}
           aria-label="Toggle endpoint menu"
         >
-          <List />
+          <ChevronDown />
         </button>
       </div>
 

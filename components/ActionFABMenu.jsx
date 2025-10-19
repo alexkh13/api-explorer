@@ -32,11 +32,12 @@ export function ActionFABMenu({ showCodeEditor, onToggleView, onPromptOpen, show
   const bottomClass = showPromptPanel ? 'bottom-[70px]' : 'bottom-6';
 
   return (
-    <div className={`absolute right-6 z-[100] flex flex-col items-end gap-3 transition-all duration-300 ${bottomClass}`}>
+    <div className={`absolute right-6 z-[100] flex flex-col items-end gap-2 transition-all duration-300 ${bottomClass}`}>
       {isMenuOpen && (
-        <div className="flex flex-col items-end gap-3 animate-slide-up">
+        <div className="flex flex-col items-end gap-2 animate-slide-up">
           <button
-            className="w-14 h-14 rounded-full flex items-center justify-center bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-2 border-purple-300 dark:border-purple-600 shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95 p-0"
+            className="w-10 h-10 rounded-full flex items-center justify-center text-cyan-400 dark:text-cyan-300 shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95 p-0"
+            style={{ background: 'rgba(6, 182, 212, 0.15)' }}
             onClick={handleToggleView}
             title={showCodeEditor ? "Show Preview" : "Show Code Editor"}
           >
@@ -44,7 +45,8 @@ export function ActionFABMenu({ showCodeEditor, onToggleView, onPromptOpen, show
           </button>
           <LoadSpecButton />
           <button
-            className="w-14 h-14 rounded-full flex items-center justify-center bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border-2 border-red-300 dark:border-red-600 shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95 p-0"
+            className="w-10 h-10 rounded-full flex items-center justify-center text-purple-400 dark:text-purple-300 shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95 p-0"
+            style={{ background: 'rgba(168, 85, 247, 0.15)' }}
             onClick={handleReset}
             title="Reset to Default"
           >
@@ -53,7 +55,8 @@ export function ActionFABMenu({ showCodeEditor, onToggleView, onPromptOpen, show
         </div>
       )}
       <button
-        className="w-14 h-14 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border-2 border-purple-300 dark:border-purple-600 shadow-lg flex items-center justify-center cursor-pointer text-2xl font-bold transition-all hover:scale-110 hover:rotate-90 hover:shadow-xl p-0"
+        className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer text-xl font-bold transition-all hover:scale-110 hover:rotate-90 hover:shadow-xl p-0 text-emerald-400 dark:text-emerald-300 shadow-lg"
+        style={{ background: 'rgba(16, 185, 129, 0.15)' }}
         onClick={handleToggleMenu}
         title="Actions"
       >

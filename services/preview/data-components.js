@@ -77,17 +77,17 @@ export function getDataDisplayComponent() {
             return React.createElement('div', { className: 'overflow-x-auto my-4 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm' },
               React.createElement('table', { className: 'min-w-full border-collapse text-sm' },
                 React.createElement('thead', null,
-                  React.createElement('tr', { className: 'bg-gradient-to-r from-slate-700 to-slate-600 dark:from-slate-800 dark:to-slate-700' },
+                  React.createElement('tr', { className: '' },
                     keys.map(key => React.createElement('th', {
                       key,
-                      className: 'px-6 py-3 text-left font-semibold text-white text-xs uppercase tracking-wider border-b-2 border-slate-800 dark:border-slate-900 whitespace-nowrap'
+                      className: 'px-6 py-3 text-left font-semibold text-gray-900 dark:text-gray-100 text-xs uppercase tracking-wider border-b-2 border-slate-800 dark:border-slate-900 whitespace-nowrap'
                     }, key))
                   )
                 ),
                 React.createElement('tbody', { className: 'divide-y divide-gray-200 dark:divide-gray-700' },
                   data.map((item, idx) => React.createElement('tr', {
                     key: idx,
-                    className: 'hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors ' + (idx % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50/50 dark:bg-gray-800/50')
+                    className: 'hover:bg-blue-50 dark:hover:bg-gray-800 transition-colors '
                   },
                     keys.map(key => {
                       const cellData = item[key];
