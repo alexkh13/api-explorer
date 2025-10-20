@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, createContext, useContext } from "react";
+import React, { useCallback, useMemo, createContext, useContext, useEffect } from "react";
 import { initialEndpointsData } from "../data/initial-endpoints.js";
 import { generateStarterCode } from "../services/code-generator/index.js";
 import { useLocalStorageState } from "../hooks/index.js";
@@ -16,6 +16,7 @@ export const EndpointContext = createContext({
   currentEndpointId: '',
   endpointCodes: {},
   modifiedEndpoints: new Set(),
+  paramOverrides: {},
   getEndpointById: () => null,
   getCurrentEndpoint: () => null,
   getEndpointCode: () => '',
@@ -23,6 +24,7 @@ export const EndpointContext = createContext({
   updateEndpointCode: () => {},
   resetEndpointCode: () => {},
   selectEndpoint: () => {},
+  navigateWithParams: () => {},
   markEndpointCompleted: () => {},
   loadEndpointsFromSpec: () => {}
 });
@@ -45,6 +47,7 @@ export function EndpointProvider({ children, initialEndpoints }) {
       endpoints: initialEndpoints,
       endpointCodes: {},
       modifiedEndpoints: new Set(),
+      paramOverrides: {},
       baseUrl: '',
       bearerToken: null
     }),
@@ -56,10 +59,56 @@ export function EndpointProvider({ children, initialEndpoints }) {
       deserialize: (savedState) => ({
         ...savedState,
         modifiedEndpoints: new Set(savedState.modifiedEndpoints || []),
-        endpoints: savedState.endpoints || initialEndpoints
+        endpoints: savedState.endpoints || initialEndpoints,
+        paramOverrides: savedState.paramOverrides || {}
       })
     }
   );
+
+  // Initialize from browser history on mount and listen for back/forward navigation
+  useEffect(() => {
+    // Initialize from history.state on first load
+    if (window.history.state) {
+      const { endpointId, paramOverrides } = window.history.state;
+      if (endpointId) {
+        setState(prev => ({
+          ...prev,
+          currentEndpointId: endpointId,
+          paramOverrides: {
+            ...prev.paramOverrides,
+            [endpointId]: paramOverrides || {}
+          }
+        }));
+      }
+    } else {
+      // Initialize history with current state
+      const historyState = {
+        endpointId: state.currentEndpointId,
+        paramOverrides: state.paramOverrides[state.currentEndpointId] || {}
+      };
+      window.history.replaceState(historyState, '', window.location.pathname);
+    }
+
+    // Listen for popstate events (back/forward navigation)
+    const handlePopState = (event) => {
+      if (event.state) {
+        const { endpointId, paramOverrides } = event.state;
+        if (endpointId) {
+          setState(prev => ({
+            ...prev,
+            currentEndpointId: endpointId,
+            paramOverrides: {
+              ...prev.paramOverrides,
+              [endpointId]: paramOverrides || {}
+            }
+          }));
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []); // Only run on mount
 
   // Context value with state and methods
   const value = useMemo(() => ({
@@ -73,8 +122,19 @@ export function EndpointProvider({ children, initialEndpoints }) {
       }
 
       // Otherwise, generate code dynamically
-      const endpoint = state.endpoints.find(e => e.id === endpointId);
+      let endpoint = state.endpoints.find(e => e.id === endpointId);
       if (!endpoint) return '';
+
+      // Apply parameter overrides if they exist
+      if (state.paramOverrides[endpointId]) {
+        endpoint = {
+          ...endpoint,
+          parameters: endpoint.parameters?.map(param => {
+            const override = state.paramOverrides[endpointId][param.name];
+            return override !== undefined ? { ...param, default: override } : param;
+          })
+        };
+      }
 
       // If endpoint is from spec, generate code dynamically
       if (endpoint.isFromSpec && generateStarterCode) {
@@ -82,6 +142,11 @@ export function EndpointProvider({ children, initialEndpoints }) {
       }
 
       // Otherwise, use starterCode from endpoint (for demo endpoints)
+      // For demo endpoints, regenerate with overrides
+      if (state.paramOverrides[endpointId] && generateStarterCode) {
+        return generateStarterCode(endpoint, state.baseUrl, state.bearerToken);
+      }
+
       return endpoint.starterCode || '';
     },
     isEndpointModified: (endpointId) => state.modifiedEndpoints.has(endpointId),
@@ -113,10 +178,42 @@ export function EndpointProvider({ children, initialEndpoints }) {
       });
     },
     selectEndpoint: (endpointId) => {
-      setState(prev => ({
-        ...prev,
-        currentEndpointId: endpointId
-      }));
+      setState(prev => {
+        const newState = {
+          ...prev,
+          currentEndpointId: endpointId
+        };
+
+        // Push state to browser history
+        const historyState = {
+          endpointId: endpointId,
+          paramOverrides: prev.paramOverrides[endpointId] || {}
+        };
+        window.history.pushState(historyState, '', window.location.pathname);
+
+        return newState;
+      });
+    },
+    navigateWithParams: (endpointId, paramValues) => {
+      setState(prev => {
+        const newState = {
+          ...prev,
+          currentEndpointId: endpointId,
+          paramOverrides: {
+            ...prev.paramOverrides,
+            [endpointId]: paramValues
+          }
+        };
+
+        // Push state to browser history
+        const historyState = {
+          endpointId: endpointId,
+          paramOverrides: paramValues
+        };
+        window.history.pushState(historyState, '', window.location.pathname);
+
+        return newState;
+      });
     },
     markEndpointCompleted: (endpointId) => {
       setState(prev => ({
@@ -133,6 +230,7 @@ export function EndpointProvider({ children, initialEndpoints }) {
         endpoints: endpoints,
         endpointCodes: {}, // Empty - codes will be dynamic until modified
         modifiedEndpoints: new Set(), // Reset modified tracking
+        paramOverrides: {}, // Reset parameter overrides
         baseUrl: baseUrl || '',
         bearerToken: bearerToken || null
       });

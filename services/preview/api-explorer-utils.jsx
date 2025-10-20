@@ -162,9 +162,29 @@ export function NestedDataCell({ value }) {
 
 /**
  * DataDisplay component - renders array/object data in a table
+ * @param {Object} props
+ * @param {any} props.data - Data to display
+ * @param {string} props.currentPath - Current endpoint path for navigation
  */
-export function DataDisplay({ data }) {
+export function DataDisplay({ data, currentPath }) {
   if (!data) return null;
+
+  // Handle row click - send navigation request to parent window
+  const handleRowClick = (rowData) => {
+    console.log('[DataDisplay] Row clicked!', { currentPath, rowData });
+    if (window.parent) {
+      console.log('[DataDisplay] Sending navigation message to parent');
+      window.parent.postMessage({
+        type: 'NAVIGATE_TO_ENDPOINT',
+        payload: {
+          parentPath: currentPath,
+          rowData: rowData
+        }
+      }, '*');
+    } else {
+      console.warn('[DataDisplay] No parent window found');
+    }
+  };
 
   if (Array.isArray(data)) {
     if (data.length === 0) {
@@ -200,7 +220,11 @@ export function DataDisplay({ data }) {
           </thead>
           <tbody className="bg-white dark:bg-black">
             {data.map((row, idx) => (
-              <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+              <tr
+                key={idx}
+                onClick={() => handleRowClick(row)}
+                className="hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors cursor-pointer"
+              >
                 {keys.map(key => (
                   <td key={key} className="px-3 py-2 text-gray-900 dark:text-gray-100 whitespace-nowrap max-w-[300px] overflow-hidden text-ellipsis">
                     <NestedDataCell value={row[key]} />
@@ -245,20 +269,29 @@ export function DataDisplay({ data }) {
 
 /**
  * Response component - standard response display with data
+ * @param {Object} props
+ * @param {any} props.data - Data to display
+ * @param {string} props.currentPath - Current endpoint path for navigation
  */
-export function Response({ data }) {
+export function Response({ data, currentPath }) {
   if (!data) return null;
   return (
     <div className="mt-2">
-      <DataDisplay data={data} />
+      <DataDisplay data={data} currentPath={currentPath} />
     </div>
   );
 }
 
 /**
  * PaginatedResponse component - response with infinite scroll
+ * @param {Object} props
+ * @param {Array} props.items - Items to display
+ * @param {boolean} props.loading - Loading state
+ * @param {boolean} props.hasMore - Whether more items can be loaded
+ * @param {Function} props.onLoadMore - Callback to load more items
+ * @param {string} props.currentPath - Current endpoint path for navigation
  */
-export function PaginatedResponse({ items, loading, hasMore, onLoadMore }) {
+export function PaginatedResponse({ items, loading, hasMore, onLoadMore, currentPath }) {
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -279,7 +312,7 @@ export function PaginatedResponse({ items, loading, hasMore, onLoadMore }) {
   return (
     <div className="mt-2">
       <div ref={scrollRef} className="max-h-[600px] overflow-y-auto">
-        <DataDisplay data={items} />
+        <DataDisplay data={items} currentPath={currentPath} />
         {loading && (
           <div className="flex items-center justify-center gap-2 py-4 text-sm text-gray-600 dark:text-gray-400">
             <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full" />

@@ -48,7 +48,7 @@ ${formFields}
           {loading ? 'Submitting...' : 'Submit'}
         </button>
       </form>
-      <Response data={result} />`;
+      <Response data={result} currentPath="${endpoint.path}" />`;
 
   const jsx = wrapWithLayout(formContent);
 
@@ -86,7 +86,7 @@ function generateMutationWithoutBody(funcName, fullUrl, endpoint, bearerToken = 
   const content = `      <button onClick={handleClick} disabled={loading} style={{ padding: '6px 12px', fontSize: '13px', fontWeight: 600 }}>
         {loading ? 'Processing...' : '${endpoint.method}'}
       </button>
-      <Response data={result} />`;
+      <Response data={result} currentPath="${endpoint.path}" />`;
 
   const jsx = wrapWithLayout(content);
 

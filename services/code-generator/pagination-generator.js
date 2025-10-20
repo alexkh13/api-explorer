@@ -122,6 +122,7 @@ ${paramInputs}
         onLoadMore={handleLoadMore}
         loading={loading}
         hasMore={hasMore}
+        currentPath="${endpoint.path}"
       />}
     </Layout>
   );

@@ -1,10 +1,23 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useMemo } from "react";
 import { useEndpoints } from "../contexts/EndpointContext.jsx";
+
+// Helper function to check if an endpoint requires parameters
+function hasRequiredParameters(endpoint) {
+  // Only path parameters are truly required (query params usually have defaults)
+  const hasPathParams = endpoint.parameters?.some(param => param.in === 'path');
+
+  return hasPathParams;
+}
 
 // EndpointAutocomplete Component - Collapsible endpoint selector
 export function EndpointAutocomplete({ isOpen, onClose, toggleButtonRef }) {
   const { endpoints, currentEndpointId, selectEndpoint } = useEndpoints();
   const containerRef = useRef(null);
+
+  // Filter out endpoints that require parameters
+  const filteredEndpoints = useMemo(() => {
+    return endpoints.filter(ep => !hasRequiredParameters(ep));
+  }, [endpoints]);
 
   const getMethodClass = (method) => {
     if (!method) return 'text-gray-600 dark:text-gray-400';
@@ -52,7 +65,7 @@ export function EndpointAutocomplete({ isOpen, onClose, toggleButtonRef }) {
       className="endpoint-autocomplete"
     >
       <div className="endpoint-autocomplete-list">
-        {endpoints.map((endpoint) => {
+        {filteredEndpoints.map((endpoint) => {
           const isActive = endpoint.id === currentEndpointId;
           return (
             <div

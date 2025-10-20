@@ -39,7 +39,7 @@ ${buildStandardState()}`;
   const { fetchStart } = buildFetchChain(urlConstruction, fetchOptions, 'result');
   const useEffectCode = buildUseEffect(fetchStart, stateVars);
 
-  const jsx = wrapWithLayout('      <Response data={data} />', {
+  const jsx = wrapWithLayout(`      <Response data={data} currentPath="${endpoint.path}" />`, {
     includeParams: true,
     paramContent: paramInputs
   });
@@ -60,7 +60,7 @@ function generateSimpleGet(funcName, fullUrl, endpoint, bearerToken = null) {
   const states = buildStandardState();
   const { fetchStart } = buildFetchChain(`'${fullUrl}'`, fetchOptions, 'result');
   const useEffectCode = buildUseEffect(fetchStart, '');
-  const jsx = wrapWithLayout('      <Response data={data} />');
+  const jsx = wrapWithLayout(`      <Response data={data} currentPath="${endpoint.path}" />`);
 
   return buildFunctionWrapper(funcName, IMPORTS, states, useEffectCode, jsx);
 }
