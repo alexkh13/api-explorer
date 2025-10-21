@@ -3,6 +3,7 @@
 
 import { IMPORTS, generateFetchOptions, detectPaginationPattern } from '../../utils/code-templates.js';
 import { generatePaginatedCode } from './pagination-generator.js';
+import { generateClientPaginatedCode } from './client-pagination-generator.js';
 import {
   generateStateDeclarations,
   generateStateVarList,
@@ -74,24 +75,30 @@ function generateSimpleGet(funcName, fullUrl, endpoint, bearerToken = null) {
  * @returns {string} Generated JSX code
  */
 export function generateGetCode(funcName, fullUrl, endpoint, bearerToken = null) {
-  if (!endpoint.parameters || endpoint.parameters.length === 0) {
-    // Simple GET without parameters
-    return generateSimpleGet(funcName, fullUrl, endpoint, bearerToken);
-  }
-
-  const allParams = endpoint.parameters;
+  const allParams = endpoint.parameters || [];
   const pathParams = allParams.filter(p => p.in === 'path');
   const queryParams = allParams.filter(p => p.in === 'query');
 
-  // Check if pagination pattern is present
+  // Check if server-side pagination pattern is present (skip/limit params)
   const { isPaginated, skipParam, limitParam } = detectPaginationPattern(queryParams);
 
   if (isPaginated) {
-    // Generate paginated version with infinite scroll
+    // Server-side pagination: Generate paginated version with API-driven infinite scroll
     const nonPaginationParams = allParams.filter(p => p.name !== skipParam.name && p.name !== limitParam.name);
     return generatePaginatedCode(funcName, fullUrl, skipParam, limitParam, pathParams, queryParams, nonPaginationParams, endpoint, bearerToken);
   }
 
-  // Regular non-paginated version
+  // Check if client-side pagination pattern is present (results + total_count in response)
+  if (endpoint.hasClientPagination) {
+    // Client-side pagination: Single API call, paginate in browser
+    return generateClientPaginatedCode(funcName, fullUrl, allParams, pathParams, queryParams, endpoint, bearerToken);
+  }
+
+  // No parameters at all
+  if (allParams.length === 0) {
+    return generateSimpleGet(funcName, fullUrl, endpoint, bearerToken);
+  }
+
+  // Regular GET with parameters (non-paginated)
   return generateParameterizedGet(funcName, fullUrl, allParams, pathParams, queryParams, endpoint, bearerToken);
 }

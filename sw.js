@@ -1,7 +1,12 @@
 // sw.js - JSX Transpiler Service Worker
 
-const CACHE_NAME = 'jsx-transpiler-v9-react19-jsdelivr';
+const CACHE_NAME = 'jsx-transpiler-v10-client-pagination';
 const BABEL_URL = 'https://unpkg.com/@babel/standalone@7.23.5/babel.min.js';
+
+// Development mode: use network-first for localhost/127.0.0.1
+const isDevelopment = self.location.hostname === 'localhost' ||
+                      self.location.hostname === '127.0.0.1' ||
+                      self.location.hostname === '';
 
 let babelLoaded = false;
 
@@ -75,7 +80,24 @@ async function handleJSXRequest(request, url) {
   const cache = await caches.open(CACHE_NAME);
   const cacheKey = new Request(url.pathname);
 
-  // Check cache first
+  // DEVELOPMENT MODE: Network-first (always fetch latest)
+  if (isDevelopment) {
+    console.log('[SW] 🛠️  Dev mode: fetching fresh:', url.pathname);
+    try {
+      const freshResponse = await transpileAndCache(request, url, cache, cacheKey);
+      return freshResponse;
+    } catch (error) {
+      // Fallback to cache if network fails
+      const cached = await cache.match(cacheKey);
+      if (cached) {
+        console.log('[SW] ⚠️  Network failed, using cache:', url.pathname);
+        return cached;
+      }
+      throw error;
+    }
+  }
+
+  // PRODUCTION MODE: Cache-first
   const cached = await cache.match(cacheKey);
   if (cached) {
     console.log('[SW] ✓ Cache hit:', url.pathname);
@@ -83,7 +105,13 @@ async function handleJSXRequest(request, url) {
   }
 
   console.log('[SW] ⟳ Transpiling:', url.pathname);
+  return transpileAndCache(request, url, cache, cacheKey);
+}
 
+// ============================================
+// TRANSPILE AND CACHE: Reusable transpilation logic
+// ============================================
+async function transpileAndCache(request, url, cache, cacheKey) {
   try {
     // Step 1: Fetch the original JSX source
     const response = await fetch(request);
@@ -110,6 +138,7 @@ async function handleJSXRequest(request, url) {
       headers: {
         'Content-Type': 'text/javascript; charset=utf-8',
         'X-Transpiled-From': 'JSX',
+        'X-Dev-Mode': isDevelopment ? 'true' : 'false',
         'Cache-Control': 'no-cache' // Let SW handle caching
       }
     });
@@ -183,9 +212,14 @@ self.addEventListener('message', (event) => {
     console.log('[SW] Clearing JSX cache...');
     event.waitUntil(
       caches.delete(CACHE_NAME).then(() => {
-        console.log('[SW] Cache cleared');
+        console.log('[SW] ✓ Cache cleared');
         event.ports[0].postMessage({ success: true });
       })
     );
+  }
+
+  if (event.data === 'skipWaiting') {
+    console.log('[SW] Forcing update...');
+    self.skipWaiting();
   }
 });

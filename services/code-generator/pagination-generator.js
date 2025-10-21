@@ -72,12 +72,19 @@ ${stateInit}
         console.log('Response:', result);
         // Handle both array responses and object responses with 'results' key
         const newData = Array.isArray(result) ? result : (result.results || []);
-        const isLastPage = newData.length < ${limitVarName};
+        const totalCount = result.total_count;
 
-        setAllResults(prev => [...prev, ...newData]);
+        setAllResults(prev => {
+          const updated = [...prev, ...newData];
+          // Use total_count if available, otherwise check if we got fewer items than requested
+          const isLastPage = totalCount !== undefined
+            ? updated.length >= totalCount
+            : newData.length < ${limitVarName};
+          setHasMore(!isLastPage);
+          return updated;
+        });
         setResponseData(result);
         ${skipRefName}.current = Number(current${capitalize(skipVarName)}) + Number(${limitVarName});
-        setHasMore(!isLastPage);
         setError(null);
 
         return result;

@@ -37,11 +37,15 @@
 
     html, body {
       background-color: #0a0a0a;
+      margin: 0;
+      padding: 0;
     }
 
     @media (prefers-color-scheme: light) {
       html, body {
         background-color: #ffffff;
+        margin: 0;
+        padding: 0;
       }
     }
 
@@ -60,16 +64,38 @@
     {
       "imports": {
         "react": "https://cdn.jsdelivr.net/npm/react@19.0.0/+esm",
-        "react-dom/client": "https://cdn.jsdelivr.net/npm/react-dom@19.0.0/client/+esm"
+        "react-dom/client": "https://cdn.jsdelivr.net/npm/react-dom@19.0.0/client/+esm",
+        "react/jsx-runtime": "https://cdn.jsdelivr.net/npm/react@19.0.0/jsx-runtime/+esm"
       }
     }
   </script>
   <script async src="https://ga.jspm.io/npm:es-module-shims@1.10.0/dist/es-module-shims.js"></script>
 </head>
-<body class="font-sans p-4 leading-relaxed text-gray-900 dark:text-gray-100">
+<body class="font-sans leading-relaxed text-gray-900 dark:text-gray-100">
   <div id="root"></div>
 
   <script>
+    // Capture console logs for debugging
+    window.__consoleLogs = [];
+    const originalLog = console.log;
+    const originalError = console.error;
+    const originalWarn = console.warn;
+
+    console.log = function(...args) {
+      window.__consoleLogs.push('[LOG] ' + args.join(' '));
+      originalLog.apply(console, args);
+    };
+
+    console.error = function(...args) {
+      window.__consoleLogs.push('[ERROR] ' + args.join(' '));
+      originalError.apply(console, args);
+    };
+
+    console.warn = function(...args) {
+      window.__consoleLogs.push('[WARN] ' + args.join(' '));
+      originalWarn.apply(console, args);
+    };
+
     // Detect base path for GitHub Pages deployment
     const basePath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
     console.log('[Preview] Base path:', basePath);
@@ -120,11 +146,30 @@
           console.log('[Preview] Original code:', code.substring(0, 300));
 
           // Transform relative import paths to absolute paths with base path
-          const codeWithAbsolutePaths = code.replace(
+          let codeWithAbsolutePaths = code.replace(
             /from\s+['"]\.\/services\//g,
             `from '${basePath}services/`
           );
           console.log('[Preview] Transformed imports:', codeWithAbsolutePaths.substring(0, 300));
+
+          // Auto-add default export if missing
+          // Check if code already has a default export
+          if (!/export\s+default\s+/.test(codeWithAbsolutePaths)) {
+            console.log('[Preview] No default export detected, searching for component...');
+            // Find the first function that starts with a capital letter
+            const componentMatch = codeWithAbsolutePaths.match(/function\s+([A-Z]\w*)\s*\(/);
+            if (componentMatch) {
+              const componentName = componentMatch[1];
+              console.log('[Preview] Found component function:', componentName);
+              console.log('[Preview] Auto-adding export default:', componentName);
+              codeWithAbsolutePaths += `\n\nexport default ${componentName};`;
+              console.log('[Preview] Code after adding export (last 200 chars):', codeWithAbsolutePaths.slice(-200));
+            } else {
+              console.warn('[Preview] No component function found (no function starting with capital letter)');
+            }
+          } else {
+            console.log('[Preview] Default export already exists in code');
+          }
 
           // Transpile only JSX, preserve ES6 imports/exports
           const transpiled = window.Babel.transform(codeWithAbsolutePaths, {
@@ -151,7 +196,7 @@
           const defaultExportMatch = transpiled.code.match(/export\s+default\s+(\w+)|export\s*\{\s*(\w+)\s+as\s+default\s*\}/);
 
           if (!defaultExportMatch) {
-            throw new Error('No default export found in generated code');
+            throw new Error('No default export found in generated code. Make sure your code has a React component function starting with a capital letter (e.g., function MyComponent).');
           }
 
           const functionName = defaultExportMatch[1] || defaultExportMatch[2];
@@ -177,43 +222,114 @@ console.log('[User Module] Component exported successfully');`;
           document.body.appendChild(scriptEl);
           console.log('[Preview] Script element added to DOM');
 
-          // Wait for component to be exported to global, then render
-          // Increased timeout to allow for module imports to complete (especially on GitHub Pages)
-          setTimeout(async () => {
-            try {
-              if (!window.__PreviewComponent) {
-                console.error('[Preview] window.__PreviewComponent not found. Import may have failed.');
-                throw new Error('No component exported (window.__PreviewComponent not found). Check console for import errors.');
+          // Poll for component with exponential backoff instead of single timeout
+          // This handles slow ESM CDN loads
+          let attempts = 0;
+          const maxAttempts = 20; // 20 attempts = up to 10 seconds
+          const checkForComponent = async () => {
+            attempts++;
+            console.log(`[Preview] Checking for component (attempt ${attempts}/${maxAttempts})...`);
+
+            if (window.__PreviewComponent) {
+              console.log('[Preview] Component found!');
+              // Component is ready, render it
+              try {
+                console.log('[Preview] Importing React...');
+                const React = await import('react');
+                const { createRoot } = await import('react-dom/client');
+
+                console.log('[Preview] Creating root and rendering component...');
+                const rootElement = document.getElementById('root');
+                const root = createRoot(rootElement);
+                root.render(React.createElement(window.__PreviewComponent));
+
+                console.log('[Preview] Component rendered successfully');
+              } catch (error) {
+                console.error('[Preview] Render error:', error);
+                const root = document.getElementById('root');
+                const errorText = `${error.message}\n${error.stack || ''}`;
+                const consoleLogs = window.__consoleLogs ? window.__consoleLogs.join('\n') : '';
+                const fullReport = `=== RUNTIME ERROR ===\n${errorText}\n\n=== CONSOLE LOGS ===\n${consoleLogs}`;
+
+                // Store in window for copy button access
+                window.__errorReport = fullReport;
+
+                root.innerHTML = `
+                  <div style="max-width: 800px; margin: 2rem auto; padding: 1.5rem; background: #fee; border: 1px solid #fcc; border-radius: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                      <h3 style="color: #c00; margin: 0; font-weight: 600;">Runtime Error</h3>
+                      <button
+                        onclick="navigator.clipboard.writeText(window.__errorReport).then(() => { this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy Error + Logs', 1000); })"
+                        style="background: #dc2626; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem; font-weight: 500;"
+                      >Copy Error + Logs</button>
+                    </div>
+                    <pre style="background: white; color: #1f2937; padding: 1rem; border-radius: 0.25rem; overflow: auto; font-size: 0.875rem; max-height: 300px; word-break: break-all; white-space: pre-wrap;">${errorText}</pre>
+                    <details style="margin-top: 1rem;">
+                      <summary style="cursor: pointer; color: #dc2626; font-weight: 500;">Show Console Logs (${window.__consoleLogs?.length || 0} messages)</summary>
+                      <pre style="background: white; color: #1f2937; padding: 1rem; border-radius: 0.25rem; overflow: auto; font-size: 0.75rem; margin-top: 0.5rem; max-height: 400px; word-break: break-all; white-space: pre-wrap;">${consoleLogs.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+                    </details>
+                  </div>
+                `;
               }
-
-              console.log('[Preview] Component found, importing React...');
-              const React = await import('react');
-              const { createRoot } = await import('react-dom/client');
-
-              console.log('[Preview] Creating root and rendering component...');
-              const rootElement = document.getElementById('root');
-              const root = createRoot(rootElement);
-              root.render(React.createElement(window.__PreviewComponent));
-
-              console.log('[Preview] Component rendered successfully');
-            } catch (error) {
-              console.error('[Preview] Render error:', error);
+            } else if (attempts < maxAttempts) {
+              // Not found yet, try again with exponential backoff
+              const delay = Math.min(100 * Math.pow(1.5, attempts - 1), 1000);
+              console.log(`[Preview] Component not ready, waiting ${delay}ms before retry...`);
+              setTimeout(checkForComponent, delay);
+            } else {
+              // Max attempts reached, show error
+              console.error('[Preview] Max attempts reached, component still not found');
               const root = document.getElementById('root');
+              const errorText = 'No component exported (window.__PreviewComponent not found). Check console for import errors.';
+              const consoleLogs = window.__consoleLogs ? window.__consoleLogs.join('\n') : '';
+              const fullReport = `=== RUNTIME ERROR ===\n${errorText}\n\n=== CONSOLE LOGS ===\n${consoleLogs}`;
+              window.__errorReport = fullReport;
+
               root.innerHTML = `
                 <div style="max-width: 800px; margin: 2rem auto; padding: 1.5rem; background: #fee; border: 1px solid #fcc; border-radius: 0.5rem;">
-                  <h3 style="color: #c00; margin-bottom: 0.5rem; font-weight: 600;">Runtime Error</h3>
-                  <pre style="background: white; padding: 1rem; border-radius: 0.25rem; overflow: auto; font-size: 0.875rem;">${error.message}\n${error.stack || ''}</pre>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <h3 style="color: #c00; margin: 0; font-weight: 600;">Runtime Error</h3>
+                    <button
+                      onclick="navigator.clipboard.writeText(window.__errorReport).then(() => { this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy Error + Logs', 1000); })"
+                      style="background: #dc2626; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem; font-weight: 500;"
+                    >Copy Error + Logs</button>
+                  </div>
+                  <pre style="background: white; color: #1f2937; padding: 1rem; border-radius: 0.25rem; overflow: auto; font-size: 0.875rem; max-height: 300px; word-break: break-all; white-space: pre-wrap;">${errorText}</pre>
+                  <details style="margin-top: 1rem;">
+                    <summary style="cursor: pointer; color: #dc2626; font-weight: 500;">Show Console Logs (${window.__consoleLogs?.length || 0} messages)</summary>
+                    <pre style="background: white; color: #1f2937; padding: 1rem; border-radius: 0.25rem; overflow: auto; font-size: 0.75rem; margin-top: 0.5rem; max-height: 400px; word-break: break-all; white-space: pre-wrap;">${consoleLogs.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+                  </details>
                 </div>
               `;
             }
-          }, 500); // Increased from 100ms to give imports time to load
+          };
+
+          // Start checking for component
+          checkForComponent();
         } catch (error) {
           // Display error in preview
           const root = document.getElementById('root');
+          const errorText = error.message;
+          const consoleLogs = window.__consoleLogs ? window.__consoleLogs.join('\n') : '';
+          const fullReport = `=== TRANSPILATION ERROR ===\n${errorText}\n\n=== CONSOLE LOGS ===\n${consoleLogs}`;
+
+          // Store in window for copy button access
+          window.__errorReport = fullReport;
+
           root.innerHTML = `
             <div style="max-width: 800px; margin: 2rem auto; padding: 1.5rem; background: #fee; border: 1px solid #fcc; border-radius: 0.5rem;">
-              <h3 style="color: #c00; margin-bottom: 0.5rem; font-weight: 600;">Transpilation Error</h3>
-              <pre style="background: white; padding: 1rem; border-radius: 0.25rem; overflow: auto; font-size: 0.875rem;">${error.message}</pre>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <h3 style="color: #c00; margin: 0; font-weight: 600;">Transpilation Error</h3>
+                <button
+                  onclick="navigator.clipboard.writeText(window.__errorReport).then(() => { this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy Error + Logs', 1000); })"
+                  style="background: #dc2626; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.25rem; cursor: pointer; font-size: 0.875rem; font-weight: 500;"
+                >Copy Error + Logs</button>
+              </div>
+              <pre style="background: white; color: #1f2937; padding: 1rem; border-radius: 0.25rem; overflow: auto; font-size: 0.875rem; max-height: 300px; word-break: break-all; white-space: pre-wrap;">${errorText}</pre>
+              <details style="margin-top: 1rem;">
+                <summary style="cursor: pointer; color: #dc2626; font-weight: 500;">Show Console Logs (${window.__consoleLogs?.length || 0} messages)</summary>
+                <pre style="background: white; color: #1f2937; padding: 1rem; border-radius: 0.25rem; overflow: auto; font-size: 0.75rem; margin-top: 0.5rem; max-height: 400px; word-break: break-all; white-space: pre-wrap;">${consoleLogs.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+              </details>
             </div>
           `;
           console.error('Preview error:', error);

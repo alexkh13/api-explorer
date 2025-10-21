@@ -39,9 +39,35 @@
     <script>
       // Register service worker BEFORE loading any JSX modules
       if ('serviceWorker' in navigator) {
+        let registration;
+
         navigator.serviceWorker.register('./sw.js')
-          .then(registration => {
+          .then(reg => {
+            registration = reg;
             console.log('✓ JSX Transpiler Service Worker registered');
+
+            // Check for updates every 60 seconds in development
+            const isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+            if (isDev) {
+              console.log('🛠️  Dev mode: Checking for updates every 60s');
+              setInterval(() => {
+                reg.update();
+              }, 60000);
+            }
+
+            // Listen for updates
+            reg.addEventListener('updatefound', () => {
+              const newWorker = reg.installing;
+              console.log('⟳ Service Worker update found...');
+
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New service worker available
+                  console.log('✓ New version available! Reload to update.');
+                  showUpdateNotification();
+                }
+              });
+            });
 
             // Check if service worker is already controlling this page
             if (navigator.serviceWorker.controller) {
@@ -64,6 +90,46 @@
           .catch(err => {
             console.error('✗ Service Worker registration failed:', err);
           });
+
+        // Show update notification
+        function showUpdateNotification() {
+          const notification = document.createElement('div');
+          notification.id = 'update-notification';
+          notification.innerHTML = `
+            <div style="position: fixed; bottom: 20px; right: 20px; background: #3b82f6; color: white; padding: 16px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; font-family: Inter, sans-serif; max-width: 320px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="flex: 1;">
+                  <div style="font-weight: 600; margin-bottom: 4px;">Update Available</div>
+                  <div style="font-size: 14px; opacity: 0.9;">A new version is ready. Reload to update.</div>
+                </div>
+              </div>
+              <div style="margin-top: 12px; display: flex; gap: 8px;">
+                <button onclick="window.location.reload()" style="flex: 1; background: white; color: #3b82f6; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px;">
+                  Reload
+                </button>
+                <button onclick="document.getElementById('update-notification').remove()" style="flex: 1; background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px;">
+                  Later
+                </button>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(notification);
+        }
+
+        // Add keyboard shortcut to clear cache (Ctrl+Shift+R or Cmd+Shift+R)
+        document.addEventListener('keydown', (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'R') {
+            e.preventDefault();
+            console.log('🗑️  Clearing cache and reloading...');
+            if (navigator.serviceWorker.controller) {
+              const channel = new MessageChannel();
+              channel.port1.onmessage = () => {
+                window.location.reload();
+              };
+              navigator.serviceWorker.controller.postMessage('clearCache', [channel.port2]);
+            }
+          }
+        });
       } else {
         console.warn('⚠ Service Workers not supported in this browser');
         // Fallback: try to load app anyway

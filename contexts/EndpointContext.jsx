@@ -39,10 +39,14 @@ export const EndpointContext = createContext({
  * @returns {JSX.Element} Provider component wrapping children
  */
 export function EndpointProvider({ children, initialEndpoints }) {
+  // Version to track schema changes - increment when initial endpoints structure changes
+  const STORAGE_VERSION = 5;
+
   // Use localStorage sync hook with custom serialization for Set
   const [state, setState] = useLocalStorageState(
     "apiExplorer",
     () => ({
+      version: STORAGE_VERSION,
       currentEndpointId: initialEndpoints[0].id,
       endpoints: initialEndpoints,
       endpointCodes: {},
@@ -56,12 +60,30 @@ export function EndpointProvider({ children, initialEndpoints }) {
         ...state,
         modifiedEndpoints: Array.from(state.modifiedEndpoints)
       }),
-      deserialize: (savedState) => ({
-        ...savedState,
-        modifiedEndpoints: new Set(savedState.modifiedEndpoints || []),
-        endpoints: savedState.endpoints || initialEndpoints,
-        paramOverrides: savedState.paramOverrides || {}
-      })
+      deserialize: (savedState) => {
+        // If version mismatch, reset to initial endpoints
+        if (!savedState.version || savedState.version < STORAGE_VERSION) {
+          console.log('[EndpointContext] Version mismatch, resetting endpoints to initial data');
+          return {
+            version: STORAGE_VERSION,
+            currentEndpointId: initialEndpoints[0].id,
+            endpoints: initialEndpoints,
+            endpointCodes: {},
+            modifiedEndpoints: new Set(),
+            paramOverrides: {},
+            baseUrl: '',
+            bearerToken: null
+          };
+        }
+
+        return {
+          ...savedState,
+          version: STORAGE_VERSION,
+          modifiedEndpoints: new Set(savedState.modifiedEndpoints || []),
+          endpoints: savedState.endpoints || initialEndpoints,
+          paramOverrides: savedState.paramOverrides || {}
+        };
+      }
     }
   );
 
@@ -134,6 +156,11 @@ export function EndpointProvider({ children, initialEndpoints }) {
             return override !== undefined ? { ...param, default: override } : param;
           })
         };
+      }
+
+      // If endpoint has custom code, always use starterCode (don't regenerate)
+      if (endpoint.isCustomCode) {
+        return endpoint.starterCode || '';
       }
 
       // If endpoint is from spec, generate code dynamically
@@ -226,6 +253,7 @@ export function EndpointProvider({ children, initialEndpoints }) {
     loadEndpointsFromSpec: (endpoints, baseUrl, bearerToken) => {
       // Don't initialize codes - let them be generated dynamically
       setState({
+        version: STORAGE_VERSION,
         currentEndpointId: endpoints[0]?.id || '',
         endpoints: endpoints,
         endpointCodes: {}, // Empty - codes will be dynamic until modified

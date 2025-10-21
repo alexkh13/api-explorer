@@ -65,6 +65,23 @@ export function parseOpenAPISpec(spec, bearerToken) {
           }
         }
 
+        // Detect client-side pagination pattern in response schema (for GET requests)
+        if (method.toUpperCase() === 'GET' && operation.responses) {
+          const successResponse = operation.responses['200'] || operation.responses['201'];
+          if (successResponse && successResponse.content) {
+            const jsonResponse = successResponse.content['application/json'];
+            if (jsonResponse && jsonResponse.schema) {
+              const schema = jsonResponse.schema;
+              // Check if response has { results: [], total_count: N } pattern
+              if (schema.properties &&
+                  schema.properties.results &&
+                  (schema.properties.results.type === 'array' || schema.properties.results.items)) {
+                endpoint.hasClientPagination = true;
+              }
+            }
+          }
+        }
+
         // Do NOT generate starterCode here - it will be generated dynamically
         endpoints.push(endpoint);
       }

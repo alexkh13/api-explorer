@@ -2,7 +2,7 @@
 // Shared utility components for preview iframe
 // This file is transpiled by the service worker when imported
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 /**
  * Layout component - provides consistent wrapper with loading state
@@ -326,5 +326,39 @@ export function PaginatedResponse({ items, loading, hasMore, onLoadMore, current
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * ClientPaginatedResponse component - wrapper for client-side pagination
+ * Manages local state pagination and delegates to PaginatedResponse for UI
+ * @param {Object} props
+ * @param {Array} props.allItems - All items to paginate locally
+ * @param {string} props.currentPath - Current endpoint path for navigation
+ * @param {number} props.pageSize - Number of items to show per page (default: 20)
+ */
+export function ClientPaginatedResponse({ allItems, currentPath, pageSize = 20 }) {
+  const [visibleCount, setVisibleCount] = useState(pageSize);
+
+  // Reset visible count when allItems changes
+  useEffect(() => {
+    setVisibleCount(pageSize);
+  }, [allItems, pageSize]);
+
+  const visibleItems = allItems.slice(0, visibleCount);
+  const hasMore = visibleCount < allItems.length;
+
+  const handleLoadMore = useCallback(() => {
+    setVisibleCount(prev => Math.min(prev + pageSize, allItems.length));
+  }, [allItems.length, pageSize]);
+
+  return (
+    <PaginatedResponse
+      items={visibleItems}
+      loading={false}
+      hasMore={hasMore}
+      onLoadMore={handleLoadMore}
+      currentPath={currentPath}
+    />
   );
 }
