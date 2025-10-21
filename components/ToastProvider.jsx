@@ -1,8 +1,7 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { ToastContext } from "../contexts/ToastContext.jsx";
-import { Toast } from "./Toast.jsx";
 
-// Toast provider component
+// Toast provider component - provides context only, no UI rendering
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
@@ -17,23 +16,14 @@ export function ToastProvider({ children }) {
   }, []);
 
   const value = useMemo(() => ({
+    toasts,
     addToast,
     removeToast
-  }), [addToast, removeToast]);
+  }), [toasts, addToast, removeToast]);
 
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="fixed bottom-6 left-6 flex flex-col gap-2 z-[1000]">
-        {toasts.map(toast => (
-          <Toast
-            key={toast.id}
-            message={toast.message}
-            type={toast.type}
-            onClose={() => removeToast(toast.id)}
-          />
-        ))}
-      </div>
     </ToastContext.Provider>
   );
 }

@@ -2,6 +2,7 @@
 export { Dialog } from "./Dialog.jsx";
 export { Toast } from "./Toast.jsx";
 export { ToastProvider } from "./ToastProvider.jsx";
+export { ToastContainer } from "./ToastContainer.jsx";
 export { APIKeyDialog } from "./APIKeyDialog.jsx";
 export { LoadSpecDialog } from "./LoadSpecDialog.jsx";
 export { LoadSpecButton } from "./LoadSpecButton.jsx";

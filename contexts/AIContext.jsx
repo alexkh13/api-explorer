@@ -10,7 +10,7 @@ import { validateGeneratedCode } from "../services/code-validation.js";
  * Includes validation for browser-compatible code and syntax checking
  */
 export const AIContext = createContext({
-  provider: 'OPENAI',
+  provider: 'OPENROUTER',
   apiKey: '',
   model: '',
   isConfigured: false,
@@ -29,7 +29,7 @@ export const AIContext = createContext({
  */
 export function AIProvider({ children }) {
   const [config, setConfig] = useState(() => {
-    const provider = getLocalStorageString('ai_provider', 'OPENAI');
+    const provider = getLocalStorageString('ai_provider', 'OPENROUTER');
     const apiKey = getLocalStorageString(AI_PROVIDERS[provider]?.apiKeyName || '');
     const model = getLocalStorageString(`${provider}_MODEL`, AI_PROVIDERS[provider]?.defaultModel);
 
@@ -91,24 +91,47 @@ export function AIProvider({ children }) {
         ...(provider.customHeaders ? provider.customHeaders(config.apiKey) : {})
       };
 
+      const requestBody = provider.formatRequest(enhancedPrompt, code, config.model);
+
+      console.log('[AI] Making request to:', provider.endpoint);
+      console.log('[AI] Model:', config.model);
+      console.log('[AI] Headers:', headers);
+
       const response = await fetch(provider.endpoint, {
         method: 'POST',
         headers,
-        body: JSON.stringify(provider.formatRequest(enhancedPrompt, code, config.model))
+        body: JSON.stringify(requestBody)
       });
 
+      console.log('[AI] Response status:', response.status);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'Failed to get response from AI service');
+        const errorText = await response.text();
+        console.error('[AI] Error response:', errorText);
+
+        let errorMessage = 'Failed to get response from AI service';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error?.message || errorData.message || errorMessage;
+        } catch (e) {
+          errorMessage = errorText || errorMessage;
+        }
+
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
+      console.log('[AI] Response data:', data);
+
       const result = provider.extractResponse(data);
+      console.log('[AI] Extracted response:', result);
 
       // Validate generated code
       const validation = validateGeneratedCode(result);
+      console.log('[AI] Validation result:', validation);
 
       if (!validation.isValid) {
+        console.error('[AI] Validation failed:', validation.error);
         setConfig(prev => ({
           ...prev,
           status: `Error: ${validation.error} Try a different prompt.`
@@ -126,7 +149,8 @@ export function AIProvider({ children }) {
 
       return true;
     } catch (error) {
-      console.error('Error generating completions:', error);
+      console.error('[AI] Error generating completions:', error);
+      console.error('[AI] Error stack:', error.stack);
 
       setConfig(prev => ({
         ...prev,

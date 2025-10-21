@@ -7,7 +7,7 @@ import { Send } from "../icons/index.jsx";
 
 // Minimal AI Assistant Component
 export function MinimalAIAssistant({ isOpen, onClose }) {
-  const { generateCompletions, isConfigured, isProcessing } = useAI();
+  const { generateCompletions, isConfigured, isProcessing, status } = useAI();
   const { currentEndpointId, getEndpointCode, updateEndpointCode } = useEndpoints();
   const toast = useToast();
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
@@ -52,7 +52,10 @@ ${code}
     });
 
     if (!success) {
-      toast.addToast('Failed to process request. Check console for details.', 'error');
+      // Show the actual error message from the AI context status
+      const errorMessage = status || 'Failed to process request. Check console for details.';
+      toast.addToast(errorMessage, 'error');
+      console.error('[MinimalAIAssistant] Request failed with status:', status);
     }
   };
 

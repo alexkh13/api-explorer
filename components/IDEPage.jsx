@@ -5,6 +5,7 @@ import { CodeEditor } from "./CodeEditor.jsx";
 import { Preview } from "./Preview.jsx";
 import { MinimalAIAssistant } from "./MinimalAIAssistant.jsx";
 import { ActionFABMenu } from "./ActionFABMenu.jsx";
+import { ToastContainer } from "./ToastContainer.jsx";
 
 // Main IDE Component
 export function IDEPage() {
@@ -61,6 +62,9 @@ export function IDEPage() {
 
       {/* Minimal AI Assistant - Part of page layout */}
       <MinimalAIAssistant isOpen={showPromptPanel} onClose={closePromptPanel} />
+
+      {/* Bottom-left notification container - floats like FAB menu */}
+      <ToastContainer showPromptPanel={showPromptPanel} />
 
       {/* Bottom-right FAB menu for actions */}
       <ActionFABMenu

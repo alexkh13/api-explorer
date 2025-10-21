@@ -23,6 +23,42 @@ import { getSystemPrompt } from './ai-prompts.js';
  * @type {Object.<string, AIProvider>}
  */
 export const AI_PROVIDERS = {
+    OPENROUTER: {
+      name: 'OpenRouter',
+      endpoint: 'https://openrouter.ai/api/v1/chat/completions',
+      apiKeyName: 'OPENROUTER_API_KEY',
+      defaultModel: 'anthropic/claude-3.5-haiku',
+      models: [
+        { id: 'anthropic/claude-3.5-haiku', name: 'Claude 3.5 Haiku' },
+        { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet' },
+        { id: 'openai/gpt-3.5-turbo', name: 'GPT-3.5 Turbo' },
+        { id: 'openai/gpt-4o', name: 'GPT-4o' },
+        { id: 'openai/gpt-4-turbo', name: 'GPT-4 Turbo' },
+        { id: 'google/gemini-2.0-flash-exp:free', name: 'Gemini 2.0 Flash (Free)' },
+        { id: 'meta-llama/llama-3.1-8b-instruct:free', name: 'Llama 3.1 8B (Free)' }
+      ],
+      formatRequest: (prompt, code, model) => ({
+        model: model || 'anthropic/claude-3.5-haiku',
+        messages: [
+          {
+            role: 'system',
+            content: getSystemPrompt('OPENAI')
+          },
+          {
+            role: 'user',
+            content: `I have the following code:\n\n\`\`\`\n${code}\n\`\`\`\n\nRequest: ${prompt}`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2048
+      }),
+      customHeaders: (apiKey) => ({
+        'Authorization': `Bearer ${apiKey}`,
+        'HTTP-Referer': 'https://alexkh13.github.io',
+        'X-Title': 'API Explorer'
+      }),
+      extractResponse: (data) => data.choices[0].message.content
+    },
     OPENAI: {
       name: 'OpenAI',
       endpoint: 'https://api.openai.com/v1/chat/completions',
@@ -66,11 +102,8 @@ export const AI_PROVIDERS = {
       formatRequest: (prompt, code, model) => ({
         model: model || 'claude-3-haiku-20240307',
         max_tokens: 2048,
+        system: getSystemPrompt('ANTHROPIC'),
         messages: [
-          {
-            role: 'system',
-            content: getSystemPrompt('ANTHROPIC')
-          },
           {
             role: 'user',
             content: `I have the following code:\n\n\`\`\`\n${code}\n\`\`\`\n\nRequest: ${prompt}\n\nRespond with only the code changes requested. No explanations, just the code.`

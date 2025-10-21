@@ -3,6 +3,7 @@ import { useEndpoints } from "../contexts/EndpointContext.jsx";
 import { useToast } from "../contexts/ToastContext.jsx";
 import * as Icons from "../icons/index.jsx";
 import { LoadSpecButton } from "./LoadSpecButton.jsx";
+import { getRandomNotification } from "../data/random-notifications.js";
 
 // Action FAB Menu Component
 export function ActionFABMenu({ showCodeEditor, onToggleView, onPromptOpen, showPromptPanel }) {
@@ -15,6 +16,11 @@ export function ActionFABMenu({ showCodeEditor, onToggleView, onPromptOpen, show
       resetEndpointCode(currentEndpointId);
       toast.addToast("Code reset to default state", "success");
     }
+  };
+
+  const handleRandomNotification = () => {
+    const notification = getRandomNotification();
+    toast.addToast(notification.message, notification.type);
   };
 
   const handleToggleView = () => {
@@ -42,6 +48,14 @@ export function ActionFABMenu({ showCodeEditor, onToggleView, onPromptOpen, show
             title={showCodeEditor ? "Show Preview" : "Show Code Editor"}
           >
             {showCodeEditor ? <Icons.Preview /> : <Icons.Code />}
+          </button>
+          <button
+            className="w-10 h-10 rounded-full flex items-center justify-center text-yellow-400 dark:text-yellow-300 shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95 p-0"
+            style={{ background: 'rgba(251, 191, 36, 0.15)' }}
+            onClick={handleRandomNotification}
+            title="Test Random Notification"
+          >
+            <Icons.Bell />
           </button>
           <LoadSpecButton />
           <button
