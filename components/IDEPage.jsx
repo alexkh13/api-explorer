@@ -59,7 +59,7 @@ export function IDEPage() {
         )}
       </div>
 
-      {/* Minimal AI Assistant */}
+      {/* Minimal AI Assistant - Part of page layout */}
       <MinimalAIAssistant isOpen={showPromptPanel} onClose={closePromptPanel} />
 
       {/* Bottom-right FAB menu for actions */}

@@ -60,7 +60,7 @@ ${code}
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 bg-[var(--bg-primary)] border-t border-[var(--border-default)] shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-[99] animate-slide-up">
+      <div className="bg-[var(--bg-primary)] border-t border-[var(--border-default)] shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-10">
         <form onSubmit={handleSubmit} className="flex items-center h-14 px-6 gap-2">
           {/* Input field */}
           <input
