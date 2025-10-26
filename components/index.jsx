@@ -15,3 +15,4 @@ export { CodeEditor } from "./CodeEditor.jsx";
 export { MinimalAIAssistant } from "./MinimalAIAssistant.jsx";
 export { ActionFABMenu } from "./ActionFABMenu.jsx";
 export { IDEPage } from "./IDEPage.jsx";
+export { VirtualEndpointDialog } from "./VirtualEndpointDialog.jsx";

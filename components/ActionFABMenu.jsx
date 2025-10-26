@@ -6,10 +6,13 @@ import { LoadSpecButton } from "./LoadSpecButton.jsx";
 import { getRandomNotification } from "../data/random-notifications.js";
 
 // Action FAB Menu Component
-export function ActionFABMenu({ showCodeEditor, onToggleView, onPromptOpen, showPromptPanel }) {
+export function ActionFABMenu({ showCodeEditor, onToggleView, onPromptOpen, showPromptPanel, showVirtualCode, onToggleVirtualCode }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { currentEndpointId, resetEndpointCode } = useEndpoints();
+  const { currentEndpointId, resetEndpointCode, getCurrentEndpoint } = useEndpoints();
   const toast = useToast();
+
+  const currentEndpoint = getCurrentEndpoint();
+  const isVirtual = currentEndpoint?.type === 'virtual';
 
   const handleReset = () => {
     if (window.confirm("Reset code to default state? This cannot be undone.")) {
@@ -41,6 +44,24 @@ export function ActionFABMenu({ showCodeEditor, onToggleView, onPromptOpen, show
     <div className={`absolute right-6 z-[100] flex flex-col items-end gap-2 transition-all duration-300 ${bottomClass}`}>
       {isMenuOpen && (
         <div className="flex flex-col items-end gap-2 animate-slide-up">
+          {isVirtual && (
+            <button
+              className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95 p-0 ${
+                showVirtualCode
+                  ? 'text-blue-400 dark:text-blue-300'
+                  : 'text-orange-400 dark:text-orange-300'
+              }`}
+              style={{
+                background: showVirtualCode
+                  ? 'rgba(59, 130, 246, 0.15)'
+                  : 'rgba(251, 146, 60, 0.15)'
+              }}
+              onClick={onToggleVirtualCode}
+              title={showVirtualCode ? "Show Generated Code" : "Show Virtual Endpoint Code"}
+            >
+              {showVirtualCode ? <Icons.Code /> : <Icons.Edit />}
+            </button>
+          )}
           <button
             className="w-10 h-10 rounded-full flex items-center justify-center text-cyan-400 dark:text-cyan-300 shadow-md transition-all hover:scale-105 hover:shadow-lg active:scale-95 p-0"
             style={{ background: 'rgba(6, 182, 212, 0.15)' }}

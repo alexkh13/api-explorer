@@ -75,6 +75,8 @@
   <div id="root"></div>
 
   <script>
+    console.log('[Preview] Script starting - preview.html loaded');
+
     // Capture console logs for debugging
     window.__consoleLogs = [];
     const originalLog = console.log;
@@ -117,27 +119,76 @@
     }
 
     // Listen for code from parent window
+    console.log('[Preview] Attaching message event listener...');
     window.addEventListener('message', async (event) => {
+      console.log('[Preview] Message received, type:', event.data?.type, 'origin:', event.origin);
+
       // Verify origin for security
       if (event.origin !== window.location.origin) {
+        console.warn('[Preview] Origin mismatch, ignoring message. Expected:', window.location.origin, 'Got:', event.origin);
         return;
       }
 
-      const { type, code } = event.data;
+      const { type, code, virtualEndpoints, realEndpoints } = event.data;
+      console.log('[Preview] Message data extracted - type:', type, 'virtualEndpoints:', virtualEndpoints?.length, 'realEndpoints:', realEndpoints?.length);
 
       if (type === 'render') {
         console.log('[Preview] Received code to render:', code?.substring(0, 100) + '...');
+        console.log('[Preview] Virtual endpoints:', virtualEndpoints);
+        console.log('[Preview] Real endpoints:', realEndpoints);
+
         try {
           // Clear previous content and scripts
           const root = document.getElementById('root');
           root.innerHTML = '';
 
-          // Remove any previous user scripts
-          const oldScripts = document.querySelectorAll('script[data-user-code]');
+          // Remove any previous user scripts and interceptor scripts
+          const oldScripts = document.querySelectorAll('script[data-user-code], script[data-fetch-interceptor]');
           oldScripts.forEach(script => script.remove());
 
           // Clear previous globals
           delete window.__PreviewComponent;
+
+          // Initialize fetch interceptor BEFORE user code
+          if (virtualEndpoints && virtualEndpoints.length > 0) {
+            console.log('[Preview] Initializing fetch interceptor with', virtualEndpoints.length, 'virtual endpoints');
+
+            try {
+              const interceptorScript = document.createElement('script');
+              interceptorScript.type = 'module';
+              interceptorScript.setAttribute('data-fetch-interceptor', 'true');
+
+              // Build the script content with proper error handling
+              const scriptContent = `
+                import { initializeFetchInterceptor } from '${basePath}services/virtual-endpoints/fetch-interceptor.js';
+
+                const virtualEndpoints = ${JSON.stringify(virtualEndpoints)};
+                const realEndpoints = ${JSON.stringify(realEndpoints)};
+
+                console.log('[Preview Interceptor] Initializing with virtual endpoints:', virtualEndpoints);
+                try {
+                  initializeFetchInterceptor(virtualEndpoints, realEndpoints);
+                  console.log('[Preview Interceptor] Fetch interceptor initialized successfully');
+                } catch (error) {
+                  console.error('[Preview Interceptor] Error initializing:', error);
+                }
+              `;
+
+              interceptorScript.textContent = scriptContent;
+              console.log('[Preview] Interceptor script created, appending to body...');
+
+              document.body.appendChild(interceptorScript);
+              console.log('[Preview] Interceptor script appended, waiting 100ms...');
+
+              // Wait a moment for the interceptor to be set up
+              await new Promise(resolve => setTimeout(resolve, 100));
+              console.log('[Preview] Interceptor initialization complete');
+            } catch (error) {
+              console.error('[Preview] Error setting up interceptor script:', error);
+            }
+          } else {
+            console.log('[Preview] No virtual endpoints, skipping interceptor initialization');
+          }
 
           // Wait for Babel to be ready
           await waitForBabel();
@@ -352,6 +403,7 @@ console.log('[User Module] Component exported successfully');`;
     Promise.all([waitForBabel(), waitForImportMaps()]).then(() => {
       console.log('[Preview] Babel and import maps loaded, signaling ready to parent');
       window.parent.postMessage({ type: 'ready' }, window.location.origin);
+      console.log('[Preview] Ready signal sent, now waiting for render messages...');
     });
   </script>
 </body>

@@ -13,18 +13,31 @@ export function IDEPage() {
     currentEndpointId,
     getEndpointCode,
     updateEndpointCode,
-    getCurrentEndpoint
+    getCurrentEndpoint,
+    updateVirtualEndpoint
   } = useEndpoints();
   const [showCodeEditor, setShowCodeEditor] = useState(false);
   const [showPromptPanel, setShowPromptPanel] = useState(false);
+  const [showVirtualCode, setShowVirtualCode] = useState(false);
 
   // Get current code based on selected endpoint
-  const currentCode = getEndpointCode(currentEndpointId);
   const currentEndpoint = getCurrentEndpoint();
+  const isVirtual = currentEndpoint?.type === 'virtual';
+
+  // Show virtual endpoint code or generated code
+  const currentCode = (isVirtual && showVirtualCode)
+    ? currentEndpoint.code
+    : getEndpointCode(currentEndpointId);
 
   const handleCodeChange = useCallback(newCode => {
-    updateEndpointCode(currentEndpointId, newCode);
-  }, [currentEndpointId, updateEndpointCode]);
+    // If showing virtual code, update the virtual endpoint's code property
+    if (isVirtual && showVirtualCode) {
+      updateVirtualEndpoint(currentEndpointId, { code: newCode });
+    } else {
+      // Otherwise update the generated code
+      updateEndpointCode(currentEndpointId, newCode);
+    }
+  }, [currentEndpointId, updateEndpointCode, updateVirtualEndpoint, isVirtual, showVirtualCode]);
 
   const toggleView = () => {
     setShowCodeEditor(!showCodeEditor);
@@ -37,6 +50,15 @@ export function IDEPage() {
   const closePromptPanel = () => {
     setShowPromptPanel(false);
   };
+
+  const toggleVirtualCode = () => {
+    setShowVirtualCode(!showVirtualCode);
+  };
+
+  // Reset showVirtualCode when changing endpoints
+  useEffect(() => {
+    setShowVirtualCode(false);
+  }, [currentEndpointId]);
 
   // Close prompt panel on Escape key
   useEffect(() => {
@@ -72,6 +94,8 @@ export function IDEPage() {
         onToggleView={toggleView}
         onPromptOpen={handlePromptOpen}
         showPromptPanel={showPromptPanel}
+        showVirtualCode={showVirtualCode}
+        onToggleVirtualCode={toggleVirtualCode}
       />
     </div>
   );

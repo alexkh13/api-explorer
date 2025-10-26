@@ -1,8 +1,27 @@
-import React from "react";
+import React, { useState } from "react";
 import * as Icons from "../icons/index.jsx";
+import { useEndpoints } from "../contexts/EndpointContext.jsx";
+import { VirtualEndpointDialog } from "./VirtualEndpointDialog.jsx";
 
 // Endpoint Item Component
 export function EndpointItem({ endpoint, isSelected, onSelect, isExpanded, onToggleExpand, isModified, showDetails = false }) {
+  const { deleteVirtualEndpoint } = useEndpoints();
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    if (confirm(`Delete virtual endpoint "${endpoint.name}"?`)) {
+      deleteVirtualEndpoint(endpoint.id);
+    }
+    setShowMenu(false);
+  };
+
+  const handleEdit = (e) => {
+    e.stopPropagation();
+    setShowEditDialog(true);
+    setShowMenu(false);
+  };
   // Get method-based color class
   const getMethodClass = (method) => {
     if (!method) return 'text-[var(--method-get)]';
@@ -73,17 +92,55 @@ export function EndpointItem({ endpoint, isSelected, onSelect, isExpanded, onTog
             <div className="text-xs text-[var(--text-secondary)] mt-1 leading-snug line-clamp-2">{endpoint.description}</div>
           )}
         </div>
-        {!showDetails && (
-          <div
-            className={`text-[var(--text-secondary)] transition-transform ${isExpanded ? 'rotate-90' : ''}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleExpand(endpoint.id);
-            }}
-          >
-            <Icons.ChevronRight />
-          </div>
-        )}
+        <div className="flex items-center gap-1">
+          {endpoint.type === 'virtual' && (
+            <div className="relative">
+              <button
+                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-1"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMenu(!showMenu);
+                }}
+                title="Actions"
+              >
+                ⋮
+              </button>
+              {showMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowMenu(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-1 bg-[var(--bg-primary)] border border-[var(--border-default)] rounded shadow-lg z-20 min-w-[120px]">
+                    <button
+                      onClick={handleEdit}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-[var(--bg-secondary)] text-[var(--text-primary)]"
+                    >
+                      <Icons.Edit /> Edit
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-[var(--bg-secondary)] text-red-500"
+                    >
+                      ✕ Delete
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+          {!showDetails && (
+            <div
+              className={`text-[var(--text-secondary)] transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleExpand(endpoint.id);
+              }}
+            >
+              <Icons.ChevronRight />
+            </div>
+          )}
+        </div>
       </div>
       {!showDetails && (
         <div className={`transition-all overflow-hidden bg-[var(--bg-primary)] ${
@@ -91,6 +148,15 @@ export function EndpointItem({ endpoint, isSelected, onSelect, isExpanded, onTog
         }`}>
           <div className="text-sm text-[var(--text-secondary)] leading-relaxed">{endpoint.description}</div>
         </div>
+      )}
+
+      {/* Edit Dialog for Virtual Endpoints */}
+      {endpoint.type === 'virtual' && showEditDialog && (
+        <VirtualEndpointDialog
+          isOpen={showEditDialog}
+          onClose={() => setShowEditDialog(false)}
+          editingEndpoint={endpoint}
+        />
       )}
     </div>
   );

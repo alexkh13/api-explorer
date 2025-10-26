@@ -1,5 +1,7 @@
-import React, { useEffect, useRef, useMemo } from "react";
+import React, { useEffect, useRef, useMemo, useState } from "react";
 import { useEndpoints } from "../contexts/EndpointContext.jsx";
+import { VirtualEndpointDialog } from "./VirtualEndpointDialog.jsx";
+import { Code } from "../icons/index.jsx";
 
 // Helper function to check if an endpoint requires parameters
 function hasRequiredParameters(endpoint) {
@@ -13,6 +15,7 @@ function hasRequiredParameters(endpoint) {
 export function EndpointAutocomplete({ isOpen, onClose, toggleButtonRef }) {
   const { endpoints, currentEndpointId, selectEndpoint } = useEndpoints();
   const containerRef = useRef(null);
+  const [showVirtualDialog, setShowVirtualDialog] = useState(false);
 
   // Filter out endpoints that require parameters
   const filteredEndpoints = useMemo(() => {
@@ -36,6 +39,12 @@ export function EndpointAutocomplete({ isOpen, onClose, toggleButtonRef }) {
     onClose();
   };
 
+  const handleNewVirtualEndpoint = (e) => {
+    e.stopPropagation();
+    setShowVirtualDialog(true);
+    // Don't close the autocomplete - keep it open while dialog is shown
+  };
+
   // Close when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -44,49 +53,78 @@ export function EndpointAutocomplete({ isOpen, onClose, toggleButtonRef }) {
         return;
       }
 
+      // Ignore clicks on dialogs (check for dialog backdrop or dialog container)
+      const isDialogClick = event.target.closest('[role="dialog"], .fixed.inset-0');
+      if (isDialogClick) {
+        return;
+      }
+
       if (containerRef.current && !containerRef.current.contains(event.target)) {
         onClose();
       }
     };
 
-    if (isOpen) {
+    if (isOpen && !showVirtualDialog) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
-  }, [isOpen, onClose, toggleButtonRef]);
+  }, [isOpen, showVirtualDialog, onClose, toggleButtonRef]);
 
   if (!isOpen) return null;
 
   return (
-    <div
-      ref={containerRef}
-      className="endpoint-autocomplete"
-    >
-      <div className="endpoint-autocomplete-list">
-        {filteredEndpoints.map((endpoint) => {
-          const isActive = endpoint.id === currentEndpointId;
-          return (
-            <div
-              key={endpoint.id}
-              onClick={() => handleEndpointClick(endpoint.id)}
-              className={`endpoint-autocomplete-item ${isActive ? 'active' : ''}`}
-            >
-              <div className="flex items-center gap-2 text-sm">
-                {endpoint.method && (
-                  <span className={`font-semibold px-2 py-0.5 rounded text-xs uppercase border ${getMethodClass(endpoint.method)}`}>
-                    {endpoint.method}
+    <>
+      <div
+        ref={containerRef}
+        className="endpoint-autocomplete"
+      >
+        {/* Scrollable list */}
+        <div className="endpoint-autocomplete-list">
+          {filteredEndpoints.map((endpoint) => {
+            const isActive = endpoint.id === currentEndpointId;
+            return (
+              <div
+                key={endpoint.id}
+                onClick={() => handleEndpointClick(endpoint.id)}
+                className={`endpoint-autocomplete-item ${isActive ? 'active' : ''}`}
+              >
+                <div className="flex items-center gap-2 text-sm">
+                  {endpoint.method && (
+                    <span className={`font-semibold px-2 py-0.5 rounded text-xs uppercase border ${getMethodClass(endpoint.method)}`}>
+                      {endpoint.method}
+                    </span>
+                  )}
+                  <span className="text-[var(--text-secondary)] font-mono text-xs">
+                    {endpoint.path || endpoint.url}
                   </span>
-                )}
-                <span className="text-[var(--text-secondary)] font-mono text-xs">
-                  {endpoint.path || endpoint.url}
-                </span>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+
+        {/* Sticky button at bottom */}
+        <div className="sticky bottom-0 left-0 right-0 bg-[var(--bg-primary)] border-t border-[var(--border-default)] p-2">
+          <button
+            onClick={handleNewVirtualEndpoint}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors"
+          >
+            <Code />
+            <span>New Virtual Endpoint</span>
+          </button>
+        </div>
       </div>
-    </div>
+
+      {/* Virtual Endpoint Dialog */}
+      <VirtualEndpointDialog
+        isOpen={showVirtualDialog}
+        onClose={() => {
+          setShowVirtualDialog(false);
+          onClose(); // Close autocomplete when dialog closes
+        }}
+      />
+    </>
   );
 }

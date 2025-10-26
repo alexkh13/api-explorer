@@ -2,6 +2,9 @@ import React, { useCallback, useMemo, createContext, useContext, useEffect } fro
 import { initialEndpointsData } from "../data/initial-endpoints.js";
 import { generateStarterCode } from "../services/code-generator/index.js";
 import { useLocalStorageState } from "../hooks/index.js";
+import { createVirtualEndpoint } from "../services/virtual-endpoints/index.js";
+import { generateVirtualEndpointCode } from "../services/virtual-endpoints/code-generator.js";
+import { initializeFetchInterceptor, updateVirtualEndpoints } from "../services/virtual-endpoints/index.js";
 
 /**
  * Endpoint Context - Manages API endpoint state and code
@@ -26,7 +29,13 @@ export const EndpointContext = createContext({
   selectEndpoint: () => {},
   navigateWithParams: () => {},
   markEndpointCompleted: () => {},
-  loadEndpointsFromSpec: () => {}
+  loadEndpointsFromSpec: () => {},
+  // Virtual endpoint methods
+  createVirtualEndpoint: () => {},
+  updateVirtualEndpoint: () => {},
+  deleteVirtualEndpoint: () => {},
+  getVirtualEndpoints: () => [],
+  getRealEndpoints: () => []
 });
 
 /**
@@ -132,6 +141,18 @@ export function EndpointProvider({ children, initialEndpoints }) {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []); // Only run on mount
 
+  // Initialize and update fetch interceptor for virtual endpoints
+  useEffect(() => {
+    const virtualEndpoints = state.endpoints.filter(e => e.type === 'virtual');
+    const realEndpoints = state.endpoints.filter(e => e.type !== 'virtual');
+
+    // Initialize on first mount
+    initializeFetchInterceptor(virtualEndpoints, realEndpoints);
+
+    // Update when endpoints change
+    updateVirtualEndpoints(virtualEndpoints, realEndpoints);
+  }, [state.endpoints]);
+
   // Context value with state and methods
   const value = useMemo(() => ({
     ...state,
@@ -146,6 +167,12 @@ export function EndpointProvider({ children, initialEndpoints }) {
       // Otherwise, generate code dynamically
       let endpoint = state.endpoints.find(e => e.id === endpointId);
       if (!endpoint) return '';
+
+      // Handle virtual endpoints
+      if (endpoint.type === 'virtual') {
+        const realEndpoints = state.endpoints.filter(e => e.type !== 'virtual');
+        return generateVirtualEndpointCode(endpoint, realEndpoints);
+      }
 
       // Apply parameter overrides if they exist
       if (state.paramOverrides[endpointId]) {
@@ -262,7 +289,47 @@ export function EndpointProvider({ children, initialEndpoints }) {
         baseUrl: baseUrl || '',
         bearerToken: bearerToken || null
       });
-    }
+    },
+    // Virtual endpoint methods
+    createVirtualEndpoint: (data) => {
+      const virtualEndpoint = createVirtualEndpoint(data);
+      setState(prev => ({
+        ...prev,
+        endpoints: [...prev.endpoints, virtualEndpoint],
+        currentEndpointId: virtualEndpoint.id
+      }));
+      return virtualEndpoint;
+    },
+    updateVirtualEndpoint: (id, updates) => {
+      setState(prev => ({
+        ...prev,
+        endpoints: prev.endpoints.map(e =>
+          e.id === id && e.type === 'virtual'
+            ? { ...e, ...updates, updatedAt: new Date().toISOString() }
+            : e
+        )
+      }));
+    },
+    deleteVirtualEndpoint: (id) => {
+      setState(prev => {
+        const newModified = new Set(prev.modifiedEndpoints);
+        newModified.delete(id);
+        const newCodes = { ...prev.endpointCodes };
+        delete newCodes[id];
+
+        return {
+          ...prev,
+          endpoints: prev.endpoints.filter(e => e.id !== id),
+          endpointCodes: newCodes,
+          modifiedEndpoints: newModified,
+          currentEndpointId: prev.currentEndpointId === id
+            ? prev.endpoints[0]?.id || ''
+            : prev.currentEndpointId
+        };
+      });
+    },
+    getVirtualEndpoints: () => state.endpoints.filter(e => e.type === 'virtual'),
+    getRealEndpoints: () => state.endpoints.filter(e => e.type !== 'virtual')
   }), [state]);
 
   return (

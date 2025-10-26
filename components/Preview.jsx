@@ -1,11 +1,15 @@
-import React, { useRef, useState, useEffect, useCallback } from "react";
+import React, { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import { useEndpoints } from "../contexts/EndpointContext.jsx";
 import { findChildEndpoints, resolveParamsFromRow } from "../utils/endpoint-relationships.js";
 
 // Preview Component
 export function Preview() {
-  const { currentEndpointId, getEndpointCode, endpoints, selectEndpoint, navigateWithParams } = useEndpoints();
+  const { currentEndpointId, getEndpointCode, endpoints, selectEndpoint, navigateWithParams, getVirtualEndpoints, getRealEndpoints } = useEndpoints();
   const code = getEndpointCode(currentEndpointId);
+
+  // Memoize endpoints to prevent unnecessary re-renders
+  const virtualEndpoints = useMemo(() => getVirtualEndpoints(), [endpoints]);
+  const realEndpoints = useMemo(() => getRealEndpoints(), [endpoints]);
   const iframeRef = useRef(null);
   const [lastRenderedCode, setLastRenderedCode] = useState("");
   const [iframeReady, setIframeReady] = useState(false);
@@ -78,20 +82,22 @@ export function Preview() {
 
     console.log('[Preview Component] Sending code to iframe:', code?.substring(0, 100) + '...');
 
-    // Send code to iframe via postMessage
+    // Send code and endpoints data to iframe via postMessage
     iframe.contentWindow.postMessage({
       type: 'render',
-      code: code
+      code: code,
+      virtualEndpoints: virtualEndpoints,
+      realEndpoints: realEndpoints
     }, window.location.origin);
 
     setLastRenderedCode(code);
-  }, [code]);
+  }, [code, virtualEndpoints, realEndpoints]);
 
-  // Set iframe src on mount
+  // Set iframe src on mount with cache busting
   useEffect(() => {
     const iframe = iframeRef.current;
     if (iframe && !iframe.src) {
-      iframe.src = 'preview.html';
+      iframe.src = 'preview.html?v=' + Date.now();
     }
   }, []);
 
